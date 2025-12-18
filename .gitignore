@@ -5,6 +5,7 @@
 # Sensitive Configuration
 settings.local.json
 *.local.json
+*.local.json.backup
 
 # Logs and Debug Files
 *.log
