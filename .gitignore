@@ -1,5 +1,7 @@
-# Local secrets/configs
+# Local secrets/configs (MCP with API keys)
 .claude/mcp/ref.json
+.claude/mcp/todoist.json
+.claude/mcp/context7.json
 # Sensitive Configuration
 settings.local.json
 *.local.json
