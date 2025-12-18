@@ -1,3 +1,5 @@
+# Local secrets/configs
+.claude/mcp/ref.json
 # Sensitive Configuration
 settings.local.json
 *.local.json
