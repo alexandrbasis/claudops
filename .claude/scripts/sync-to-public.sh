@@ -66,6 +66,7 @@ log "Starting sync from $SOURCE_CLAUDE_DIR to $TARGET_CLAUDE_DIR"
 # Files and directories to EXCLUDE (sensitive data)
 EXCLUDE_PATTERNS=(
     "settings.local.json"
+    "*.local.json.backup"
     "hook-debug.log"
     "sync-public.log"
     "*.log"
@@ -79,6 +80,10 @@ EXCLUDE_PATTERNS=(
     "debug"
     "file-history"
     ".state"
+    # MCP configs with API keys
+    "mcp/todoist.json"
+    "mcp/context7.json"
+    "mcp/ref.json"
 )
 
 # Build rsync exclude parameters
