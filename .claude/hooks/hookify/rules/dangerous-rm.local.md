@@ -5,7 +5,7 @@ event: bash
 conditions:
   - field: command
     operator: regex_match
-    pattern: 'rm\s+(-rf|-fr|--recursive.*--force|--force.*--recursive)\s+\S*\b(node_modules|src|backend|prisma)\b|rm\s+(-rf|-fr)\s+(/|~|\$HOME)\s*$'
+    pattern: 'rm\s+(-rf|-fr|--recursive.*--force|--force.*--recursive)\s+.*\b(node_modules|src|backend|prisma)\b|rm\s+(-rf|-fr)\s+(/|~|\$HOME)\s*$'
 action: block
 ---
 
