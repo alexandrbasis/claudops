@@ -1,15 +1,15 @@
 ---
 name: pre-commit-quality-gate
-enabled: false
+enabled: true
 event: bash
 conditions:
   - field: command
     operator: regex_match
     pattern: 'git\s+commit'
-action: block
+action: warn
 ---
 
-**BLOCKED: Run quality checks before commit**
+**⚠️ REMINDER: Run quality checks before commit**
 
 Execute in backend/ directory:
 ```bash

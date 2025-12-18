@@ -5,7 +5,7 @@ allowed-tools: ["Glob", "Read", "Skill"]
 
 # List Hookify Rules
 
-**Load hookify:writing-rules skill first** to understand rule format.
+**Load hookify skill first** to understand rule format.
 
 Show all configured hookify rules in the project.
 

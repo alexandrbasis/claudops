@@ -112,7 +112,7 @@ def main():
 
         # Setup paths
         project_dir = Path(cwd) if cwd else Path.cwd()
-        log_file = project_dir / ".claude" / "hook-debug.log"
+        log_file = project_dir / ".claude" / "hooks" / "logs" / "hook-debug.log"
 
         # Log hook activation
         log(f"Hook triggered: {hook_event} for {tool_name}", log_file)
@@ -157,7 +157,7 @@ def main():
         # Log error but don't block
         try:
             project_dir = Path.cwd()
-            log_file = project_dir / ".claude" / "hook-debug.log"
+            log_file = project_dir / ".claude" / "hooks" / "logs" / "hook-debug.log"
             log(f"Unexpected error: {str(e)}", log_file)
         except:
             pass

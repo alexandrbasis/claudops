@@ -40,7 +40,7 @@ def log_debug(message: str, data: Optional[Dict] = None, force: bool = False) ->
         data: Дополнительные данные (словарь)
         force: Принудительное логирование (даже если не git commit)
     """
-    debug_log = Path(".claude/hooks/hook-debug.log")
+    debug_log = Path(".claude/hooks/logs/hook-debug.log")
 
     # Проверяем размер лога и ротируем если нужно
     try:

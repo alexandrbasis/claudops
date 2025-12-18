@@ -6,7 +6,7 @@ allowed-tools: ["Read", "Write", "AskUserQuestion", "Task", "Grep", "TodoWrite",
 
 # Hookify - Create Hooks from Unwanted Behaviors
 
-**FIRST: Load the hookify:writing-rules skill** using the Skill tool to understand rule file format and syntax.
+**FIRST: Load the hookify skill** using the Skill tool to understand rule file format and syntax.
 
 Create hook rules to prevent problematic behaviors by analyzing the conversation or from explicit user instructions.
 
@@ -30,7 +30,7 @@ You will help the user create hookify rules to prevent unwanted behaviors. Follo
 Use the Task tool to launch conversation-analyzer agent:
 ```
 {
-  "subagent_type": "hookify:conversation-analyzer",
+  "subagent_type": "conversation-analyzer",
   "description": "Analyze conversation for unwanted behaviors",
   "prompt": "Analyze the current conversation to find behaviors to prevent."
 }
