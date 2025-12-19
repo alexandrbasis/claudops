@@ -38,15 +38,11 @@ Note: Skip this step when continuing implementation or addressing Code Review Re
 
 #### **Status Updates**
 1. **Update task status** to "In Progress" with timestamp
-2. **Update Linear** using linear-task-manager agent:
+2. **Update Linear** using `cg-linear` skill pattern:
+   ```bash
+   cg --mcp-config .claude/mcp/linear.json -p "Update issue [ISSUE-ID] status to 'In Progress'"
    ```
-   Update Linear issue status to "In Progress"
-
-   Task directory: [absolute path to task folder]
-   Issue ID: [Linear issue ID from task document]
-   New state: "In Progress"
-   ```
-   **Integration**: Use `Task` tool with `linear-task-manager` agent type
+   **Reference**: See `.claude/skills/cg-linear/SKILL.md` for details
 3. **Create feature branch**: `git checkout -b feature/[task-id]-[slug]`
 4. **Update task document** with branch name
 
@@ -129,20 +125,17 @@ Note: Skip this step when continuing implementation or addressing Code Review Re
 3. **Add implementation summary**
 
 ### **Step 5: Prepare for Code Review**
-1. **Update Linear status and add completion comment** using linear-task-manager agent:
+1. **Update Linear status and add completion comment** using `cg-linear` skill pattern:
+   ```bash
+   cg --mcp-config .claude/mcp/linear.json -p "Update issue [ISSUE-ID]:
+   1. Set status to 'In Review'
+   2. Add comment: 'Implementation completed.
+      - Key changes: [list main changes]
+      - Test coverage: [X]%
+      - Technical notes: [any notable decisions]
+      PR ready for review.'"
    ```
-   Update Linear issue to "Ready for Review" and add implementation completion comment
-
-   Task directory: [absolute path to task folder]
-   Issue ID: [Linear issue ID from task document]
-   Action:
-   1. Update state to "Ready for Review"
-   2. Add comment with implementation completed summary including:
-      - Key changes implemented
-      - Test coverage achieved
-      - Any notable technical decisions
-   ```
-   **Integration**: Use `Task` tool with `linear-task-manager` agent type
+   **Reference**: See `.claude/skills/cg-linear/SKILL.md` for self-contained prompt patterns
 2. **Prepare the task document for the Code review and clean it up**
 3. **Push feature branch**: `git push origin feature/[branch-name]`
 #### **Call task-pm-validator to validate task documentation**:

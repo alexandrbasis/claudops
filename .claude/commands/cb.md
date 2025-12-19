@@ -30,7 +30,11 @@ Creates a new git branch for a Linear task following repository branch naming ru
 - Requires git write permission when executed by the agent.
 
 ### Implementation details (Agent behavior)
-1) Resolve Linear issue by number using MCP → title + labels.
+1) Resolve Linear issue by number using `cg-linear` skill:
+   ```bash
+   cg --mcp-config .claude/mcp/linear.json -p "Get issue WYT-[number] details. Return: title, labels (as comma-separated list)"
+   ```
+   **Reference**: See `.claude/skills/cg-linear/SKILL.md` for self-contained prompt patterns
 2) Compute prefix by label mapping (case-insensitive).
 3) Slugify title to kebab-case, ASCII-only, trim to reasonable length.
 4) Construct branch: `<prefix>/wyt-<number>-<slug>`.

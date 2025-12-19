@@ -136,30 +136,22 @@ Use only when:
 
 ### **STEP 7: Linear Updates**
 
-**Post completion and update status** using linear-task-manager agent:
-```
-Update Linear issue to "Done" and add completion comment
-
-Task directory: [absolute path to task folder]
-Issue ID: [Linear issue ID from task document]
-
-Action:
-1. Update state to "Done"
-2. Add completion comment:
-
-🎉 Task completed and PR merged
+**Post completion and update status** using `cg-linear` skill pattern:
+```bash
+cg --mcp-config .claude/mcp/linear.json -p "Update issue [ISSUE-ID]:
+1. Set status to 'Done'
+2. Add comment: '🎉 Task completed and PR merged
 
 **Status**: ✅ COMPLETED
 **SHA**: [commit]
 **PR**: [URL]
 **Date**: [timestamp]
-**Archive**: `tasks/completed/task-[date]-[title]/`
+**Archive**: tasks/completed/task-[date]-[title]/
 
 **Summary**: [functionality delivered]
-**Quality**: Review passed, tests green
+**Quality**: Review passed, tests green'"
 ```
-
-**Integration**: Use `Task` tool with `linear-task-manager` agent type
+**Reference**: See `.claude/skills/cg-linear/SKILL.md` for self-contained prompt patterns
 
 ### **STEP 8: Archiving**
 

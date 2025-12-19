@@ -20,23 +20,16 @@ Reviewing code **implemented by human developers** following structured task doc
    - PR info (ID, URL, branch) must be present
    - Linear issue referenced, steps marked complete
 
-3. **Initial Linear update** using linear-task-manager agent:
+3. **Initial Linear update** using `cg-linear` skill pattern:
+   ```bash
+   cg --mcp-config .claude/mcp/linear.json -p "Update issue [ISSUE-ID]:
+   1. Set status to 'In Review'
+   2. Add comment: '🔍 Code review started
+      **Task**: tasks/task-[date]-[title]/[Task].md
+      **Started**: [timestamp]
+      **Review doc**: Will be created in task directory'"
    ```
-   Update Linear issue to "In Review" and add review start comment
-
-   Task directory: [absolute path to task folder]
-   Issue ID: [Linear issue ID from task document]
-
-   Action:
-   1. Update state to "In Review"
-   2. Add comment:
-
-   🔍 Code review started
-   **Task**: `tasks/task-[date]-[title]/[Task].md`
-   **Started**: [timestamp]
-   **Review doc**: Will be created in task directory
-   ```
-   **Integration**: Use `Task` tool with `linear-task-manager` agent type
+   **Reference**: See `.claude/skills/cg-linear/SKILL.md` for self-contained prompt patterns
 
 ### **STEP 2: Requirements Analysis**
 
@@ -207,31 +200,25 @@ Create `Code Review - [Task Title].md` in task directory:
 
 ### **STEP 5: Linear Communication**
 
-**Post review results and update status** using linear-task-manager agent:
-```
-Update Linear issue based on review outcome and add completion comment
+**Post review results and update status** using `cg-linear` skill pattern:
+```bash
+cg --mcp-config .claude/mcp/linear.json -p "Update issue [ISSUE-ID]:
+1. Set status to '[Ready to Merge | Needs Fixes | In Review]' based on outcome
+2. Add comment: '✅ Code review completed
 
-Task directory: [absolute path to task folder]
-Issue ID: [Linear issue ID from task document]
-
-Action:
-1. Add completion comment:
-
-✅ Code review completed
-
-**Status**: ✅ APPROVED / ❌ NEEDS FIXES / 🔄 NEEDS DISCUSSION
-**Review Doc**: `tasks/task-[date]-[title]/Code Review - [Task].md`
+**Status**: [✅ APPROVED / ❌ NEEDS FIXES / 🔄 NEEDS DISCUSSION]
+**Review Doc**: tasks/task-[date]-[title]/Code Review - [Task].md
 **Completed**: [timestamp]
 **Summary**: [key findings]
 **Issues**: [X critical, Y major, Z minor]
-**Next Steps**: [action items]
-
-2. Update state based on outcome:
-   - APPROVED: "Ready to Merge"
-   - FIXES: "Needs Fixes"
-   - DISCUSSION: Keep "In Review"
+**Next Steps**: [action items]'"
 ```
-**Integration**: Use `Task` tool with `linear-task-manager` agent type
+**Reference**: See `.claude/skills/cg-linear/SKILL.md` for self-contained prompt patterns
+
+**Status mapping:**
+- APPROVED → "Ready to Merge"
+- NEEDS FIXES → "Needs Fixes"
+- NEEDS DISCUSSION → Keep "In Review"
 
 **Notify user** of next steps based on review outcome
 #### LINEAR SYNCHRONIZATION CHECKLIST

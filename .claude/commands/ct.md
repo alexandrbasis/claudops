@@ -75,21 +75,22 @@ Please analyze tech-decomposition-[feature-name].md and provide your decision an
 ### GATE 3: Linear Issue Creation
 **Complete AFTER task splitting evaluation:**
 
-**ACTION:** Invoke linear-task-manager agent with the following prompt:
+**ACTION:** Use `cg-linear` skill pattern (see `.claude/skills/cg-linear/SKILL.md`):
 
+```bash
+cg --mcp-config .claude/mcp/linear.json -p "Create Linear issue in WYT team:
+- title: '[Task Name from tech decomposition]'
+- description: '[Summary from tech decomposition: objective, key requirements, acceptance criteria]'
+- priority: [0-4, default 3]
+
+Return the created issue ID and URL in format:
+- Issue ID: WYT-XXX
+- URL: https://linear.app/..."
 ```
-Create a Linear issue for this task.
 
-Task: [Task Name]
-Task directory: [absolute path to task folder, e.g., /Users/.../tasks/task-2025-10-16-feature-name/]
-Priority: [0=None, 1=Urgent, 2=High, 3=Normal, 4=Low] (default: 3)
+**After creation:** Update task document's Tracking & Progress section with returned issue ID and URL.
 
-Please:
-1. Read tech-decomposition-[feature-name].md from the task directory
-2. Read related PRD from product-docs/PRD/ and JTBD from task directory if they exist
-3. Create a Linear issue with appropriate title and description
-4. Update the Tracking & Progress section in tech-decomposition-[feature-name].md with the issue ID and URL
-```
+**Note:** Prompt must be self-contained — spawned session has no context. Include all necessary info directly in the prompt.
 
 ---
 
