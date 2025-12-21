@@ -1,6 +1,6 @@
 ---
 name: cg-linear
-description: Interact with Linear via `cg` alias (Claude Code + GLM model). Use for creating, updating, querying Linear issues from current session. Spawns one-shot subprocess with Linear MCP - prompts must be self-contained.
+description: Execute atomic Linear operations via one-shot `cg` session with Linear MCP. Use for creating issues, updating status, adding comments, querying tasks. CRITICAL: Each command performs ONE operation only. For multi-step workflows (update status THEN add comment), execute SEPARATE `cg` commands sequentially. Spawned sessions cannot ask clarifying questions - prompts must be self-contained and unambiguous. See OPERATIONS.md for patterns and anti-patterns.
 ---
 
 # CG Linear
@@ -100,6 +100,30 @@ cg --mcp-config .claude/mcp/linear.json -p "Add comment to WYT-66:
 - Updated auth middleware
 - Tests passing'"
 ```
+
+## Critical: Separate Operations
+
+**NEVER combine status updates and comments in one prompt!**
+
+The cg session may interpret "Add comment" as modifying the description field, causing loss of the original task description.
+
+### WRONG - Combined prompt (causes description overwrite):
+```bash
+cg --mcp-config .claude/mcp/linear.json -p "Update issue WYT-66:
+1. Set status to 'In Review'
+2. Add comment: 'Implementation completed'"
+```
+
+### CORRECT - Separate prompts:
+```bash
+# First: Update status only
+cg --mcp-config .claude/mcp/linear.json -p "Update issue WYT-66 status to 'In Review'. Do NOT modify the description."
+
+# Second: Add comment separately
+cg --mcp-config .claude/mcp/linear.json -p "Add comment to WYT-66: 'Implementation completed. PR ready for review.'"
+```
+
+This ensures `update_issue` only changes status, and `create_comment` adds the comment.
 
 ## Configuration
 

@@ -129,19 +129,25 @@ Note: Skip this step when continuing implementation or addressing Code Review Re
 3. **Add implementation summary**
 
 ### **Step 5: Prepare for Code Review**
-1. **Update Linear status and add completion comment** using `cg-linear` skill pattern:
+1. **Update Linear status** (separate from comment):
    ```bash
-   cg --mcp-config .claude/mcp/linear.json -p "Update issue [ISSUE-ID]:
-   1. Set status to 'In Review'
-   2. Add comment: 'Implementation completed.
-      - Key changes: [list main changes]
-      - Test coverage: [X]%
-      - Technical notes: [any notable decisions]
-      PR ready for review.'"
+   cg --mcp-config .claude/mcp/linear.json -p "Update issue [ISSUE-ID] status to 'In Review'. Do NOT modify description."
    ```
-   **Reference**: See `.claude/skills/cg-linear/SKILL.md` for self-contained prompt patterns
-2. **Prepare the task document for the Code review and clean it up**
-3. **Push feature branch**: `git push origin feature/[branch-name]`
+
+2. **Add completion comment** (separate call):
+   ```bash
+   cg --mcp-config .claude/mcp/linear.json -p "Add comment to issue [ISSUE-ID]:
+   'Implementation completed.
+   - Key changes: [list main changes]
+   - Test coverage: [X]%
+   - Technical notes: [any notable decisions]
+   PR ready for review.'"
+   ```
+   **Important**: Always use separate prompts for status updates and comments to prevent description overwrite.
+   **Reference**: See `.claude/skills/cg-linear/SKILL.md` for details on separate operations.
+
+3. **Prepare the task document for the Code review and clean it up**
+4. **Push feature branch**: `git push origin feature/[branch-name]`
 #### **Call task-pm-validator to validate task documentation**:
    - Use Task tool with subagent_type: "task-pm-validator"
    - Provide task-pm-validator the exact task document path (e.g., `tasks/task-2025-01-15-feature-name.md`)

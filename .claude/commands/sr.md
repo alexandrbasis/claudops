@@ -204,20 +204,28 @@ Create `Code Review - [Task Title].md` in task directory:
 
 ### **STEP 5: Linear Communication**
 
-**Post review results and update status** using `cg-linear` skill pattern:
-```bash
-cg --mcp-config .claude/mcp/linear.json -p "Update issue [ISSUE-ID]:
-1. Set status to '[Ready to Merge | Needs Fixes | In Review]' based on outcome
-2. Add comment: '✅ Code review completed
+**Post review results** using separate `cg-linear` calls:
 
-**Status**: [✅ APPROVED / ❌ NEEDS FIXES / 🔄 NEEDS DISCUSSION]
-**Review Doc**: tasks/task-[date]-[title]/Code Review - [Task].md
-**Completed**: [timestamp]
-**Summary**: [key findings]
-**Issues**: [X critical, Y major, Z minor]
-**Next Steps**: [action items]'"
-```
-**Reference**: See `.claude/skills/cg-linear/SKILL.md` for self-contained prompt patterns
+1. **Update status**:
+   ```bash
+   cg --mcp-config .claude/mcp/linear.json -p "Update issue [ISSUE-ID] status to '[Ready to Merge | Needs Fixes | In Review]'. Do NOT modify description."
+   ```
+
+2. **Add review comment**:
+   ```bash
+   cg --mcp-config .claude/mcp/linear.json -p "Add comment to issue [ISSUE-ID]:
+   '✅ Code review completed
+
+   **Status**: [✅ APPROVED / ❌ NEEDS FIXES / 🔄 NEEDS DISCUSSION]
+   **Review Doc**: tasks/task-[date]-[title]/Code Review - [Task].md
+   **Completed**: [timestamp]
+   **Summary**: [key findings]
+   **Issues**: [X critical, Y major, Z minor]
+   **Next Steps**: [action items]'"
+   ```
+
+**Important**: Always use separate prompts for status and comments to prevent description overwrite.
+**Reference**: See `.claude/skills/cg-linear/SKILL.md` for details on separate operations.
 
 **Status mapping:**
 - APPROVED → "Ready to Merge"

@@ -174,6 +174,14 @@ Add this section to task document after creating Linear issue.
    - If API fails: explain error and suggest fix
    - If unclear: state your interpretation and confirm
 
+6. **CRITICAL: Separate Status and Comment Operations**
+   - NEVER combine `update_issue` and `create_comment` in a single prompt
+   - When both operations needed, execute TWO separate prompts:
+     1. First: `update_issue` with status only (explicitly state "Do NOT modify description")
+     2. Second: `create_comment` with the comment body
+   - This prevents accidental description overwrites
+   - See `.claude/skills/cg-linear/OPERATIONS.md` for patterns and anti-patterns
+
 ---
 
 ## RESPONSE FORMAT

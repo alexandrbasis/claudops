@@ -140,22 +140,30 @@ Use only when:
 
 ### **STEP 7: Linear Updates**
 
-**Post completion and update status** using `cg-linear` skill pattern:
-```bash
-cg --mcp-config .claude/mcp/linear.json -p "Update issue [ISSUE-ID]:
-1. Set status to 'Done'
-2. Add comment: '🎉 Task completed and PR merged
+**Post completion** using separate `cg-linear` calls:
 
-**Status**: ✅ COMPLETED
-**SHA**: [commit]
-**PR**: [URL]
-**Date**: [timestamp]
-**Archive**: tasks/completed/task-[date]-[title]/
+1. **Update status to Done**:
+   ```bash
+   cg --mcp-config .claude/mcp/linear.json -p "Update issue [ISSUE-ID] status to 'Done'. Do NOT modify description."
+   ```
 
-**Summary**: [functionality delivered]
-**Quality**: Review passed, tests green'"
-```
-**Reference**: See `.claude/skills/cg-linear/SKILL.md` for self-contained prompt patterns
+2. **Add completion comment**:
+   ```bash
+   cg --mcp-config .claude/mcp/linear.json -p "Add comment to issue [ISSUE-ID]:
+   '🎉 Task completed and PR merged
+
+   **Status**: ✅ COMPLETED
+   **SHA**: [commit]
+   **PR**: [URL]
+   **Date**: [timestamp]
+   **Archive**: tasks/completed/task-[date]-[title]/
+
+   **Summary**: [functionality delivered]
+   **Quality**: Review passed, tests green'"
+   ```
+
+**Important**: Always use separate prompts to prevent description overwrite.
+**Reference**: See `.claude/skills/cg-linear/SKILL.md` for details on separate operations.
 
 ### **STEP 8: Archiving**
 
