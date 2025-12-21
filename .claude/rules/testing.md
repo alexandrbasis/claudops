@@ -1,3 +1,7 @@
+---
+paths: backend/**/*.{ts,spec.ts}
+---
+
 # Testing Standards
 
 ## Required Reading

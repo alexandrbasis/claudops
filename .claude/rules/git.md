@@ -23,11 +23,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - Wait for explicit approval before git operations
 
 ## Pre-merge Checklist
-- Format: `isort . && black .` (Python) | `prettier` (TS)
-- Types: `mypy` | `tsc --noEmit`
-- Lint: `make lint`
+- Format: `prettier --write .` (TS/JS)
+- Types: `tsc --noEmit`
+- Lint: `npm run lint`
 - Tests: All passing
-
-## Task Documentation
-- Structure: `tasks/task-YYYY-MM-DD-[kebab-case]/`
-- Archive completed: `tasks/completed/`

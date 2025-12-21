@@ -1,3 +1,7 @@
+---
+paths: backend/**/*.ts
+---
+
 # Backend Development Rules
 
 ## Architecture
