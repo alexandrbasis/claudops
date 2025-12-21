@@ -1,3 +1,7 @@
+---
+description: Create git branch for Linear task with proper naming
+---
+
 ## Claude Command — Teams: Create Branch
 
 **Command trigger**: `create branch <task-number>`

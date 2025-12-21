@@ -1,3 +1,7 @@
+---
+description: Review and address code review comments on PR
+---
+
 # PR Review Comments Handler
 
 Review and address code review comments on the current PR.

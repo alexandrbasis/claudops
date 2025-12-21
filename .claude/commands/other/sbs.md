@@ -1,3 +1,7 @@
+---
+description: Interactive teaching guide for learning while working
+---
+
 # Step-by-Step Learning Guide
 
 ## PRIMARY OBJECTIVE

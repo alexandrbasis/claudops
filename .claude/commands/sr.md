@@ -1,3 +1,7 @@
+---
+description: Conduct comprehensive code review before PR merge
+---
+
 # Start Review Command
 
 ## PRIMARY OBJECTIVE

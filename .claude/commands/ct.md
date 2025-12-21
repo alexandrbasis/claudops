@@ -1,3 +1,7 @@
+---
+description: Create technical task documentation for developer implementation
+---
+
 # Create Task Command
 
 ## PRIMARY OBJECTIVE

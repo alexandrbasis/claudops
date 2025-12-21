@@ -1,3 +1,7 @@
+---
+description: Create and deploy Prisma database migrations
+---
+
 # Command: Make Migrations (`/mm`)
 
 Purpose: Create and deploy Prisma migrations for the backend when the schema changes.

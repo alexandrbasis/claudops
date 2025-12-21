@@ -1,3 +1,7 @@
+---
+description: Execute structured TDD implementation following task documents
+---
+
 # Start Implementation Command
 
 ## PRIMARY OBJECTIVE

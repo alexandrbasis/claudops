@@ -1,3 +1,7 @@
+---
+description: Fix CI pipeline failures blocking PR merge
+---
+
 # Fix CI Issues Command
 
 ## PRIMARY OBJECTIVE

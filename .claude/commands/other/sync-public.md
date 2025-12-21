@@ -1,3 +1,7 @@
+---
+description: Sync Claude Code config to public repository
+---
+
 When the user requests to sync the Claude Code configuration to the public repository:
 
 1. Ensure you're in the monorepo root (`/Users/.../wythm`) with a clean working tree, then execute the sync script:

@@ -1,3 +1,7 @@
+---
+description: Claude Commands Directory
+---
+
 # Claude Commands Directory
 
 This directory contains specialized AI agent commands for the Wythm project. Each command is a highly specialized agent designed for specific workflow stages in the development lifecycle.

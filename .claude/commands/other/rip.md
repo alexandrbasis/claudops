@@ -1,3 +1,7 @@
+---
+description: Review implementation plan for business value alignment
+---
+
 # Review Implementation Plan (RIP)
 
 Пошаговый разбор имплементационного плана. Фокус: **бизнес-ценность** через техническое понимание.

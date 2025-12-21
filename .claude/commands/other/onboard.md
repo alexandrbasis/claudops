@@ -1,3 +1,7 @@
+---
+description: Step-by-step junior developer onboarding guide
+---
+
 ## ОСНОВНАЯ ЗАДАЧА
 Провести пошаговый онбординг junior-разработчика в проект с нуля до успешного локального запуска.
 

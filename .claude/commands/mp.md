@@ -1,3 +1,7 @@
+---
+description: Merge approved PR and archive completed task
+---
+
 # Merge PR Command
 
 ## PRIMARY OBJECTIVE
