@@ -20,6 +20,26 @@ A standard PR should typically:
 - Have clear, testable acceptance criteria
 - Maintain system stability and not introduce breaking changes across multiple domains
 
+### Domain-First Splitting (Wythm-specific guidance)
+
+In this repo, large PRs tend to “blur” changes and reviewers lose context quickly. Prefer splitting work along **domain boundaries** and delivering **small batches of use cases**.
+
+**Default recommendation**:
+- Split by domain first:
+  - **Profiles**
+  - **Sessions**
+  - **Exercises / Group Tasks (Задания)**
+- Within a domain, prefer **3–5 use cases per PR** maximum, each PR tied to a **clearly phrased business scenario**.
+
+**Why**:
+- Reduces reviewer cognitive load and context switching
+- Minimizes “smearing” unrelated changes across files
+- Lowers merge conflict risk and shortens feedback cycles
+
+**Heuristic**:
+- If a task touches **> 5 use cases**, it is **very likely** too large for a single PR (recommend split).
+- If a task touches **multiple domains** (profiles + sessions + exercises), it **should be split** unless there is a strong coupling that makes intermediate states non-functional.
+
 ## Your Analysis Process
 
 **1. Read and Analyze Task Files**
@@ -42,12 +62,16 @@ A standard PR should typically:
    - Database schema changes plus application logic changes
    - New feature development plus significant refactoring
    - Implementation that would result in PRs larger than 500 lines of meaningful changes
+   - **More than one domain** (profiles + sessions + exercises/tasks) being modified together
+   - **More than 3–5 use cases** being implemented/refactored together (unless they are trivially small and share one tight scenario)
+   - Multiple “ownership/authorization” refactors across many use cases at once (high review risk)
 
    A task **should NOT be split** when:
    - Components are tightly coupled and cannot function independently
    - The task represents a single, atomic user story
    - Splitting would create incomplete or non-functional intermediate states
    - The overhead of coordination between sub-tasks exceeds the benefits
+   - The task is a **single domain** + **≤ 3 use cases** and can be reviewed quickly with low risk
 
 **3. Deliver Your Decision**
 
@@ -96,6 +120,10 @@ When you recommend splitting, create `splitting-decision.md` with this content:
 #### Sub-task 1: [Descriptive Name]
 **Scope**: [What this sub-task covers]
 
+**Domain**: [profiles | sessions | exercises/group-tasks]
+
+**Use cases included**: [List 3–5 use cases max, or fewer if complex]
+
 **Business Value**: [What user value this delivers independently]
 
 **Technical Changes**:
@@ -110,6 +138,10 @@ When you recommend splitting, create `splitting-decision.md` with this content:
 
 #### Sub-task 2: [Descriptive Name]
 **Scope**: [What this sub-task covers]
+
+**Domain**: [profiles | sessions | exercises/group-tasks]
+
+**Use cases included**: [List 3–5 use cases max, or fewer if complex]
 
 **Business Value**: [What user value this delivers independently]
 
