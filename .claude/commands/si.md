@@ -10,10 +10,8 @@ Consider requirements carefully.
 
 ## CONSTRAINTS
 - Follow existing task document in `tasks/` directory
-- Update task document in real-time
-- Linear updates only at start and completion (Ready for Review)
-- Always work on feature branch and commit each step
-- Complete each step fully before proceeding
+- ⚠️ Git writes require explicit user permission:
+  - Do **NOT** create commits, push branches, open PRs, merge, rebase, or otherwise modify git state unless the user explicitly approves it.
 
 ## Implementation Guidelines
 
@@ -24,38 +22,71 @@ Consider requirements carefully.
 
 ## WORKFLOW STEPS
 
+### **STEP 0: Context Loading**
+
+**Purpose**: Load project context before implementation. 
+
+0. **Decide the work mode** (must be explicit):
+   - **Start**: new implementation from task docs
+   - **Continue**: continue an existing branch/partial implementation
+   - **Code Review**: address review comments on an existing PR/branch
+
+   If mode is not stated, ask the user which one.
+
+1. **Invoke context-loader skill**:
+   ```
+   Use Skill tool:
+   skill: "context-loader"
+   args: "[task_document_path]"
+   ```
+
+2. **Review context summary**:
+   ```
+   Read the generated CONTEXT_SUMMARY.md
+   - Related modules found
+   - Patterns to follow
+   - Key files to reference
+   ```
+
+3. **Announce context loaded**:
+
+---
+
 ### **STEP 1: Task Validation**
 
 1. **Ask user**: "Which task to implement? Provide task name or path." If it was not provided
    - List tasks in `tasks/` if unclear
 
 2. **Validate document**:
-   - Confirm exists with proper format
-   - Status: "Ready for Implementation" or "Draft"
-   - Linear issue created and referenced
-   - Implementation steps clearly defined
+   - Confirm the task exists (either a single `.md` file OR a `tasks/task-YYYY-MM-DD-slug/` directory).
+   - Confirm scope is unambiguous:
+     - Clear acceptance criteria
+     - Clear “done” definition (what must be true for completion)
+   - Confirm task status is appropriate (e.g., "Ready for Implementation" vs "Draft") and ask before proceeding if unclear.
+   - Confirm Linear issue exists and is referenced (ID/link).
+   - Confirm there is an implementation plan (even if small): impacted components + test plan.
 
-3. **Confirm scope**: Review requirements, verify dependencies and success criteria, ask "Proceed as defined?"
 
 ### **STEP 2: Setup**
 Note: Skip this step when continuing implementation or addressing Code Review Results
 
 #### **Status Updates**
 1. **Update task status** to "In Progress" with timestamp
-2. **Update Linear** using `cg-linear` skill pattern:
-   ```bash
-   cg --mcp-config .claude/mcp/linear.json -p "Update issue [ISSUE-ID] status to 'In Progress'"
-   ```
-   **Reference**: See `.claude/skills/cg-linear/SKILL.md` for details
-3. **Create feature branch**: `git checkout -b feature/[task-id]-[slug]`
-4. **Update task document** with branch name
-
-#### **Pre-Implementation**
-1. **Review project docs** and affected codebase areas
-2. **Verify existing test patterns** and check recent changes
-3. **Setup test environment** and verify test runner works
+2. **Create feature branch** (name must follow repo convention): `feature/wyt-[ID]-[slug]`
+3. **Update task document** with branch name
+4. **Permission gate**: If any git operation is required (branch creation, commit, push), ask for explicit approval first.
 
 ### **STEP 3: Implementation**
+
+#### **Parallelization (optional)**
+
+If you believe part of the work can be done safely in parallel, use the `parallelization` skill:
+
+- `.claude/skills/parallelization/SKILL.md`
+
+---
+
+#### **Sequential Mode**
 
 #### **Before Each Step:**
 1. **Announce**: "Starting Step [N]: [Description]"
@@ -68,100 +99,56 @@ Note: Skip this step when continuing implementation or addressing Code Review Re
    - **GREEN**: Write minimal code to make tests pass
    - **REFACTOR**: Clean up code while keeping tests green
 3. **Implement tests by approved categories**:
-   - **Business Logic Tests**: As\If defined in approved test plan
-   - **State Transition Tests**: As\If defined in approved test plan
-   - **Error Handling Tests**: As\If defined in approved test plan  
-   - **Integration Tests**: As\If defined in approved test plan
-   - **User Interaction Tests**: As\If defined in approved test plan
+   - **Business Logic Tests**: As/if defined in approved test plan
+   - **State Transition Tests**: As/if defined in approved test plan
+   - **Error Handling Tests**: As/if defined in approved test plan
+   - **Integration Tests**: As/if defined in approved test plan
+   - **User Interaction Tests**: As/if defined in approved test plan
 4. **Testing tools**:
-   - `npm run test` / `npm run test -- --coverage` (Jest with ts-jest)
+   - Prefer silent scripts in AI-agent mode (backend): `npm run test:silent`, `npm run test:unit:silent`, `npm run test:integration:silent`, `npm run test:e2e:silent`
+   - Local runs are fine with `npm run test` when you need full output
    - `npm run test:ci` when the Postgres-backed integration suite is required
    - `npm run test:db:start|migrate|stop` scripts to spin up and tear down the Supabase-compatible test DB
 5. **TDD Verification**: All tests from approved plan must pass before proceeding to next step
 
 #### **After Each Step:**
-1. **Update progress**:
+1. **Record the step outcome** (single lightweight entry):
    ```markdown
    - [x] ✅ Step [N]: [Description] - Completed
-     - **Notes**: [Key decisions, challenges]
+     - **Files**: `path/a.ts`, `path/b.spec.ts` (required)
+     - **Tests**: [command run + result] OR "skipped: [reason]" (required)
+     - **Notes**: [key decision / caveat] (optional)
    ```
 
-2. **Add changelog**:
-   ```markdown
-   ### Changelog:
-
-   [ISO-Timestamp] — [Icon] [Action] [file/path]: [detailed description of changes]
-
-   Icons:
-   - ✳️ Created (new files)
-   - ♻️ Updated (modified files)
-   - 🗑️ Deleted (removed files)
-   - 🔧 Fixed (bug fixes)
-   - ✅ Tests (test additions/updates)
-
-   Example entries:
-   2025-09-27T20:35Z — ✳️ Created src/models/schedule.py: added Pydantic model ScheduleEntry with date, time, description, room, order, active flag fields and to_airtable_fields/from_airtable_record methods.
-
-   2025-09-27T20:35Z — ✅ Created tests/unit/test_models/test_schedule.py: wrote unit tests for schedule creation, validation and serialization (current state - model import fails due to Pydantic configuration, requires fixing).
-
-   2025-09-27T20:35Z — ♻️ Updated src/models/__init__.py: exported ScheduleEntry and expanded model package description.
-   ```
-
-3. **Commit changes**: `git add [files] && git commit -m "[descriptive message]"`
-   - Commit after each logical step for clear development history
-   - Use descriptive commit messages explaining the change
+2. **Commit changes (permission gate)**:
+   - If the user has **not explicitly approved** git writes: ask for permission **before** any `git` command.
+   - If approved and the step is complete: `git add [files] && git commit -m "feat|fix|refactor: [step summary]"`
 
 ### **STEP 4: Completion**
 
 #### **Final Verification**
-1. **Run complete test suite** using the project's npm script and capture actual output:
-   ```bash
-   cd backend
-   npm run test -- --coverage
-   ```
-   If other packages are affected, run their `npm run test` scripts as well and record the logs in the task document.
-2. **Verify success criteria**
+1. **Run quality gates via agent**:
+   - Use Task tool with subagent_type: "automated-quality-gate"
+   - Provide `task_path` (absolute path to `tasks/task-YYYY-MM-DD-slug/`) and current `branch`
+   - Agent runs format/lint/types/tests/build and writes a Quality Gate Report in the task directory
+
 
 
 #### **Finalize Task Document**
 1. **Update status** to "Ready for Review" with timestamp
-2. **Complete changelog** and verify all checkboxes
+2. **Verify all checkboxes are accurate**
 3. **Add implementation summary**
 
 ### **Step 5: Prepare for Code Review**
-1. **Update Linear status** (separate from comment):
-   ```bash
-   cg --mcp-config .claude/mcp/linear.json -p "Update issue [ISSUE-ID] status to 'In Review'. Do NOT modify description."
-   ```
+1. **Permission gate (required)**:
+   - Creating a PR and pushing branches requires **explicit user approval** for git writes.
+   - If approval is not given, stop and ask for permission before proceeding.
 
-2. **Add completion comment** (separate call):
-   ```bash
-   cg --mcp-config .claude/mcp/linear.json -p "Add comment to issue [ISSUE-ID]:
-   'Implementation completed.
-   - Key changes: [list main changes]
-   - Test coverage: [X]%
-   - Technical notes: [any notable decisions]
-   PR ready for review.'"
-   ```
-   **Important**: Always use separate prompts for status updates and comments to prevent description overwrite.
-   **Reference**: See `.claude/skills/cg-linear/SKILL.md` for details on separate operations.
-
-3. **Prepare the task document for the Code review and clean it up**
-4. **Push feature branch**: `git push origin feature/[branch-name]`
-#### **Call task-pm-validator to validate task documentation**:
+2. **Validate task documentation**:
    - Use Task tool with subagent_type: "task-pm-validator"
-   - Provide task-pm-validator the exact task document path (e.g., `tasks/task-2025-01-15-feature-name.md`)
-   - Agent will validate documentation completeness and accuracy before code review
-#### **Call create-pr-agent to create a PR**:
+   - Provide the exact task document path (e.g., `tasks/task-2025-01-15-feature-name.md`)
+
+3. **Create PR + sync Linear (single path)**:
    - Use Task tool with subagent_type: "create-pr-agent"
-   - **IMPORTANT**: Provide the exact task document path (e.g., `tasks/task-2025-01-15-feature-name.md`)
-   - Agent will create PR, update task document with PR links, and sync with Linea
-#### **Present completion**
-"Implementation complete. All tests passing with [X]% coverage. Task documentation validated. PR created and ready for code review."
-
-## ERROR HANDLING
-
-1. **Document blocker** in task notes
-2. **Update Linear** with issue info
-3. **Ask user** for guidance with solutions
-4. **Set status** to "Blocked" if stuck
+   - Provide the exact task document path (e.g., `tasks/task-2025-01-15-feature-name.md`)
+   - This agent handles PR creation and updates the task document with PR links. For Linear updates use the `cc-linear` skill (`.claude/skills/cc-linear/SKILL.md`).

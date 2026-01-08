@@ -64,7 +64,9 @@ Create technical implementation plan with **TEST PLAN FIRST** (TDD approach):
 ### GATE 2: Task Splitting Evaluation
 **Complete AFTER plan review and BEFORE Linear creation:**
 
-**ACTION:** Invoke task-splitter agent with the following prompt:
+**STEP 2.1: Analyze task scope**
+
+Invoke task-splitter agent:
 
 ```
 Evaluate if this task should be split into smaller sub-tasks.
@@ -74,15 +76,53 @@ Task directory: [absolute path to task folder, e.g., /Users/.../tasks/task-2025-
 Please analyze tech-decomposition-[feature-name].md and provide your decision and reasoning.
 ```
 
+**STEP 2.2: Check splitting decision**
+
+After task-splitter completes:
+
+- **IF `splitting-decision.md` created with SPLIT RECOMMENDED:**
+  1. Present the splitting decision summary to user
+  2. Ask user: "Task splitter recommends splitting into N phases. Review splitting-decision.md and confirm: Proceed with decomposition?"
+  3. **IF user approves:** Proceed to GATE 2.5
+  4. **IF user rejects:** Proceed to GATE 3 (single Linear issue)
+
+- **IF NO SPLIT RECOMMENDED:**
+  - Proceed to GATE 3 (single Linear issue)
+
+---
+
+### GATE 2.5: Task Decomposition (if split approved)
+**Complete ONLY IF task-splitter recommended split AND user approved:**
+
+**ACTION:** Invoke task-decomposer agent:
+
+```
+Execute the approved splitting decision.
+
+Task directory: [absolute path to task folder]
+
+Create phase folders, generate phase tech-decompositions, and create Linear sub-issues.
+```
+
+**task-decomposer will:**
+1. Create `phase-N-[name]/` folders for each phase
+2. Generate full tech-decomposition document for each phase (extracted from parent)
+3. Archive parent document as `initial-tech-decomposition-[feature]-ARCHIVED.md`
+4. Create Linear sub-issues for each phase via cc-linear
+5. Update phase docs with Linear IDs
+6. Update splitting-decision.md with completion summary
+
+**After GATE 2.5:** SKIP GATE 3 (Linear issues already created by decomposer)
+
 ---
 
 ### GATE 3: Linear Issue Creation
-**Complete AFTER task splitting evaluation:**
+**Complete AFTER task splitting evaluation (ONLY if NOT split or user rejected split):**
 
-**ACTION:** Use `cg-linear` skill pattern (see `.claude/skills/cg-linear/SKILL.md`):
+**ACTION:** Use `cc-linear` skill pattern (see `.claude/skills/cc-linear/SKILL.md`):
 
 ```bash
-cg --mcp-config .claude/mcp/linear.json -p "Create Linear issue in WYT team:
+cc --mcp-config .claude/mcp/linear.json -p "Create Linear issue in WYT team:
 - title: '[Task Name from tech decomposition]'
 - description: '[Summary from tech decomposition: objective, key requirements, acceptance criteria]'
 - priority: [0-4, default 3]
@@ -102,10 +142,26 @@ Return the created issue ID and URL in format:
 
 After all gates complete, task directory contains:
 
+### Single Task (no split)
 ```
 tasks/task-YYYY-MM-DD-[feature-name]/
 ├── JTBD-[feature-name].md              (optional)
-└── tech-decomposition-[feature-name].md (required)
+└── tech-decomposition-[feature-name].md (required, with Linear issue)
+```
+
+### Split Task (after GATE 2.5)
+```
+tasks/task-YYYY-MM-DD-[feature-name]/
+├── JTBD-[feature-name].md                        (optional)
+├── SPEC-[feature-name].md                        (optional)
+├── initial-tech-decomposition-[feature]-ARCHIVED.md  (archived parent)
+├── splitting-decision.md                          (with completion summary)
+├── phase-1-[name]/
+│   └── tech-decomposition-phase-1-[name].md      (with Linear issue WYT-XXX)
+├── phase-2-[name]/
+│   └── tech-decomposition-phase-2-[name].md      (with Linear issue WYT-XXX)
+└── phase-N-[name]/
+    └── tech-decomposition-phase-N-[name].md      (with Linear issue WYT-XXX)
 ```
 
 **Document Structure**: See `@docs/product-docs/templates/technical-decomposition-template.md` for the complete format.
@@ -115,6 +171,7 @@ tasks/task-YYYY-MM-DD-[feature-name]/
 - **Test Plan**: TDD approach with Given/When/Then test cases
 - **Implementation Steps**: Detailed steps with files, directories, and changelogs
 - **Tracking & Progress**: Linear issue and PR details (updated during workflow)
+- **Dependencies**: (for split tasks) Phase dependencies and blocking relationships
 
 ---
 

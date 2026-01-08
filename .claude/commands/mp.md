@@ -140,16 +140,16 @@ Use only when:
 
 ### **STEP 7: Linear Updates**
 
-**Post completion** using separate `cg-linear` calls:
+**Post completion** using separate `cc-linear` calls:
 
 1. **Update status to Done**:
    ```bash
-   cg --mcp-config .claude/mcp/linear.json -p "Update issue [ISSUE-ID] status to 'Done'. Do NOT modify description."
+   cc --mcp-config .claude/mcp/linear.json -p "Update issue [ISSUE-ID] status to 'Done'. Do NOT modify description."
    ```
 
 2. **Add completion comment**:
    ```bash
-   cg --mcp-config .claude/mcp/linear.json -p "Add comment to issue [ISSUE-ID]:
+   cc --mcp-config .claude/mcp/linear.json -p "Add comment to issue [ISSUE-ID]:
    '🎉 Task completed and PR merged
 
    **Status**: ✅ COMPLETED
@@ -163,7 +163,7 @@ Use only when:
    ```
 
 **Important**: Always use separate prompts to prevent description overwrite.
-**Reference**: See `.claude/skills/cg-linear/SKILL.md` for details on separate operations.
+**Reference**: See `.claude/skills/cc-linear/SKILL.md` for details on separate operations.
 
 ### **STEP 8: Archiving**
 

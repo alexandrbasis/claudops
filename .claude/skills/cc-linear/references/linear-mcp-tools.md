@@ -145,24 +145,24 @@ URL: [Linear URL if available]
 - **API fails**: Explain error and suggest fix
 - **Unclear request**: State interpretation and confirm
 
-## Common Prompts for cg
+## Common Prompts for cc
 
 ```bash
 # List tasks
-cg --mcp-config .claude/mcp/linear.json -p "Get top 5 tasks from WYT"
+cc --mcp-config .claude/mcp/linear.json -p "Get top 5 tasks from WYT"
 
 # Get specific issue
-cg --mcp-config .claude/mcp/linear.json -p "Get details for WYT-66"
+cc --mcp-config .claude/mcp/linear.json -p "Get details for WYT-66"
 
 # Create issue
-cg --mcp-config .claude/mcp/linear.json -p "Create issue in WYT: title='Add logout button', description='Add logout functionality to settings page', priority=3"
+cc --mcp-config .claude/mcp/linear.json -p "Create issue in WYT: title='Add logout button', description='Add logout functionality to settings page', priority=3"
 
 # Update status
-cg --mcp-config .claude/mcp/linear.json -p "Update WYT-66 status to 'Done'"
+cc --mcp-config .claude/mcp/linear.json -p "Update WYT-66 status to 'Done'"
 
 # Add comment
-cg --mcp-config .claude/mcp/linear.json -p "Add comment to WYT-66: 'PR merged, ready for QA'"
+cc --mcp-config .claude/mcp/linear.json -p "Add comment to WYT-66: 'PR merged, ready for QA'"
 
 # Search
-cg --mcp-config .claude/mcp/linear.json -p "Search WYT issues for 'authentication'"
+cc --mcp-config .claude/mcp/linear.json -p "Search WYT issues for 'authentication'"
 ```

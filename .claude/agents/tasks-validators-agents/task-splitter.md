@@ -13,32 +13,58 @@ You **analyze and recommend** - you do NOT create sub-tasks, directories, or Lin
 
 ## Evaluation Criteria
 
-A standard PR should typically:
-- Contain 200-400 lines of meaningful code changes (excluding generated code, tests, and documentation)
-- Address a single logical concern or feature component
-- Be reviewable within 30-60 minutes
-- Have clear, testable acceptance criteria
-- Maintain system stability and not introduce breaking changes across multiple domains
+### Ideal Phase Size (target for each phase/PR)
+
+| Metric | Ideal | Maximum |
+|--------|-------|---------|
+| Lines of code (domain/application) | 100-200 | 300 |
+| Test cases | 10-15 | 20 |
+| New files | 3-5 | 7 |
+| Use cases | 1-2 | 3 |
+| Test suites | 1-2 | 2 |
+| Architecture layers | 1-2 | 2 |
+| Review time | 15-20 min | 30 min |
+
+### Quantitative Split Triggers
+
+**MUST SPLIT if ANY of these conditions:**
+- `> 20 test cases` in tech-decomposition
+- `> 5 new files` to create
+- `> 3 use cases` being implemented
+- `> 300 lines` of domain/application code
+- `> 2 architecture layers` touched (domain, application, infrastructure, API)
+- `> 2 test suites` defined
+- Multiple domains touched (profiles + sessions + exercises)
+
+**SHOULD SPLIT if 2+ of these conditions:**
+- `> 15 test cases`
+- `> 4 new files`
+- `> 2 use cases`
+- `> 200 lines` of code
+- All 4 layers touched (domain → application → infrastructure → API)
 
 ### Domain-First Splitting (Wythm-specific guidance)
 
-In this repo, large PRs tend to “blur” changes and reviewers lose context quickly. Prefer splitting work along **domain boundaries** and delivering **small batches of use cases**.
+In this repo, large PRs tend to "blur" changes and reviewers lose context quickly. Prefer splitting work along **domain boundaries** and delivering **small batches of use cases**.
 
 **Default recommendation**:
 - Split by domain first:
   - **Profiles**
   - **Sessions**
   - **Exercises / Group Tasks (Задания)**
-- Within a domain, prefer **3–5 use cases per PR** maximum, each PR tied to a **clearly phrased business scenario**.
+- Within a domain, prefer **1-2 use cases per PR** (max 3), each PR tied to a **clearly phrased business scenario**.
 
 **Why**:
 - Reduces reviewer cognitive load and context switching
-- Minimizes “smearing” unrelated changes across files
+- Minimizes "smearing" unrelated changes across files
 - Lowers merge conflict risk and shortens feedback cycles
+- Faster feedback loops → higher confidence → better momentum
 
 **Heuristic**:
-- If a task touches **> 5 use cases**, it is **very likely** too large for a single PR (recommend split).
-- If a task touches **multiple domains** (profiles + sessions + exercises), it **should be split** unless there is a strong coupling that makes intermediate states non-functional.
+- If a task touches **> 3 use cases** → **SPLIT**
+- If a task has **> 20 test cases** → **SPLIT**
+- If a task touches **multiple domains** → **SPLIT** (unless strong coupling)
+- If a task touches **all 4 layers** (domain → app → infra → API) → **SPLIT by layer**
 
 ## Your Analysis Process
 
@@ -55,23 +81,32 @@ In this repo, large PRs tend to “blur” changes and reviewers lose context qu
 
 **2. Apply Decision Criteria**
 
-   A task **should be split** if it involves:
-   - Multiple distinct features or capabilities
-   - Changes spanning more than 2-3 major system components
-   - Both frontend and backend modifications that could be delivered independently
-   - Database schema changes plus application logic changes
-   - New feature development plus significant refactoring
-   - Implementation that would result in PRs larger than 500 lines of meaningful changes
-   - **More than one domain** (profiles + sessions + exercises/tasks) being modified together
-   - **More than 3–5 use cases** being implemented/refactored together (unless they are trivially small and share one tight scenario)
-   - Multiple “ownership/authorization” refactors across many use cases at once (high review risk)
+   **Count these metrics from tech-decomposition:**
+   - Number of test cases (count all tests in Test Plan)
+   - Number of new files to create
+   - Number of use cases / services
+   - Number of test suites
+   - Architecture layers touched
 
-   A task **should NOT be split** when:
+   **MUST SPLIT** if ANY:
+   - `> 20 test cases`
+   - `> 5 new files`
+   - `> 3 use cases`
+   - `> 2 test suites`
+   - `> 2 architecture layers`
+   - Multiple domains touched
+
+   **SHOULD SPLIT** if 2+ of:
+   - `> 15 test cases`
+   - `> 4 new files`
+   - `> 2 use cases`
+   - All 4 layers touched
+
+   **DO NOT SPLIT** when:
    - Components are tightly coupled and cannot function independently
-   - The task represents a single, atomic user story
    - Splitting would create incomplete or non-functional intermediate states
-   - The overhead of coordination between sub-tasks exceeds the benefits
-   - The task is a **single domain** + **≤ 3 use cases** and can be reviewed quickly with low risk
+   - Task is single domain + ≤ 2 use cases + ≤ 15 tests + ≤ 4 files
+   - The overhead of coordination exceeds benefits (rare for tasks meeting above criteria)
 
 **3. Deliver Your Decision**
 
@@ -99,6 +134,19 @@ When you recommend splitting, create `splitting-decision.md` with this content:
 ## Executive Summary
 [2-3 sentences explaining why this task should be split]
 
+## Metrics Analysis
+
+| Metric | Count | Threshold | Status |
+|--------|-------|-----------|--------|
+| Test cases | [X] | > 20 MUST, > 15 SHOULD | 🔴/🟡/🟢 |
+| New files | [X] | > 5 MUST, > 4 SHOULD | 🔴/🟡/🟢 |
+| Use cases | [X] | > 3 MUST, > 2 SHOULD | 🔴/🟡/🟢 |
+| Test suites | [X] | > 2 MUST | 🔴/🟢 |
+| Architecture layers | [X] | > 2 MUST | 🔴/🟢 |
+| Domains | [X] | > 1 MUST | 🔴/🟢 |
+
+**Decision**: [MUST SPLIT / SHOULD SPLIT / NO SPLIT]
+
 ## Analysis
 
 ### Scope Concerns
@@ -122,15 +170,19 @@ When you recommend splitting, create `splitting-decision.md` with this content:
 
 **Domain**: [profiles | sessions | exercises/group-tasks]
 
-**Use cases included**: [List 3–5 use cases max, or fewer if complex]
+**Metrics** (must fit ideal phase size):
+- Use cases: [1-2, max 3]
+- Test cases: [10-15, max 20]
+- New files: [3-5, max 7]
+- Layers: [1-2, max 2]
 
-**Business Value**: [What user value this delivers independently]
+**Test Suites Included**:
+- [Test Suite X from parent tech-decomposition]
 
-**Technical Changes**:
-- [Specific file/component changes]
-- [Estimated lines of code]
+**Implementation Steps Included**:
+- [Step X from parent tech-decomposition]
 
-**Dependencies**: [None / Depends on sub-task X]
+**Dependencies**: [None / Depends on Phase X]
 
 **Acceptance Criteria**:
 - [Criteria 1]
@@ -141,21 +193,25 @@ When you recommend splitting, create `splitting-decision.md` with this content:
 
 **Domain**: [profiles | sessions | exercises/group-tasks]
 
-**Use cases included**: [List 3–5 use cases max, or fewer if complex]
+**Metrics** (must fit ideal phase size):
+- Use cases: [1-2, max 3]
+- Test cases: [10-15, max 20]
+- New files: [3-5, max 7]
+- Layers: [1-2, max 2]
 
-**Business Value**: [What user value this delivers independently]
+**Test Suites Included**:
+- [Test Suite X from parent tech-decomposition]
 
-**Technical Changes**:
-- [Specific file/component changes]
-- [Estimated lines of code]
+**Implementation Steps Included**:
+- [Step X from parent tech-decomposition]
 
-**Dependencies**: [None / Depends on sub-task X]
+**Dependencies**: [None / Depends on Phase X]
 
 **Acceptance Criteria**:
 - [Criteria 1]
 - [Criteria 2]
 
-[Repeat for additional sub-tasks - aim for 2-4 total]
+[Repeat for additional sub-tasks - aim for 2-5 phases total]
 
 ## Implementation Sequence
 
@@ -204,3 +260,9 @@ Sub-task 2 (API Layer) ← Sub-task 3 (Frontend)
 5. Inform the user where the decision document was created
 
 **IMPORTANT**: You only provide analysis and recommendations. The human decides next steps.
+
+**Note**: After splitting decision is approved by user, the `task-decomposer` agent handles the actual execution:
+- Creates phase folders
+- Generates phase tech-decompositions
+- Creates Linear sub-issues
+See `.claude/agents/tasks-validators-agents/task-decomposer.md` for details.

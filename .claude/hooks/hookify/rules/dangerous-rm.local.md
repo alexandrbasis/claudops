@@ -6,14 +6,20 @@ conditions:
   - field: command
     operator: regex_match
     pattern: 'rm\s+(-rf|-fr|--recursive.*--force|--force.*--recursive)\s+.*\b(node_modules|src|backend|prisma)\b|rm\s+(-rf|-fr)\s+(/|~|\$HOME)\s*$'
-action: block
+action: ask
 ---
 
-**BLOCKED: Dangerous recursive delete**
+**⚠️ Dangerous rm -rf detected**
 
-This command targets a critical path. Use safer alternative:
+This command targets a critical path. Consider safer alternatives:
 
-- For `node_modules`: `rm -rf node_modules && npm install`
-- For other paths: `mv <path> ~/.Trash/` or `rm -ri <path>`
+| Instead of | Use |
+|------------|-----|
+| `rm -rf node_modules` | `rm -rf node_modules && npm install` |
+| `rm -rf <path>` | `trash <path>` (trash-cli) |
+| `rm -rf <path>` | `mv <path> ~/.Trash/` |
+| `rm -rf <path>` | `rm -ri <path>` (interactive) |
 
-Verify the exact path before retrying with a safer command.
+**Options:**
+- **Allow** - proceed with original command (risky)
+- **Deny** - cancel and use safer alternative manually
