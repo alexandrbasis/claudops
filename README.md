@@ -6,11 +6,20 @@ This repository showcases the complete Claude Code setup used in the [Wythm](htt
 
 ## What's Inside
 
-### Custom Agents (15+)
+### Custom Agents (25+)
+
 Specialized agents for different development tasks:
 
+**Automation Agents** (`.claude/agents/automation-agents/`)
+- `test-developer.md` - TDD test specialist, writes failing tests first
+- `implementation-developer.md` - Implements code to make tests pass
+- `automated-quality-gate.md` - Runs automated quality checks
+- `developer-agent.md` - Universal developer for scoped work items
+- `integration-test-runner.md` - E2E and integration test execution
+- `code-review-orchestrator.md` - Orchestrates multi-agent code review
+- `senior-approach-reviewer.md` - Reviews implementation approach and TDD compliance
+
 **Code Review Agents** (`.claude/agents/code-review-agents/`)
-- `architect-reviewer.md` - Architecture and SOLID principles review
 - `code-quality-reviewer.md` - Code quality and maintainability
 - `documentation-accuracy-reviewer.md` - Documentation completeness
 - `performance-reviewer.md` - Performance optimization
@@ -21,90 +30,124 @@ Specialized agents for different development tasks:
 - `plan-reviewer.md` - Technical plan validation
 - `task-pm-validator.md` - Project management validation
 - `task-splitter.md` - Task breakdown evaluation
+- `task-decomposer.md` - Creates phase structure for split tasks
+- `task-validator.md` - Pre-flight validation before implementation
+- `architect-review.md` - Architecture consistency review
 
 **Workflow Agents** (`.claude/agents/wf-agents/`)
 - `changelog-generator.md` - Automated changelog creation
 - `create-pr-agent.md` - Pull request automation with Linear integration
 - `docs-updater.md` - Documentation synchronization
-- `linear-task-manager.md` - Linear issue management
 
 **Helper Agents** (`.claude/agents/helpful-agents/`)
 - `comprehensive-researcher.md` - In-depth research tasks
-- `meeting-task-syncer.md` - Meeting notes to Linear tasks
+
+**Hookify Agents** (`.claude/agents/hookify-agents/`)
+- `conversation-analyzer.md` - Analyzes conversations for rule creation
+
+**Specialized Agents**
+- `nextjs-architecture-expert.md` - Next.js best practices and optimization
 
 ### Slash Commands
+
 Custom commands for streamlined workflows (`.claude/commands/`):
 
 **Development Workflow**
-- `/asr` - Automated sprint review with specialized agents
 - `/ct` - Create task documentation (JTBD-based)
-- `/cb` - Create branch from task
-- `/cp` - Create pull request with Linear integration
+- `/cb` - Create branch from Linear task
+- `/si` - Structured TDD implementation
+- `/dev` - Full development orchestrator (implement → review → PR)
+- `/nf` - New feature discovery interview
+- `/ph` - Prepare handover documentation
 
-**Product Management** (`.claude/commands/product/`)
-- `/product:cjtbd` - Jobs-to-be-Done analysis
-- `/product:cprd` - Product Requirements Document creation
+**Code Review & Quality**
+- `/sr` - Comprehensive code review before PR
+- `/prc` - Review and address PR comments
+- `/fci` - Fix CI pipeline failures
 
-**Code Review**
-- `/cr` - Comprehensive code review
-- `/review-pr` - GitHub PR review
+**Database & Migrations**
+- `/mm` - Create and deploy Prisma migrations
 
-**Quality Gates**
-- `/qg` - Run quality gates (format, lint, type check)
-- `/fix-lint` - Auto-fix linting issues
+**Merge & Deploy**
+- `/mp` - Merge approved PR and archive task
 
-### Hooks
-Event-driven automation (`.claude/hooks/`):
+**General**
+- `/brainstorm` - General brainstorming on any topic
 
-**Quality Assurance**
-- `pre-commit-validation.py` - Pre-commit quality checks
-- `lint-on-write.py` - Auto-lint on file writes
-
-**Synchronization**
-- `auto-sync-claude-agents.py` - Sync agent configurations
-- `claude-agents-sync.py` - Agent sync orchestration
-
-**Integrations**
-- `telegram-notify.sh` - Telegram notifications for events
-- `ct-context-injector.py` - Task context injection
-
-**Current Hook** (auto-sync to this repo)
-- `auto-sync-public-repo.py` - Automatically syncs `.claude/` changes to this public repository
+**Other Commands** (`.claude/commands/other/`)
+- `/other:product` - Create product documentation (JTBD or PRD)
+- `/other:dopmwork` - Sync meeting discussions to Linear tasks
+- `/other:onboard` - Junior developer onboarding guide
+- `/other:rip` - Review implementation plan for business alignment
+- `/other:sbs` - Interactive teaching guide
+- `/other:hookify` - Create hookify rules
+- `/other:sync-public` - Sync config to public repository
 
 ### Skills
+
 Specialized capabilities (`.claude/skills/`):
 
-- `git-commit-helper` - Generate descriptive commit messages
-- `twitter-x-assistant` - Social media content optimization
-- `skill-creator` - Guide for creating new skills
-- `gemini-cli` - Google Gemini CLI integration
+- `cc-linear/` - Linear operations via Claude Code sessions
+- `brainstorming/` - Creative exploration before implementation
+- `code-analysis/` - Deep code analysis with metrics
+- `context-loader/` - Load project context before implementation
+- `deep-research/` - In-depth technical research
+- `parallelization/` - Orchestrate parallel implementation
+- `gemini-cli/` - Google Gemini CLI integration
+- `hookify/` - Create rules to prevent unwanted behaviors
+
+### Hooks & Rules
+
+Event-driven automation (`.claude/hooks/`):
+
+**Hookify System** (`.claude/hooks/hookify/`)
+Declarative rules for Claude Code behavior:
+- `dangerous-rm.local.md` - Prevent dangerous rm commands
+- `pre-commit.local.md` - Pre-commit validation
+- `schema-change.local.md` - Database schema change alerts
+- `db-danger.local.md` - Dangerous database operations
+- `arch-violation.local.md` - Architecture violation detection
+- `test-silent.local.md` - Silent test execution
+- `no-console.local.md` - Prevent console.log in production
+- `interface-naming.local.md` - Interface naming conventions
+- `first-commit-reminder.local.md` - First commit guidelines
+
+**Project Rules** (`.claude/rules/`)
+- `backend.md` - Backend development guidelines
+- `testing.md` - Testing standards
+- `git.md` - Git workflow rules
+- `research.md` - Research guidelines (Exa + Ref MCP)
+- `sync.md` - Sync configuration
 
 ### MCP Servers
-Model Context Protocol integrations (`.claude/mcp/`):
 
+Model Context Protocol integrations (`.claude/mcp/`):
 - Linear integration for issue management
+- Exa integration for code-aware search
 - IDE integration for diagnostics
-- Custom MCP server configurations
 
 ## Repository Structure
 
 ```
 .claude/
-├── agents/                    # 15+ specialized agents
-│   ├── code-review-agents/   # Quality & security reviewers
-│   ├── tasks-validators-agents/ # Task validation agents
-│   ├── wf-agents/            # Workflow automation
-│   └── helpful-agents/       # Research & meeting sync
-├── commands/                  # Slash commands
-│   ├── product/              # Product management commands
-│   └── [development commands]
-├── hooks/                     # Event-driven automation
-├── skills/                    # Specialized capabilities
-├── mcp/                      # MCP server configs
-└── scripts/                  # Utility scripts
+├── agents/                       # 25+ specialized agents
+│   ├── automation-agents/        # TDD, quality gates, orchestration
+│   ├── code-review-agents/       # Quality & security reviewers
+│   ├── tasks-validators-agents/  # Task validation & splitting
+│   ├── wf-agents/                # Workflow automation
+│   ├── helpful-agents/           # Research helpers
+│   └── hookify-agents/           # Rule creation helpers
+├── commands/                     # Slash commands
+│   └── other/                    # Additional commands
+├── hooks/                        # Event-driven automation
+│   └── hookify/                  # Declarative behavior rules
+├── skills/                       # Specialized capabilities
+├── rules/                        # Project-wide rules
+├── mcp/                          # MCP server configs
+└── scripts/                      # Utility scripts
 
 docs/
-└── setup-guide.md            # Detailed setup instructions
+└── setup-guide.md                # Detailed setup instructions
 ```
 
 ## How to Use These Workflows
@@ -121,23 +164,34 @@ Pick specific agents, commands, or hooks:
 
 ```bash
 # Copy specific agent
-cp wythm-claude-workflows/.claude/agents/code-review-agents/security-code-reviewer.md \
+cp wythm-claude-workflows/.claude/agents/automation-agents/developer-agent.md \
    your-project/.claude/agents/
 
 # Copy specific command
 cp wythm-claude-workflows/.claude/commands/ct.md \
    your-project/.claude/commands/
+
+# Copy hookify rules
+cp -r wythm-claude-workflows/.claude/hooks/hookify \
+   your-project/.claude/hooks/
 ```
 
 ### Option 3: Learn and Adapt
 Study the patterns and create your own:
 - Read agent prompts to understand specialization patterns
-- Examine hooks for event-driven automation ideas
+- Examine hookify rules for behavior control
 - Review commands for workflow optimization
 
 ## Key Features
 
-### 1. Automated Code Review Pipeline
+### 1. TDD-Driven Development Pipeline
+Multi-agent system for test-driven development:
+- `test-developer` - Writes failing tests first
+- `implementation-developer` - Makes tests pass
+- `automated-quality-gate` - Validates quality
+- `senior-approach-reviewer` - Reviews approach
+
+### 2. Automated Code Review Pipeline
 Multi-agent review system covering:
 - Architecture patterns (SOLID, DDD)
 - Security vulnerabilities (OWASP Top 10)
@@ -145,33 +199,27 @@ Multi-agent review system covering:
 - Test coverage
 - Documentation accuracy
 
-### 2. Task-Driven Development
+### 3. Task-Driven Development
 JTBD (Jobs-to-be-Done) based workflow:
 - `/ct` - Create comprehensive task documentation
 - `/cb` - Create feature branch from task
-- `/cp` - Create PR with Linear integration
+- `/si` - Structured TDD implementation
+- `/dev` - Full orchestration (implement → review → PR)
 - Automatic traceability and audit trail
 
-### 3. Quality Gates Integration
-Automated checks before commits:
-- Format validation (Black, isort)
-- Linting (flake8, mypy)
-- Type checking
-- Test execution
-
 ### 4. Linear Integration
-Seamless project management:
+Seamless project management via `cc-linear` skill:
 - Create/update issues from Claude
 - Link PRs to Linear tasks
 - Sync meeting notes to tasks
 - Automated changelog generation
 
-### 5. Hook-Based Automation
-Event-driven workflows:
-- Pre-commit validation
-- Auto-sync configurations
-- Telegram notifications
-- Context injection for tasks
+### 5. Hookify Rules System
+Declarative behavior control:
+- Prevent dangerous operations
+- Enforce coding standards
+- Alert on schema changes
+- Maintain architecture boundaries
 
 ## Technology Stack
 
@@ -190,7 +238,6 @@ Event-driven workflows:
 ## Prerequisites
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed
-- Python 3.11+ (for hooks)
 - Node.js 18+ (for project context)
 - Git configured
 - GitHub CLI (`gh`) installed
@@ -210,8 +257,6 @@ Create `.claude/settings.local.json` (not tracked in this repo):
   },
   "env": {
     "PUBLIC_REPO_PATH": "/path/to/wythm-claude-workflows",
-    "TELEGRAM_BOT_TOKEN": "your-token-here",
-    "TELEGRAM_CHAT_ID": "your-chat-id",
     "LINEAR_API_KEY": "your-linear-key"
   }
 }
@@ -224,31 +269,27 @@ See [docs/setup-guide.md](docs/setup-guide.md) for detailed configuration.
 **What's NOT Included:**
 - `settings.local.json` - Contains sensitive tokens and IDs
 - `history.jsonl` - Conversation history
-- `hook-debug.log` - May contain sensitive paths
+- `*.log` files - May contain sensitive paths
 - Runtime directories (`session-env/`, `todos/`, etc.)
+- MCP configs with API keys
 
 **Safe to Share:**
 - Agent definitions
 - Command templates
-- Hook scripts (sanitized)
+- Hook scripts and rules
 - MCP configurations (anonymized)
 - Skills and workflows
 
 ## Real-World Usage
 
 This setup powers the development of [Wythm](https://github.com/alexandrbasis/wythm), a production NestJS application with:
-- 15+ custom agents for specialized reviews
+- 25+ custom agents for specialized tasks
+- TDD-driven development workflow
 - Automated task creation and PR workflows
 - Linear integration for project tracking
 - Multi-stage code review pipeline
 - JTBD-based feature development
-
-**Development Metrics:**
-- 40+ completed tasks with full traceability
-- 100+ agent-reviewed PRs
-- Automated quality gates on every commit
-- Real-time Telegram notifications
-- Automated changelog generation
+- Hookify rules for behavior control
 
 ## Contributing
 
@@ -266,7 +307,6 @@ MIT License - See [LICENSE](LICENSE) for details
 - **Main Project:** [Wythm Repository](https://github.com/alexandrbasis/wythm)
 - **Claude Code Docs:** [Official Documentation](https://docs.anthropic.com/en/docs/claude-code)
 - **Linear:** [Project Management Tool](https://linear.app)
-- **Blog Posts:** Coming soon on social media
 
 ## Acknowledgments
 
@@ -274,4 +314,4 @@ Built with [Claude Code](https://claude.com/claude-code) - AI-assisted software 
 
 ---
 
-**Auto-synced from main repository** | Last update: 2025-01-20 | [View Sync Hook](.claude/hooks/auto-sync-public-repo.py)
+**Auto-synced from main repository** | Last update: 2026-01-08
