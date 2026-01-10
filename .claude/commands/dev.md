@@ -21,15 +21,16 @@ All agents read/write to the **task directory** as shared memory:
 ```
 tasks/task-YYYY-MM-DD-[feature]/
 ├── tech-decomposition-[feature].md    ← Requirements (read by all)
-├── JTBD-[feature].md                  ← Alternative: Jobs-to-be-Done
+├── discovery-[feature].md             ← Alternative: Feature spec (created by /nf)
+├── JTBD-[feature].md                  ← Alternative: Jobs-to-be-Done (legacy)
 ├── Pre-Flight Validation - [Task].md  ← Created by task-validator
 ├── TEST_PLAN.md                       ← Created by test-developer
 ├── IMPLEMENTATION_LOG.md              ← Updated by implementation-developer
-├── Quality Gate Report - [Task].md    ← Created by automated-quality-gate
-├── Approach Review - [Task].md        ← Created by senior-approach-reviewer
-├── Code Review - [Task].md            ← Created by code-review-orchestrator
+├── Code Review - [Task].md            ← Final review (consolidates all findings)
 └── Integration Test Report - [Task].md ← Created by integration-test-runner
 ```
+
+**Note**: Quality Gate and Approach Review data are returned inline by agents and integrated into `Code Review - [Task].md`. No separate files are created for these.
 
 **Wythm Context**: Before starting, agents should review:
 - `backend/docs/project-structure.md` - DDD/Clean Architecture patterns
@@ -86,7 +87,7 @@ tasks/task-YYYY-MM-DD-[feature]/
 ┌─────────────────────────────────────────────────────┐
 │  PHASE 2: Automated Quality Gates                   │
 │  Agent: automated-quality-gate                      │
-│  Output: Quality Gate Report - [Task].md            │
+│  Output: Returns data inline (for Code Review)      │
 │                                                     │
 │  IF GATE_FAILED → Fix specific criterion            │
 └─────────────────────────────────────────────────────┘
@@ -96,7 +97,7 @@ tasks/task-YYYY-MM-DD-[feature]/
 │  PHASE 3: Senior Approach Review                    │
 │  Agent: senior-approach-reviewer                    │
 │  - TDD compliance verified from git history         │
-│  Output: Approach Review - [Task].md                │
+│  Output: Returns data inline (for Code Review)      │
 │                                                     │
 │  IF NEEDS_REWORK → Back to specific criterion       │
 └─────────────────────────────────────────────────────┘
@@ -347,7 +348,8 @@ GATES:
 4. Coverage threshold (70%)
 5. Build verification
 
-Return JSON: {status, report_doc, gates, coverage_percentage, summary}"
+Return JSON: {status, gates, coverage_percentage, summary, markdown_snippet}
+Note: Agent returns data inline (no file created). Integrate into Code Review."
 ```
 
 ### Handle Result
@@ -371,7 +373,8 @@ VERIFY:
 3. Architecture fits codebase patterns
 4. TDD compliance (from git history - tests committed before implementation)
 
-Return JSON: {status, review_doc, requirements_score, approach_score, tdd_compliance, summary}"
+Return JSON: {status, requirements_score, approach_score, tdd_compliance, summary}
+Note: Agent returns data inline (no file created). Integrate into Code Review."
 ```
 
 ### Handle Result
@@ -465,8 +468,8 @@ Present to user:
 | Pre-Flight | ✅ READY | Pre-Flight Validation - [Task].md |
 | Test Writing | ✅ [N] tests | TEST_PLAN.md |
 | Implementation | ✅ [N/N] criteria | IMPLEMENTATION_LOG.md |
-| Quality Gates | ✅ PASSED | Quality Gate Report - [Task].md |
-| Approach Review | ✅ APPROVED | Approach Review - [Task].md |
+| Quality Gates | ✅ PASSED | (integrated in Code Review) |
+| Approach Review | ✅ APPROVED | (integrated in Code Review) |
 | Code Review | ✅ APPROVED | Code Review - [Task].md |
 | Integration | ✅ PASSED | Integration Test Report - [Task].md |
 

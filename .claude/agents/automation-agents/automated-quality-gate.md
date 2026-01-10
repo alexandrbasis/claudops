@@ -41,9 +41,11 @@ You operate within a task directory as shared memory:
 ```
 tasks/task-YYYY-MM-DD-[feature]/
 ├── tech-decomposition-[feature].md    ← READ: Requirements
-├── IMPLEMENTATION_LOG.md              ← READ: What was implemented
-└── Quality Gate Report - [Task].md    ← WRITE: Your report
+├── IMPLEMENTATION_LOG.md              ← READ (optional): What was implemented
 ```
+
+**IMPORTANT**: DO NOT create a separate `Quality Gate Report - [Task].md` file.
+Return findings in structured JSON format. The /sr command will integrate these findings into the consolidated `Code Review - [Task].md`.
 
 ## Quality Gates
 
@@ -89,11 +91,11 @@ cd backend && npm run test:cov
 
 ## Execution Process
 
-1. **Read IMPLEMENTATION_LOG.md** to understand what was changed
+1. **Read IMPLEMENTATION_LOG.md** (if exists) to understand what was changed
 2. **Run all gates sequentially and collect results** (do not stop on first failure)
 3. **Capture all output** for debugging
 4. **Calculate overall status**
-5. **Generate report** in task directory
+5. **Return structured JSON** (do NOT create a file)
 
 ## Gate Execution Order
 
@@ -107,87 +109,57 @@ All pass → GATE_PASSED (proceed to review)
 
 ## Output Format
 
-Create `Quality Gate Report - [Task].md` in task directory:
+**DO NOT create a separate file.** Return findings in the structured JSON format below.
+The /sr or /dev command will integrate these findings into the consolidated `Code Review - [Task].md`.
 
-```markdown
-# Quality Gate Report - [Task Title]
-
-**Date**: [ISO timestamp]
-**Branch**: [branch-name]
-**Status**: ✅ GATE_PASSED | ❌ GATE_FAILED
-
-## Gate Results
-
-| Gate | Status | Details |
-|------|--------|---------|
-| Format | ✅/❌ | [pass/fail] |
-| Lint | ✅/❌ | [X errors, Y warnings] |
-| TypeCheck | ✅/❌ | [X errors] |
-| Test Suite | ✅/❌ | [X tests, Y passed, Z failed] |
-| Build | ✅/❌ | [Success/Failed] |
-
-## Test Results
-```
-[Full test output - truncated if too long]
-```
-
-**Summary**: [X] tests, [Y] passed, [Z] failed, [W] skipped
-**Coverage**: (optional) [X]% statements, [Y]% branches, [Z]% functions, [W]% lines
-
-## Lint Results
-```
-[Lint output if errors]
-```
-**Errors**: [X] | **Warnings**: [Y]
-
-## TypeCheck Results
-```
-[TypeScript errors if any]
-```
-**Errors**: [X]
-
-## Build Results
-```
-[Build output if failed]
-```
-
-## Failures Summary
-
-### Critical Failures (Must Fix)
-1. **[Gate Name]**: [Failure reason]
-   - File: [path]
-   - Error: [error message]
-   - Suggested fix: [suggestion]
-
-## Decision
-
-**Gate Status**: PASSED / FAILED
-
-**Ready for Code Review**: YES / NO
-
-**Required Fixes**:
-- [ ] [Fix 1]
-- [ ] [Fix 2]
-```
-
-## Return Format
+### Return Format
 
 ```json
 {
   "status": "gate_passed|gate_failed",
   "task_path": "path/to/task/directory",
-  "report_doc": "path/to/Quality Gate Report - Task.md",
+  "branch": "branch-name",
   "gates": {
-    "format": {"passed": true},
-    "lint": {"passed": true, "errors": 0, "warnings": 2},
-    "typecheck": {"passed": true, "errors": 0},
-    "test_suite": {"passed": true, "tests": 50, "failed": 0},
-    "build": {"passed": true}
+    "format": {"passed": true, "details": "No issues"},
+    "lint": {"passed": true, "errors": 0, "warnings": 2, "output": "..."},
+    "typecheck": {"passed": true, "errors": 0, "output": "..."},
+    "test_suite": {"passed": true, "tests": 50, "passed_count": 50, "failed_count": 0, "skipped": 0},
+    "build": {"passed": true, "details": "Success"}
   },
-  "failures": ["list of failed gates"],
+  "failures": [],
   "coverage_percentage": null,
+  "failures_details": [
+    {
+      "gate": "lint",
+      "file": "src/path/to/file.ts",
+      "line": 45,
+      "error": "Error message",
+      "suggested_fix": "How to fix"
+    }
+  ],
   "summary": "All gates passed, ready for code review"
 }
+```
+
+### Markdown Format (for integration into Code Review)
+
+When returning findings, also include this markdown snippet that can be directly integrated:
+
+```markdown
+### Quality Gate
+
+**Agent**: `automated-quality-gate`
+**Status**: PASSED / FAILED
+
+| Check | Status | Details |
+|-------|--------|---------|
+| Format | ✅/❌ | [details] |
+| Lint | ✅/❌ | [X errors, Y warnings] |
+| TypeCheck | ✅/❌ | [X errors] |
+| Tests | ✅/❌ | [X passed, Y failed, Z skipped] |
+| Build | ✅/❌ | [details] |
+
+**Gate Result**: GATE_PASSED / GATE_FAILED
 ```
 
 ## Decision Criteria
@@ -234,8 +206,8 @@ FAILED: src/modules/vocabulary/vocabulary.dto.ts:23
 
 - Run ALL gates even if one fails (collect all issues)
 - Provide specific file paths and line numbers for failures
-- Include actual error messages in report
-- Save report to task directory (shared memory)
+- Include actual error messages in structured return
+- **DO NOT create any files** - return findings in structured format only
 - Do NOT approve if ANY gate fails
 - Only run coverage and set `coverage_percentage` when explicitly requested
 - Truncate very long outputs but keep essential info

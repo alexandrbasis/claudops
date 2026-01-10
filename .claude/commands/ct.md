@@ -59,6 +59,34 @@ Create technical implementation plan with **TEST PLAN FIRST** (TDD approach):
 2. Re-submit with updated document + previous review for context + summary of changes
 3. Repeat until plan-reviewer and architect-reviewer approve
 
+**FINAL VALIDATION (after plan-reviewer & architect-reviewer approve):**
+
+Run Codex for cross-AI validation of technical decomposition:
+
+```bash
+codex exec "Review the technical decomposition document at [task-directory]/tech-decomposition-[feature-name].md
+
+As a senior technical lead, validate this implementation plan:
+
+1. **Test Plan Quality**: Are tests comprehensive? Missing edge cases? TDD structure correct?
+2. **Implementation Completeness**: All acceptance criteria covered? Clear file paths?
+3. **Technical Accuracy**: Correct patterns for this codebase? Any architectural issues?
+4. **Dependencies**: Are all dependencies identified? Correct order of operations?
+5. **Risk Assessment**: Any overlooked technical risks or blockers?
+
+Provide:
+- Critical issues that must be fixed before implementation
+- Suggestions for improvement
+- Overall assessment: APPROVED / NEEDS REVISION
+
+Be thorough - developers will implement exactly what's documented." -m gpt-5.2-codex --full-auto
+```
+
+**Process Codex feedback:**
+- If NEEDS REVISION with critical issues → Update document, inform user
+- If approved with suggestions → Present to user, optionally incorporate
+- Add "Cross-AI Validation: PASSED" to document metadata when approved
+
 ---
 
 ### GATE 2: Task Splitting Evaluation

@@ -19,7 +19,12 @@ SOURCE_CLAUDE_DIR="$PROJECT_ROOT/.claude"
 
 # Public repo path from environment or default
 if [[ -z "$PUBLIC_REPO_PATH" ]]; then
-    PUBLIC_REPO_PATH="$PROJECT_ROOT/wythm-claude-workflows"
+    # Try local directory first, then iCloud location
+    if [[ -d "$PROJECT_ROOT/wythm-claude-workflows" ]]; then
+        PUBLIC_REPO_PATH="$PROJECT_ROOT/wythm-claude-workflows"
+    else
+        PUBLIC_REPO_PATH="/Users/alexandrbasis/Library/Mobile Documents/com~apple~CloudDocs/Coding Projects/wythm/wythm-claude-workflows"
+    fi
 fi
 
 TARGET_CLAUDE_DIR="$PUBLIC_REPO_PATH/.claude"

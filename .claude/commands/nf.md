@@ -59,5 +59,33 @@ After brainstorming and interview completion:
    - Output file: `discovery-[feature-name].md`
 3. **Present summary** to user for confirmation
 
+### Step 4: Codex Validation
+
+After discovery document is created, run Codex for cross-AI validation:
+
+```bash
+codex exec "Review the feature discovery document at [task-directory]/discovery-[feature-name].md
+
+As a senior product analyst, validate this discovery:
+
+1. **Completeness**: Are all user scenarios covered? Missing edge cases?
+2. **Consistency**: Any contradictions between sections?
+3. **Clarity**: Are requirements specific enough for implementation?
+4. **Feasibility**: Any technical concerns or risks not addressed?
+5. **Scope**: Is MVP scope clearly defined vs future phases?
+
+Provide:
+- List of inconsistencies or gaps found
+- Suggested clarifying questions for the user
+- Overall assessment: APPROVED / NEEDS CLARIFICATION
+
+Be critical - this is the last check before technical decomposition." -m gpt-5.2-codex --full-auto
+```
+
+**Process Codex feedback:**
+- If NEEDS CLARIFICATION → Ask user the suggested questions, update discovery
+- If issues found → Present to user, update document if confirmed
+- Add "Cross-AI Validation: PASSED" note to discovery document when approved
+
 ## Output
 `tasks/task-YYYY-MM-DD-[feature-name]/discovery-[feature-name].md`

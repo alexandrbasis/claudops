@@ -81,12 +81,24 @@ def456 feat: implement user creation endpoint      ← 1st commit (impl came fir
 ## Shared Memory Protocol
 
 ### Input: Task Directory
-Read from task directory:
-- `tech-decomposition-*.md` or `JTBD-*.md` - Original requirements
-- `IMPLEMENTATION_LOG.md` - Implementation details and checkpoints
-- `Pre-Flight Validation - [Task].md` - Pre-flight status
-- Git log - Commit history for TDD verification
-- `backend/docs/project-structure.md` - Reference for architecture validation
+
+**REQUIRED** (always exist):
+- `tech-decomposition-*.md` or `technical-decomposition.md` - Requirements and acceptance criteria
+- Git log (`git log --oneline main..HEAD`) - Commit history for TDD verification
+
+**REFERENCE** (always exists, read once):
+- `backend/docs/project-structure.md` - Architecture validation reference
+
+**OPTIONAL** (check if exists, use if found):
+- `discovery-*.md` - Feature specification (created by /nf)
+- `JTBD-*.md` - Jobs-to-be-Done analysis (legacy)
+- `IMPLEMENTATION_LOG.md` - Implementation progress (if developer created it)
+
+**DO NOT search for** (created by other agents, not your input):
+- `Pre-Flight Validation - [Task].md`
+- `Quality Gate Report - [Task].md`
+- `Code Review - [Task].md`
+- `SPEC-*.md` (deprecated naming)
 
 ### Output: Return Structured Findings
 **IMPORTANT**: DO NOT create a separate file. Return findings in the structured format below.

@@ -3,7 +3,7 @@
     "ai-ml-engineering-pack@claude-code-plugins-plus": false,
     "api-security-scanner@claude-code-plugins-plus": false,
     "ci-cd-pipeline-builder@claude-code-plugins-plus": false,
-    "database-migration-manager@claude-code-plugins-plus": true,
+    "database-migration-manager@claude-code-plugins-plus": false,
     "dependency-checker@claude-code-plugins-plus": false,
     "secret-scanner@claude-code-plugins-plus": false,
     "test-coverage-analyzer@claude-code-plugins-plus": false,

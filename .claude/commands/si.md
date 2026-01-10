@@ -22,36 +22,6 @@ Consider requirements carefully.
 
 ## WORKFLOW STEPS
 
-### **STEP 0: Context Loading**
-
-**Purpose**: Load project context before implementation. 
-
-0. **Decide the work mode** (must be explicit):
-   - **Start**: new implementation from task docs
-   - **Continue**: continue an existing branch/partial implementation
-   - **Code Review**: address review comments on an existing PR/branch
-
-   If mode is not stated, ask the user which one.
-
-1. **Invoke context-loader skill**:
-   ```
-   Use Skill tool:
-   skill: "context-loader"
-   args: "[task_document_path]"
-   ```
-
-2. **Review context summary**:
-   ```
-   Read the generated CONTEXT_SUMMARY.md
-   - Related modules found
-   - Patterns to follow
-   - Key files to reference
-   ```
-
-3. **Announce context loaded**:
-
----
-
 ### **STEP 1: Task Validation**
 
 1. **Ask user**: "Which task to implement? Provide task name or path." If it was not provided
@@ -65,7 +35,6 @@ Consider requirements carefully.
    - Confirm task status is appropriate (e.g., "Ready for Implementation" vs "Draft") and ask before proceeding if unclear.
    - Confirm Linear issue exists and is referenced (ID/link).
    - Confirm there is an implementation plan (even if small): impacted components + test plan.
-
 
 ### **STEP 2: Setup**
 Note: Skip this step when continuing implementation or addressing Code Review Results
@@ -112,12 +81,17 @@ If you believe part of the work can be done safely in parallel, use the `paralle
 5. **TDD Verification**: All tests from approved plan must pass before proceeding to next step
 
 #### **After Each Step:**
-1. **Record the step outcome** (single lightweight entry):
+1. **Update the task document** (REQUIRED - not just chat output):
+   - Mark the step checkbox as complete: `- [ ]` → `- [x]`
+   - Add **Changelog** entry describing what was done
+   - Update **Tests** field with command run + result
+   - If tests are defined in the Test Plan section, mark those checkboxes too
+
+   Example of updating a step in the task doc:
    ```markdown
-   - [x] ✅ Step [N]: [Description] - Completed
-     - **Files**: `path/a.ts`, `path/b.spec.ts` (required)
-     - **Tests**: [command run + result] OR "skipped: [reason]" (required)
-     - **Notes**: [key decision / caveat] (optional)
+   - [x] Sub-step 3.1: Update CreateSessionUseCase logic ✅
+     - **Tests**: Test Suite 3 - PASS
+     - **Changelog**: Injected WordGroupService, added validateGroupHasSufficientWords() method
    ```
 
 2. **Commit changes (permission gate)**:
@@ -131,8 +105,6 @@ If you believe part of the work can be done safely in parallel, use the `paralle
    - Use Task tool with subagent_type: "automated-quality-gate"
    - Provide `task_path` (absolute path to `tasks/task-YYYY-MM-DD-slug/`) and current `branch`
    - Agent runs format/lint/types/tests/build and writes a Quality Gate Report in the task directory
-
-
 
 #### **Finalize Task Document**
 1. **Update status** to "Ready for Review" with timestamp

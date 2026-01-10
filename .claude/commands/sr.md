@@ -19,23 +19,18 @@ Professional code review using specialized agents. Ensure quality, architectural
    - **STOP if**: "In Progress" or missing PR information
    - Linear issue referenced, steps marked complete
 
-3. **Update Linear** using `cc-linear` skill:
-   ```bash
-   cc --mcp-config .claude/mcp/linear.json -p "Update issue [ISSUE-ID]:
-   1. Set status to 'In Review'
-   2. Add comment: '🔍 Code review started - Task: [path]'"
-   ```
-
 ### GATE 2: Automated Quality Gate
 
 **ACTION**: Invoke `automated-quality-gate` agent
 
 ```
 Task directory: [path]
-Run all quality checks (lint, types, tests, coverage) and report pass/fail.
+Run quality checks (format, lint, types, tests, build) and return structured results.
+Agent returns data inline (no file created) - integrate into Code Review.
 ```
 
 - **STOP if GATE_FAILED** → Return to developer with fixes list
+- Agent returns JSON + markdown snippet for integration into Code Review
 
 ### GATE 3: Approach Review
 
@@ -91,21 +86,40 @@ Review approach, requirements fulfillment, architecture fit, TDD compliance (git
 5. **Apply decision matrix** (see below)
 6. **Create** `Code Review - [Task].md` in task directory using template structure
 
-### GATE 6: Linear & Completion
+### GATE 6: Codex Final Review (If APPROVED)
 
-1. **Update status**:
-   ```bash
-   cc --mcp-config .claude/mcp/linear.json -p "Update issue [ISSUE-ID] status to '[Ready to Merge | Needs Fixes | In Review]'"
-   ```
+**CONDITION**: Only run if Decision Matrix result is APPROVED (0 Critical, 0-2 Major)
 
-2. **Add results comment**:
-   ```bash
-   cc --mcp-config .claude/mcp/linear.json -p "Add comment to issue [ISSUE-ID]:
-   '✅ Code review completed
-   **Status**: [APPROVED/NEEDS FIXES/NEEDS DISCUSSION]
-   **Issues**: [X critical, Y major, Z minor]
-   **Review Doc**: [path]'"
-   ```
+**ACTION**: Run Codex CLI for cross-AI final validation
+
+```bash
+codex exec "Final pre-merge code review for task.
+
+Task specification: [task-directory]/tech-decomposition.md
+PR changes: Review against main branch
+
+You are the final reviewer before merge to main. Check:
+1. All acceptance criteria from task spec are implemented
+2. No regressions or breaking changes
+3. Code is production-ready
+4. No security issues missed by previous reviewers
+
+If issues found, list them with severity. Otherwise confirm APPROVED for merge." -m gpt-5.2-codex --full-auto
+```
+
+- **STOP if Codex finds CRITICAL issues** → Change decision to NEEDS FIXES
+- **Add Codex findings** to Code Review document under "Cross-AI Validation" section
+- Takes 3-7 minutes - run in background if needed
+
+### GATE 7: Linear & Completion
+
+1. **Update Linear status (end only)** using the `cc-linear` skill:
+   - Do this as a **single atomic operation** (status update only).
+   - Target status: `[Ready to Merge | Needs Fixes | In Review]`
+
+2. **Add results comment (end only)** using the `cc-linear` skill:
+   - Do this as a **separate atomic operation** (comment only).
+   - Include status + issue counts + review doc path.
 
 3. **Notify user** of outcome and next steps
 
@@ -132,8 +146,13 @@ Review approach, requirements fulfillment, architecture fit, TDD compliance (git
 
 Single `Code Review - [Task].md` created in task directory using template from `@docs/product-docs/templates/code-review-template.md`.
 
+**Important**: All review data is consolidated into this single file. No separate files are created for:
+- Quality Gate Report (integrated into Pre-Review Validation section)
+- Approach Review (integrated into Pre-Review Validation section)
+
 **Contains**:
-- Pre-Review validation (Quality Gate + Approach Review)
+- Pre-Review validation (Quality Gate + Approach Review inline)
 - Code Review findings from 5 specialized agents (with inline severity markers)
+- Cross-AI Validation (Codex final review - if APPROVED)
 - Consolidated issues checklist with agent attribution
 - Decision with severity counts and next steps
