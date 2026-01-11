@@ -18,9 +18,19 @@ Conduct a comprehensive interview to fully understand and document a new feature
 
 ## Workflow
 
+### Step 0: Codebase Exploration
+
+Launch 1-3 parallel Explore agents (Sonnet) based on feature complexity. Use Task tool in **single message**.
+
+**Agents:**
+1. Code & patterns in `backend/`
+2. Data models, schemas, APIs (if 2+ agents)
+3. Docs, ADRs, tests (if 3 agents)
+
+Synthesize findings, then proceed to brainstorming.
+
 ### Step 1: Brainstorming Phase
-**Invoke the `brainstorming` skill** which will:
-- Use multiple Explore agents in parallel (Sonnet) to gather project context
+**Invoke the `brainstorming` skill** with gathered context:
 - Ask questions to refine the idea (batch related questions)
 - Propose 2-3 different approaches with trade-offs
 - Present design incrementally (200-300 word sections) for validation
