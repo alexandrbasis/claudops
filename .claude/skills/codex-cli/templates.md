@@ -2,6 +2,11 @@
 
 Reusable prompt templates for common Codex operations.
 
+**Important:** All templates use output redirection for token optimization:
+- `codex exec` commands: Use `-o /tmp/codex-result.md > /dev/null 2>&1`
+- `codex exec review` commands: Use `> /tmp/codex-review.md 2>&1`
+- Always read result with **Read tool**, not Bash cat
+
 ## Approach Validation
 
 ### General Approach Review
@@ -21,7 +26,8 @@ codex exec "Review this implementation approach:
 Questions:
 1. Is this approach sound?
 2. What are the potential issues?
-3. What alternatives should I consider?" -m gpt-5.2-codex --full-auto
+3. What alternatives should I consider?" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
+# Read: /tmp/codex-result.md
 ```
 
 ### Architecture Decision
@@ -39,24 +45,28 @@ Option B: [Description]
 Context: [Project context]
 Requirements: [Key requirements]
 
-Which approach would you recommend and why?" -m gpt-5.2-codex --full-auto
+Which approach would you recommend and why?" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
+# Read: /tmp/codex-result.md
 ```
 
 ## Code Review
 
 ### Uncommitted Changes Review
 ```bash
-codex exec review --uncommitted -m gpt-5.2-codex --full-auto
+codex exec review --uncommitted -m gpt-5.2-codex --full-auto > /tmp/codex-review.md 2>&1
+# Read: /tmp/codex-review.md
 ```
 
 ### Review Against Branch
 ```bash
-codex exec review --base main -m gpt-5.2-codex --full-auto
+codex exec review --base main -m gpt-5.2-codex --full-auto > /tmp/codex-review.md 2>&1
+# Read: /tmp/codex-review.md
 ```
 
 ### Review Specific Commit
 ```bash
-codex exec review --commit [SHA] -m gpt-5.2-codex --full-auto
+codex exec review --commit [SHA] -m gpt-5.2-codex --full-auto > /tmp/codex-review.md 2>&1
+# Read: /tmp/codex-review.md
 ```
 
 ### Custom Review Focus
@@ -66,7 +76,8 @@ codex exec "Review the uncommitted changes focusing on:
 2. [Focus area 2]
 3. [Focus area 3]
 
-Provide specific feedback for each area." -m gpt-5.2-codex --full-auto
+Provide specific feedback for each area." -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
+# Read: /tmp/codex-result.md
 ```
 
 ## Security Review
@@ -81,7 +92,8 @@ codex exec "Perform a security review of the uncommitted changes. Check for:
 - Sensitive data exposure
 - Input validation gaps
 
-Report findings with severity levels (Critical/High/Medium/Low)." -m gpt-5.2-codex --full-auto
+Report findings with severity levels (Critical/High/Medium/Low)." -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
+# Read: /tmp/codex-result.md
 ```
 
 ### API Security Review
@@ -92,7 +104,8 @@ codex exec "Review [file/endpoint] for API security:
 - Authentication checks
 - Authorization (access control)
 - Error handling (info leakage)
-- CORS configuration" -m gpt-5.2-codex --full-auto
+- CORS configuration" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
+# Read: /tmp/codex-result.md
 ```
 
 ## Implementation Verification
@@ -114,7 +127,8 @@ Check:
 - All requirements implemented?
 - Edge cases handled?
 - Error handling adequate?
-- Tests cover key paths?" -m gpt-5.2-codex --full-auto
+- Tests cover key paths?" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
+# Read: /tmp/codex-result.md
 ```
 
 ### Refactoring Verification
@@ -127,7 +141,8 @@ Changed files: [files]
 Check that:
 1. All existing functionality preserved
 2. No subtle behavior changes
-3. No new edge case bugs introduced" -m gpt-5.2-codex --full-auto
+3. No new edge case bugs introduced" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
+# Read: /tmp/codex-result.md
 ```
 
 ## Test Assessment
@@ -144,7 +159,8 @@ Check:
 - Are all public functions tested?
 - Are edge cases covered?
 - Are error paths tested?
-- What's missing?" -m gpt-5.2-codex --full-auto
+- What's missing?" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
+# Read: /tmp/codex-result.md
 ```
 
 ### Test Quality Review
@@ -153,7 +169,8 @@ codex exec "Review the quality of tests in [test file]:
 - Are tests meaningful or just checking syntax?
 - Are assertions comprehensive?
 - Are tests isolated (no shared state)?
-- Are tests readable/maintainable?" -m gpt-5.2-codex --full-auto
+- Are tests readable/maintainable?" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
+# Read: /tmp/codex-result.md
 ```
 
 ## Performance Review
@@ -165,7 +182,8 @@ codex exec "Analyze [file/function] for performance issues:
 - Memory leaks or excessive allocation
 - Blocking operations
 - Missing caching opportunities
-- N+1 query patterns" -m gpt-5.2-codex --full-auto
+- N+1 query patterns" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
+# Read: /tmp/codex-result.md
 ```
 
 ## Bug Investigation
@@ -179,7 +197,8 @@ Expected: [What should happen]
 Context: [Relevant context]
 Suspected files: [files]
 
-Find the root cause and suggest a fix." -m gpt-5.2-codex --full-auto
+Find the root cause and suggest a fix." -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
+# Read: /tmp/codex-result.md
 ```
 
 ## Template Variables
