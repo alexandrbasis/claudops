@@ -65,3 +65,4 @@ Thumbs.db
 *.tmp
 *.temp
 .cache/
+.claude/mcp/supabase.json

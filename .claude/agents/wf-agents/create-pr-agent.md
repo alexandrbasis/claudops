@@ -54,8 +54,8 @@ linear_id=$(grep -m 1 -E "WYT-[0-9]+" "$task_file" || true)
 description=$(awk '/^## (Primary Objective|Description)/,/^## [^#]/' "$task_file" | tail -n +2 | head -n -1)
 quality_gate_report=$(grep -m 1 -E "Quality Gate Report|Quality Gate Report -" "$task_file" || true)
 
-# Create comprehensive PR with extracted information
-gh pr create --title "[type]: $task_title" --body "$(cat <<EOF
+# Create comprehensive PR with Linear ID in title (REQUIRED)
+gh pr create --title "[type]($linear_id): $task_title" --body "$(cat <<EOF
 ## Summary
 $description
 
@@ -76,7 +76,33 @@ EOF
 )"
 ```
 
-**PR Title Types:** `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
+### PR Naming Convention
+
+**CRITICAL**: PR titles MUST include the Linear issue ID for traceability.
+
+**Format**: `type(LINEAR-ID): Brief description`
+
+**Examples**:
+- `feat(WYT-110): Phase 2 - ExercisePlanningService Core`
+- `fix(WYT-115): Resolve authentication token expiry bug`
+- `refactor(WYT-120): Simplify session lifecycle management`
+- `docs(WYT-125): Update API documentation for training endpoints`
+
+**Title Types**: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
+
+**Validation**: Before creating PR, ensure:
+1. Linear ID is extracted from task document
+2. Linear ID is included in PR title in parentheses after type
+3. Description is concise but descriptive
+
+```bash
+# Extract Linear ID and validate
+linear_id=$(grep -oE "WYT-[0-9]+" "$task_file" | head -1)
+[[ -z "$linear_id" ]] && echo "❌ No Linear ID found in task document" && exit 1
+
+# Create PR with proper naming
+gh pr create --title "$type($linear_id): $description" ...
+```
 
 ### 3. Task Document Update
 Add comprehensive PR traceability and code review preparation section after successful creation inside the same `tech-decomposition-*.md` file:
@@ -159,9 +185,9 @@ linear_id=$(grep "Issue:" "$task" | awk '{print $2}')
 completed_steps=$(grep -E "^\s*- \[x\] ✅.*Completed" "$task")
 test_coverage=$(grep -o "coverage.*[0-9]\+%" "$task" | tail -1)
 
-# 3. Create comprehensive GitHub PR
+# 3. Create comprehensive GitHub PR with Linear ID in title
 echo "🚀 Creating GitHub PR with comprehensive information..."
-pr_url=$(gh pr create --title "feat: $task_title" \
+pr_url=$(gh pr create --title "feat($linear_id): $task_title" \
   --body "..." --head "$(git branch --show-current)")
 
 # 4. Update task document with comprehensive PR traceability

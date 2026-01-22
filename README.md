@@ -2,316 +2,343 @@
 
 > Production-ready Claude Code workflows, hooks, agents, and commands for AI-assisted software development
 
-This repository showcases the complete Claude Code setup used in the [Wythm](https://github.com/alexandrbasis/wythm) project - an AI-powered vocabulary learning platform. These workflows demonstrate advanced Claude Code usage patterns, custom automation, and development best practices.
+**Follow us:** [@wythmapp](https://x.com/wythmapp) | [@MishkaKey](https://x.com/MishkaKey) | [@alexandrbasis](https://x.com/alexandrbasis)
+
+---
+
+This repository showcases the complete Claude Code setup used in the [Wythm](https://github.com/alexandrbasis/wythm) project — an AI-powered vocabulary learning platform. These workflows demonstrate advanced Claude Code patterns, multi-AI orchestration, and development automation.
+
+## Highlights
+
+- **24 specialized agents** for TDD, code review, task validation, and more
+- **14 slash commands** + 7 utility commands for streamlined workflows
+- **9 skills** including cross-AI integrations (Gemini CLI, Codex CLI)
+- **Cross-AI Plan Review** — automatic Gemini verification of Claude's plans
+- **Hookify rules system** — declarative behavior control
+- **Linear integration** — seamless project management
+
+---
 
 ## What's Inside
 
-### Custom Agents (25+)
+### Agents (24 total)
 
-Specialized agents for different development tasks:
+Specialized agents organized by function:
 
 **Automation Agents** (`.claude/agents/automation-agents/`)
-- `test-developer.md` - TDD test specialist, writes failing tests first
-- `implementation-developer.md` - Implements code to make tests pass
-- `automated-quality-gate.md` - Runs automated quality checks
-- `developer-agent.md` - Universal developer for scoped work items
-- `integration-test-runner.md` - E2E and integration test execution
-- `code-review-orchestrator.md` - Orchestrates multi-agent code review
-- `senior-approach-reviewer.md` - Reviews implementation approach and TDD compliance
+| Agent | Purpose |
+|-------|---------|
+| `test-developer` | TDD specialist — writes failing tests first |
+| `implementation-developer` | Makes tests pass with clean code |
+| `automated-quality-gate` | Runs lint, types, tests before review |
+| `developer-agent` | Universal agent for scoped work items |
+| `integration-test-runner` | E2E and integration test execution |
+| `code-review-orchestrator` | Orchestrates multi-agent code review |
+| `senior-approach-reviewer` | Reviews approach, TDD compliance, solution quality |
 
 **Code Review Agents** (`.claude/agents/code-review-agents/`)
-- `code-quality-reviewer.md` - Code quality and maintainability
-- `documentation-accuracy-reviewer.md` - Documentation completeness
-- `performance-reviewer.md` - Performance optimization
-- `security-code-reviewer.md` - Security vulnerability scanning
-- `test-coverage-reviewer.md` - Test coverage analysis
+| Agent | Focus |
+|-------|-------|
+| `code-quality-reviewer` | SOLID, maintainability, code smells |
+| `security-code-reviewer` | OWASP Top 10, injection, auth issues |
+| `performance-reviewer` | N+1 queries, caching, optimization |
+| `test-coverage-reviewer` | Coverage gaps, test quality |
+| `documentation-accuracy-reviewer` | Docs completeness and accuracy |
 
 **Task Validators** (`.claude/agents/tasks-validators-agents/`)
-- `plan-reviewer.md` - Technical plan validation
-- `task-pm-validator.md` - Project management validation
-- `task-splitter.md` - Task breakdown evaluation
-- `task-decomposer.md` - Creates phase structure for split tasks
-- `task-validator.md` - Pre-flight validation before implementation
-- `architect-review.md` - Architecture consistency review
+| Agent | Purpose |
+|-------|---------|
+| `plan-reviewer` | Technical plan validation |
+| `task-pm-validator` | PM validation before code review |
+| `task-splitter` | Evaluates if task needs breakdown |
+| `task-decomposer` | Creates phase structure for split tasks |
+| `task-validator` | Pre-flight validation before implementation |
+| `architect-review` | Architecture consistency review |
 
 **Workflow Agents** (`.claude/agents/wf-agents/`)
-- `changelog-generator.md` - Automated changelog creation
-- `create-pr-agent.md` - Pull request automation with Linear integration
-- `docs-updater.md` - Documentation synchronization
+| Agent | Purpose |
+|-------|---------|
+| `changelog-generator` | Creates changelog from task docs |
+| `create-pr-agent` | PR automation with Linear integration |
+| `docs-updater` | Documentation synchronization |
 
-**Helper Agents** (`.claude/agents/helpful-agents/`)
-- `comprehensive-researcher.md` - In-depth research tasks
+**Other Agents**
+| Agent | Purpose |
+|-------|---------|
+| `comprehensive-researcher` | In-depth research tasks |
+| `conversation-analyzer` | Analyzes conversations for hookify rules |
+| `nextjs-architecture-expert` | Next.js best practices and optimization |
 
-**Hookify Agents** (`.claude/agents/hookify-agents/`)
-- `conversation-analyzer.md` - Analyzes conversations for rule creation
-
-**Specialized Agents**
-- `nextjs-architecture-expert.md` - Next.js best practices and optimization
+---
 
 ### Slash Commands
 
-Custom commands for streamlined workflows (`.claude/commands/`):
+**Core Development Workflow** (`.claude/commands/`)
 
-**Development Workflow**
-- `/ct` - Create task documentation (JTBD-based)
-- `/cb` - Create branch from Linear task
-- `/si` - Structured TDD implementation
-- `/dev` - Full development orchestrator (implement → review → PR)
-- `/nf` - New feature discovery interview
-- `/ph` - Prepare handover documentation
+| Command | Description |
+|---------|-------------|
+| `/ct` | Create task documentation (JTBD-based) |
+| `/cb` | Create branch from Linear task |
+| `/si` | Structured TDD implementation |
+| `/dev` | Full orchestrator: implement → review → PR |
+| `/nf` | New feature discovery interview |
+| `/ph` | Prepare handover documentation |
+| `/sr` | Comprehensive code review before PR |
+| `/prc` | Review and address PR comments |
+| `/fci` | Fix CI pipeline failures |
+| `/mm` | Create and deploy Prisma migrations |
+| `/mp` | Merge approved PR and archive task |
+| `/brainstorm` | General brainstorming on any topic |
 
-**Code Review & Quality**
-- `/sr` - Comprehensive code review before PR
-- `/prc` - Review and address PR comments
-- `/fci` - Fix CI pipeline failures
+**Utility Commands** (`.claude/commands/other/`)
 
-**Database & Migrations**
-- `/mm` - Create and deploy Prisma migrations
+| Command | Description |
+|---------|-------------|
+| `/other:product` | Create product documentation (JTBD or PRD) |
+| `/other:dopmwork` | Sync meeting discussions to Linear tasks |
+| `/other:onboard` | Junior developer onboarding guide |
+| `/other:rip` | Review implementation plan for business alignment |
+| `/other:sbs` | Interactive step-by-step teaching |
+| `/other:hookify` | Create hookify rules |
+| `/other:sync-public` | Sync config to this public repository |
 
-**Merge & Deploy**
-- `/mp` - Merge approved PR and archive task
+---
 
-**General**
-- `/brainstorm` - General brainstorming on any topic
+### Skills (9 total)
 
-**Other Commands** (`.claude/commands/other/`)
-- `/other:product` - Create product documentation (JTBD or PRD)
-- `/other:dopmwork` - Sync meeting discussions to Linear tasks
-- `/other:onboard` - Junior developer onboarding guide
-- `/other:rip` - Review implementation plan for business alignment
-- `/other:sbs` - Interactive teaching guide
-- `/other:hookify` - Create hookify rules
-- `/other:sync-public` - Sync config to public repository
+Advanced capabilities in `.claude/skills/`:
 
-### Skills
+| Skill | Description |
+|-------|-------------|
+| `gemini-cli` | Google Gemini CLI for web-grounded research, automation, cross-AI validation |
+| `codex-cli` | OpenAI Codex CLI for second-opinion code review and approach validation |
+| `cc-linear` | Linear operations via Claude Code sessions (create issues, update status) |
+| `context-loader` | Load project context before implementation |
+| `parallelization` | Orchestrate parallel implementation with scoped workers |
+| `brainstorming` | Creative exploration before implementation |
+| `code-analysis` | Deep code analysis with metrics and patterns |
+| `deep-research` | In-depth technical research with multiple sources |
+| `hookify` | Create rules to prevent unwanted behaviors |
 
-Specialized capabilities (`.claude/skills/`):
+---
 
-- `cc-linear/` - Linear operations via Claude Code sessions
-- `brainstorming/` - Creative exploration before implementation
-- `code-analysis/` - Deep code analysis with metrics
-- `context-loader/` - Load project context before implementation
-- `deep-research/` - In-depth technical research
-- `parallelization/` - Orchestrate parallel implementation
-- `gemini-cli/` - Google Gemini CLI integration
-- `hookify/` - Create rules to prevent unwanted behaviors
+### Cross-AI Plan Review
 
-### Hooks & Rules
+Automatic Gemini CLI verification when Claude exits Plan Mode:
 
-Event-driven automation (`.claude/hooks/`):
+```
+Claude creates plan → ExitPlanMode → PostToolUse hook →
+Gemini CLI reviews (~30 sec) → Review appended to plan file
+```
 
-**Hookify System** (`.claude/hooks/hookify/`)
-Declarative rules for Claude Code behavior:
-- `dangerous-rm.local.md` - Prevent dangerous rm commands
-- `pre-commit.local.md` - Pre-commit validation
-- `schema-change.local.md` - Database schema change alerts
-- `db-danger.local.md` - Dangerous database operations
-- `arch-violation.local.md` - Architecture violation detection
-- `test-silent.local.md` - Silent test execution
-- `no-console.local.md` - Prevent console.log in production
-- `interface-naming.local.md` - Interface naming conventions
-- `first-commit-reminder.local.md` - First commit guidelines
+**What Gemini checks:**
+- Security issues (auth, validation, injection)
+- Architecture violations (DDD, Clean Architecture)
+- Performance problems (N+1, missing indexes)
+- Missing edge cases and error handling
+- Testability concerns
 
-**Project Rules** (`.claude/rules/`)
-- `backend.md` - Backend development guidelines
-- `testing.md` - Testing standards
-- `git.md` - Git workflow rules
-- `research.md` - Research guidelines (Exa + Ref MCP)
-- `sync.md` - Sync configuration
+**Configuration** (`.claude/settings.json`):
+```json
+{
+  "plansDirectory": "./tasks/plans",
+  "hooks": {
+    "PostToolUse": [{
+      "matcher": "ExitPlanMode",
+      "hooks": [{
+        "type": "command",
+        "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/review-plan-gemini.sh",
+        "timeout": 300
+      }]
+    }]
+  }
+}
+```
 
-### MCP Servers
+See [docs/dev-workflow/gemini-plan-review-hook.md](docs/dev-workflow/gemini-plan-review-hook.md) for full documentation.
 
-Model Context Protocol integrations (`.claude/mcp/`):
-- Linear integration for issue management
-- Exa integration for code-aware search
-- IDE integration for diagnostics
+---
+
+### Hookify Rules System
+
+Declarative behavior control in `.claude/hooks/hookify/rules/`:
+
+| Rule | Purpose |
+|------|---------|
+| `dangerous-rm.local.md` | Block dangerous rm commands |
+| `pre-commit.local.md` | Pre-commit validation |
+| `schema-change.local.md` | Alert on database schema changes |
+| `db-danger.local.md` | Block dangerous database operations |
+| `arch-violation.local.md` | Detect architecture violations |
+| `test-silent.local.md` | Prefer silent test execution |
+| `no-console.local.md` | Prevent console.log in production |
+| `interface-naming.local.md` | Enforce interface naming conventions |
+| `first-commit-reminder.local.md` | First commit guidelines |
+
+---
+
+### Project Rules
+
+Development guidelines in `.claude/rules/`:
+
+| Rule | Scope |
+|------|-------|
+| `backend.md` | Backend architecture (NestJS, DDD, Clean Architecture) |
+| `testing.md` | Testing standards and patterns |
+| `git.md` | Git workflow and commit conventions |
+| `research.md` | Research guidelines (Exa + Ref MCP) |
+| `sync.md` | File synchronization rules |
+
+---
 
 ## Repository Structure
 
 ```
 .claude/
-├── agents/                       # 25+ specialized agents
+├── agents/                       # 24 specialized agents
 │   ├── automation-agents/        # TDD, quality gates, orchestration
-│   ├── code-review-agents/       # Quality & security reviewers
+│   ├── code-review-agents/       # Quality, security, performance
 │   ├── tasks-validators-agents/  # Task validation & splitting
 │   ├── wf-agents/                # Workflow automation
 │   ├── helpful-agents/           # Research helpers
 │   └── hookify-agents/           # Rule creation helpers
-├── commands/                     # Slash commands
-│   └── other/                    # Additional commands
-├── hooks/                        # Event-driven automation
-│   └── hookify/                  # Declarative behavior rules
-├── skills/                       # Specialized capabilities
-├── rules/                        # Project-wide rules
+├── commands/                     # 14 slash commands
+│   └── other/                    # 7 utility commands
+├── hooks/
+│   └── hookify/                  # 9 declarative behavior rules
+├── skills/                       # 9 specialized capabilities
+├── rules/                        # 5 project-wide rules
+├── scripts/                      # Automation scripts
+│   ├── review-plan-gemini.sh     # Cross-AI plan review
+│   └── sync-to-public.sh         # Repo sync utility
 ├── mcp/                          # MCP server configs
-└── scripts/                      # Utility scripts
+└── settings.json                 # Hooks & plansDirectory config
 
 docs/
-└── setup-guide.md                # Detailed setup instructions
+├── setup-guide.md                # Detailed setup instructions
+└── dev-workflow/
+    └── gemini-plan-review-hook.md  # Cross-AI plan review docs
 ```
 
-## How to Use These Workflows
+---
 
-### Option 1: Full Setup (Recommended)
-1. Clone this repository
-2. Copy `.claude/` directory to your project root
-3. Review and customize configuration for your needs
-4. Install dependencies (see [Setup Guide](docs/setup-guide.md))
-5. Configure MCP servers and hooks
+## How to Use
+
+### Option 1: Full Setup
+```bash
+git clone https://github.com/alexandrbasis/wythm-claude-workflows.git
+cp -r wythm-claude-workflows/.claude your-project/
+# Review and customize for your needs
+```
 
 ### Option 2: Cherry-Pick Components
-Pick specific agents, commands, or hooks:
-
 ```bash
 # Copy specific agent
 cp wythm-claude-workflows/.claude/agents/automation-agents/developer-agent.md \
    your-project/.claude/agents/
 
-# Copy specific command
-cp wythm-claude-workflows/.claude/commands/ct.md \
-   your-project/.claude/commands/
+# Copy Gemini plan review
+cp wythm-claude-workflows/.claude/scripts/review-plan-gemini.sh \
+   your-project/.claude/scripts/
 
 # Copy hookify rules
 cp -r wythm-claude-workflows/.claude/hooks/hookify \
    your-project/.claude/hooks/
 ```
 
-### Option 3: Learn and Adapt
-Study the patterns and create your own:
-- Read agent prompts to understand specialization patterns
-- Examine hookify rules for behavior control
-- Review commands for workflow optimization
+### Option 3: Use as Reference
+Study the patterns and create your own workflows based on these examples.
+
+---
 
 ## Key Features
 
 ### 1. TDD-Driven Development Pipeline
-Multi-agent system for test-driven development:
-- `test-developer` - Writes failing tests first
-- `implementation-developer` - Makes tests pass
-- `automated-quality-gate` - Validates quality
-- `senior-approach-reviewer` - Reviews approach
+```
+test-developer → implementation-developer → automated-quality-gate → senior-approach-reviewer
+```
 
-### 2. Automated Code Review Pipeline
-Multi-agent review system covering:
-- Architecture patterns (SOLID, DDD)
-- Security vulnerabilities (OWASP Top 10)
-- Performance optimization
-- Test coverage
-- Documentation accuracy
+### 2. Multi-Agent Code Review
+```
+code-quality-reviewer + security-code-reviewer + performance-reviewer + test-coverage-reviewer
+```
 
-### 3. Task-Driven Development
-JTBD (Jobs-to-be-Done) based workflow:
-- `/ct` - Create comprehensive task documentation
-- `/cb` - Create feature branch from task
-- `/si` - Structured TDD implementation
-- `/dev` - Full orchestration (implement → review → PR)
-- Automatic traceability and audit trail
+### 3. Task-Driven Development (JTBD)
+```
+/ct (create task) → /cb (create branch) → /si (implement) → /sr (review) → /mp (merge)
+```
 
-### 4. Linear Integration
-Seamless project management via `cc-linear` skill:
+### 4. Cross-AI Orchestration
+- Gemini CLI for plan review and web-grounded research
+- Codex CLI for second-opinion code review
+- Multiple AI perspectives on critical decisions
+
+### 5. Linear Integration
 - Create/update issues from Claude
 - Link PRs to Linear tasks
 - Sync meeting notes to tasks
 - Automated changelog generation
 
-### 5. Hookify Rules System
-Declarative behavior control:
-- Prevent dangerous operations
-- Enforce coding standards
-- Alert on schema changes
-- Maintain architecture boundaries
-
-## Technology Stack
-
-**Backend Project Context:**
-- NestJS + TypeScript
-- PostgreSQL + Prisma ORM
-- Domain-Driven Design (DDD)
-- Clean Architecture
-
-**Development Tools:**
-- Claude Code (AI-assisted development)
-- Linear (Project management)
-- GitHub Actions (CI/CD)
-- MCP Servers (Integrations)
+---
 
 ## Prerequisites
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed
-- Node.js 18+ (for project context)
+- Node.js 18+
 - Git configured
 - GitHub CLI (`gh`) installed
-- Linear API access (optional, for full workflow)
+- Optional: Gemini CLI (`npm i -g @google/gemini-cli`)
+- Optional: Linear API access
 
-## Configuration
+---
 
-### Required Environment Variables
+## Technology Context
 
-Create `.claude/settings.local.json` (not tracked in this repo):
+This setup powers a NestJS backend with:
+- TypeScript + Prisma + PostgreSQL (Supabase)
+- Domain-Driven Design (DDD)
+- Clean Architecture
+- Comprehensive testing (Jest)
 
-```json
-{
-  "hooks": {
-    "PostToolUse": [...],
-    "PreToolUse": [...]
-  },
-  "env": {
-    "PUBLIC_REPO_PATH": "/path/to/wythm-claude-workflows",
-    "LINEAR_API_KEY": "your-linear-key"
-  }
-}
-```
-
-See [docs/setup-guide.md](docs/setup-guide.md) for detailed configuration.
+---
 
 ## Security & Privacy
 
-**What's NOT Included:**
-- `settings.local.json` - Contains sensitive tokens and IDs
-- `history.jsonl` - Conversation history
-- `*.log` files - May contain sensitive paths
-- Runtime directories (`session-env/`, `todos/`, etc.)
-- MCP configs with API keys
+**Not included (sensitive):**
+- `settings.local.json` — API keys and tokens
+- `*.log` files
+- MCP configs with credentials
 
-**Safe to Share:**
-- Agent definitions
-- Command templates
+**Safe to share:**
+- All agents, commands, skills
 - Hook scripts and rules
-- MCP configurations (anonymized)
-- Skills and workflows
+- Configuration templates
 
-## Real-World Usage
-
-This setup powers the development of [Wythm](https://github.com/alexandrbasis/wythm), a production NestJS application with:
-- 25+ custom agents for specialized tasks
-- TDD-driven development workflow
-- Automated task creation and PR workflows
-- Linear integration for project tracking
-- Multi-stage code review pipeline
-- JTBD-based feature development
-- Hookify rules for behavior control
+---
 
 ## Contributing
 
 Found a better pattern? Have suggestions?
 - Open an issue with your idea
-- Share your own Claude Code workflows
+- Share your own workflows
 - Contribute improvements via PR
-
-## License
-
-MIT License - See [LICENSE](LICENSE) for details
-
-## Links & Resources
-
-- **Main Project:** [Wythm Repository](https://github.com/alexandrbasis/wythm)
-- **Claude Code Docs:** [Official Documentation](https://docs.anthropic.com/en/docs/claude-code)
-- **Linear:** [Project Management Tool](https://linear.app)
-
-## Acknowledgments
-
-Built with [Claude Code](https://claude.com/claude-code) - AI-assisted software development by Anthropic.
 
 ---
 
-**Auto-synced from main repository** | Last update: 2026-01-08
+## License
+
+MIT License — See [LICENSE](LICENSE) for details
+
+---
+
+## Links
+
+- **Main Project:** [Wythm Repository](https://github.com/alexandrbasis/wythm)
+- **Claude Code Docs:** [Official Documentation](https://docs.anthropic.com/en/docs/claude-code)
+- **Linear:** [Project Management](https://linear.app)
+
+---
+
+Built with [Claude Code](https://claude.com/claude-code) by Anthropic
+
+**Last update:** 2026-01-22
