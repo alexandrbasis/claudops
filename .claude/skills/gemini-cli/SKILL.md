@@ -1,6 +1,6 @@
 ---
 name: gemini-cli
-description: Wield Google's Gemini CLI as a powerful auxiliary tool for code generation, review, analysis, and web research. Use when tasks benefit from a second AI perspective, current web information via Google Search, codebase architecture analysis, or parallel code generation. Also use when user explicitly requests Gemini operations.
+description: Use Google's Gemini CLI for web-grounded research (Google Search), automation via one-shot prompts, and second-opinion review. Use when you need structured JSON output, fast scripting workflows, or cross-AI validation.
 allowed-tools:
   - Bash
   - Read
@@ -11,7 +11,7 @@ allowed-tools:
 
 # Gemini CLI Integration Skill
 
-This skill enables Claude Code to effectively orchestrate Gemini CLI (v0.16.0+) with Gemini 3 Pro for code generation, review, analysis, and specialized tasks.
+This skill enables Claude Code to orchestrate Google's **Gemini CLI** reliably using **one-shot prompts** (positional prompt) for scripting and automation.
 
 ## When to Use This Skill
 
@@ -27,10 +27,10 @@ This skill enables Claude Code to effectively orchestrate Gemini CLI (v0.16.0+) 
    - Latest library versions, API changes, documentation updates
    - Current events or recent releases
 
-3. **Codebase Architecture Analysis**
-   - Use Gemini's `codebase_investigator` tool
-   - Understanding unfamiliar codebases
-   - Mapping cross-file dependencies
+3. **Automation (One-Shot)**
+   - One-shot prompts in CI/scripts with `gemini "..."` (positional prompt)
+   - Structured output via `--output-format json`
+   - Streaming JSON events via `--output-format stream-json` (only when you explicitly need detailed event traces)
 
 4. **Parallel Processing**
    - Offload tasks while continuing other work
@@ -51,36 +51,172 @@ This skill enables Claude Code to effectively orchestrate Gemini CLI (v0.16.0+) 
 
 ## Core Instructions
 
-### 1. Verify Installation
+### Model policy (pinned for consistency)
+
+In this workspace, run Gemini CLI **with an explicit pinned model** for consistency and deeper reviews:
 
 ```bash
-command -v gemini || which gemini
+gemini --model gemini-3-pro-preview "..."
 ```
 
-### 2. Basic Command Pattern
+This is intentional: our tests show the pinned `gemini-3-pro-preview` run produces more careful, slower, code-grounded reviews.
+
+### 1. Verify Installation & Auth (Gemini CLI itself)
 
 ```bash
-gemini "[prompt]" --yolo -o text 2>&1
+command -v gemini && gemini --version
+```
+
+If missing, install:
+
+```bash
+npm install -g @google/gemini-cli
+```
+
+Authenticate (one of):
+- **API key**: export `GEMINI_API_KEY=...`
+- **OAuth (interactive)**: run `gemini` once and follow the prompts
+
+### 2. Critical Concept: Gemini CLI Has NO Claude Context
+
+Gemini CLI is a separate process. It **does not see this chat**.
+
+Gemini one-shot calls are **not interactive** by default: you get one request and one answer.
+
+To make Gemini effective in one-shot mode, always include:
+- **Goal**: what you want and why
+- **Inputs**: explicit file paths (or inject files/dirs via `@path`), plus any relevant snippets
+- **Constraints**: languages, frameworks, versions, coding style, do/don't rules
+- **Deliverable**: exact output shape (e.g. “return JSON”, “output diff”, “output a markdown table”)
+- **Scope**: what to touch vs not touch (files/dirs, no network, no deps, etc.)
+- **Working directory**: run from the project root so relative paths resolve
+
+### 3. Basic One-Shot Pattern (Recommended)
+
+Use one-shot prompts for predictable, scriptable behavior:
+
+```bash
+gemini --model gemini-3-pro-preview "Your prompt here" --output-format text
 ```
 
 Key flags:
-- `--yolo` or `-y`: Auto-approve all tool calls
-- `-o text`: Human-readable output
-- `-o json`: Structured output with stats
-- `-m gemini-2.5-flash`: Use faster model for simple tasks
+- `--output-format`: `text` (default), `json`, `stream-json`
+- `--yolo`, `-y`: Auto-approve all actions
+- `--approval-mode`: e.g. `auto_edit`
+- `--include-directories`: add extra workspace dirs (comma-separated)
+- `--debug`, `-d`: debug output
 
-### 3. Critical Behavioral Notes
+### 3.1 One-shot prompt checklist (must be exhaustive)
 
-**YOLO Mode Behavior**: Auto-approves tool calls but does NOT prevent planning prompts. Gemini may still present plans and ask "Does this plan look good?" Use forceful language:
-- "Apply now"
-- "Start immediately"
-- "Do this without asking for confirmation"
+Use this checklist when writing the prompt you pass to `gemini "..."`:
 
-**Rate Limits**: Free tier has 60 requests/min, 1000/day. CLI auto-retries with backoff. Expect messages like "quota will reset after Xs".
+- **Context injection**: include `@path/to/file` / `@src/` where needed (Gemini does not see your repo unless you provide it).
+- **Exact task**: “Do X” + acceptance criteria (what counts as “done”).
+- **Output contract**:
+  - If you want a clean final answer only: say “Output ONLY the final answer. No reasoning.”
+  - If you want machine parsing: request `--output-format json` and rely on `.response`.
+- **Safety / approvals**:
+  - If you want it to act without prompts: use `--yolo` or `--approval-mode auto_edit`.
+  - If you want zero traces: avoid `--output-format stream-json` and avoid `--debug`.
 
-### 4. Output Processing
+### 3.2 Multi-line prompts (practical pattern)
 
-For JSON output (`-o json`), parse:
+For long instructions, build a multi-line prompt and pass it as one argument:
+
+```bash
+PROMPT=$(cat <<'EOF'
+Output ONLY the final answer. No reasoning.
+
+Task:
+- ...
+
+Inputs:
+- @path/to/file
+- @src/
+
+Constraints:
+- ...
+
+Deliverable:
+- ...
+EOF
+)
+
+gemini --model gemini-3-pro-preview "$PROMPT" --output-format json > /tmp/gemini.json 2> /tmp/gemini.err \
+  && jq -r '.response' /tmp/gemini.json > /tmp/gemini.out
+```
+
+### 4. Output Handling Best Practice (Low-Token, Reliable)
+
+**Do not stream Gemini output directly into the tool output** for large responses. Instead, redirect to a file and read the file.
+
+```bash
+gemini --model gemini-3-pro-preview "Review @backend/src/app.module.ts for security issues" \
+  --output-format text \
+  --yolo \
+  > /tmp/gemini.txt 2> /tmp/gemini.err && echo "Gemini completed"
+
+# Then read with Read tool:
+# - /tmp/gemini.txt
+# - /tmp/gemini.err (only if needed)
+```
+
+### Output only the final answer (no logs / no event stream)
+
+If you want **only the final output** (and to avoid extra CLI chatter), prefer JSON output and extract `.response` into a clean file.
+
+```bash
+gemini --model gemini-3-pro-preview "Answer with ONLY the final result. No reasoning. Task: ..." \
+  --output-format json \
+  --yolo \
+  > /tmp/gemini.json 2> /tmp/gemini.err \
+  && jq -r '.response' /tmp/gemini.json > /tmp/gemini.out \
+  && echo "Gemini completed"
+
+# Then read with Read tool:
+# - /tmp/gemini.out   (clean final answer only)
+# - /tmp/gemini.err   (only if something went wrong)
+```
+
+Avoid these when you want “final output only”:
+- `--output-format stream-json` (it emits tool/event traces by design)
+- `--debug` (adds verbose debug logs)
+
+For structured automation:
+
+```bash
+gemini --model gemini-3-pro-preview "Summarize @README.md in 5 bullets" \
+  --output-format json \
+  > /tmp/gemini.json 2> /tmp/gemini.err && echo "Gemini completed"
+
+# Extract just the response:
+jq -r '.response' /tmp/gemini.json
+```
+
+### 5. Critical Behavioral Notes
+
+**Approval behavior**:
+- `--yolo` auto-approves all actions.
+- `--approval-mode auto_edit` can be a safer middle ground (auto-edit without fully "yolo"-ing everything).
+
+**Rate limits** (documented): CLI auto-retries with backoff; you may see messages like "quota will reset after Xs".
+
+### 6. Injecting Files & Directories into Prompts (`@` commands)
+
+Use `@<path>` in the prompt to inject file/directory contents (git-aware filtering by default):
+
+```bash
+gemini --model gemini-3-pro-preview "@src/ Summarize the code in this directory. Focus on architecture." --output-format text
+gemini --model gemini-3-pro-preview "What does this file do? @README.md" --output-format text
+```
+
+Notes:
+- For paths with spaces, escape spaces: `@My\ Documents/file.txt`
+- By default, git-ignored paths (e.g. `node_modules/`, `.env`) are excluded (configurable in settings)
+
+### 7. Output Processing (JSON)
+
+For JSON output (`--output-format json`), parse:
 ```json
 {
   "response": "actual content",
@@ -95,55 +231,44 @@ For JSON output (`-o json`), parse:
 
 ### Code Generation
 ```bash
-gemini "Create [description] with [features]. Output complete file content." --yolo -o text
+gemini --model gemini-3-pro-preview "Create [description] with [features]. Output complete file content." --yolo --output-format text
 ```
 
 ### Code Review
 ```bash
-gemini "Review [file] for: 1) features, 2) bugs/security issues, 3) improvements" -o text
+gemini --model gemini-3-pro-preview "Review @path/to/file for: 1) features, 2) bugs/security issues, 3) improvements" --output-format text
 ```
 
 ### Bug Fixing
 ```bash
-gemini "Fix these bugs in [file]: [list]. Apply fixes now." --yolo -o text
+gemini --model gemini-3-pro-preview "Fix these bugs in @path/to/file: [list]. Apply fixes now." --yolo --output-format text
 ```
 
 ### Test Generation
 ```bash
-gemini "Generate [Jest/pytest] tests for [file]. Focus on [areas]." --yolo -o text
+gemini --model gemini-3-pro-preview "Generate [Jest/pytest] tests for @path/to/file. Focus on [areas]." --yolo --output-format text
 ```
 
 ### Documentation
 ```bash
-gemini "Generate JSDoc for all functions in [file]. Output as markdown." --yolo -o text
-```
-
-### Architecture Analysis
-```bash
-gemini "Use codebase_investigator to analyze this project" -o text
+gemini --model gemini-3-pro-preview "Generate JSDoc for all functions in @path/to/file. Output as markdown." --yolo --output-format text
 ```
 
 ### Web Research
 ```bash
-gemini "What are the latest [topic]? Use Google Search." -o text
-```
-
-### Faster Model (Simple Tasks)
-```bash
-gemini "[prompt]" -m gemini-2.5-flash -o text
+gemini --model gemini-3-pro-preview "What are the latest [topic]? Use Google Search." --output-format text
 ```
 
 ## Error Handling
 
 ### Rate Limit Exceeded
 - CLI auto-retries with backoff
-- Use `-m gemini-2.5-flash` for lower priority tasks
 - Run in background for long operations
 
 ### Command Failures
-- Check JSON output for detailed error stats
-- Verify Gemini is authenticated: `gemini --version`
-- Check `~/.gemini/settings.json` for config issues
+- Prefer `--output-format json` and inspect `.error` (if present)
+- Verify Gemini is authenticated and available: `gemini --version`
+- Check settings: `~/.gemini/settings.json` and `.gemini/settings.json`
 
 ### Validation After Generation
 Always verify Gemini's output:
@@ -158,78 +283,29 @@ Always verify Gemini's output:
 
 ```bash
 # 1. Generate
-gemini "Create [code]" --yolo -o text
+gemini --model gemini-3-pro-preview "Create [code]" --yolo --output-format text
 
 # 2. Review (Gemini reviews its own work)
-gemini "Review [file] for bugs and security issues" -o text
+gemini --model gemini-3-pro-preview "Review @path/to/file for bugs and security issues" --output-format text
 
 # 3. Fix identified issues
-gemini "Fix [issues] in [file]. Apply now." --yolo -o text
+gemini --model gemini-3-pro-preview "Fix [issues] in @path/to/file. Apply now." --yolo --output-format text
 ```
 
 ### Background Execution
 
 For long tasks, run in background and monitor:
 ```bash
-gemini "[long task]" --yolo -o text 2>&1 &
-# Monitor with BashOutput tool
+gemini --model gemini-3-pro-preview "[long task]" --yolo --output-format text > /tmp/gemini-long.txt 2>&1 &
+# Monitor by reading /tmp/gemini-long.txt
 ```
 
-## Gemini's Unique Capabilities
+## Gemini CLI Capabilities Worth Using
 
-These tools are available only through Gemini:
-
-1. **google_web_search** - Real-time internet search via Google
-2. **codebase_investigator** - Deep architectural analysis
-3. **save_memory** - Cross-session persistent memory
-4. **generate_image** - AI image generation via nanobanana extension
-
-## Image Generation
-
-Gemini CLI supports image generation through the **nanobanana** extension.
-
-### Prerequisites
-
-The API key must be set in environment (already configured in `~/.zshrc`):
-```bash
-export NANOBANANA_GEMINI_API_KEY="your-key-here"
-```
-
-To get a key: [Google AI Studio](https://aistudio.google.com/app/apikey)
-
-### Generate Image Command
-
-```bash
-gemini "Generate an image of [description]. Save it to /tmp/image-name.png" --yolo -o text 2>&1
-```
-
-### Model Selection (Optional)
-
-```bash
-# Default: gemini-2.5-flash-image (faster)
-# For higher quality:
-export NANOBANANA_MODEL="gemini-3-pro-image-preview"
-```
-
-### Rate Limits for Image Generation
-
-**Important**: Image generation requires a paid tier or has very limited free quota.
-- Free tier: ~0 requests (quota resets periodically)
-- Paid Tier 1: 500 RPM for flash, 20 RPM for pro
-- If quota exceeded, wait ~50 seconds and retry
-
-### Example Prompts
-
-```bash
-# Product mockup
-gemini "Generate an image of a mobile app interface for vocabulary learning with dark mode. Save to /tmp/app-mockup.png" --yolo -o text
-
-# Illustration
-gemini "Generate a cute robot mascot reading books in a cozy library. Save to /tmp/mascot.png" --yolo -o text
-
-# Icon/Logo
-gemini "Generate a minimalist logo for a language learning app, blue and white colors. Save to /tmp/logo.png" --yolo -o text
-```
+Notable built-in tools:
+- **`google_web_search`**: real-time web search grounding
+- **`web_fetch`**: fetch & summarize specific URLs
+- **`run_shell_command`**: execute shell commands (be careful)
 
 ## Configuration
 
@@ -237,14 +313,10 @@ gemini "Generate a minimalist logo for a language learning app, blue and white c
 
 Create `.gemini/GEMINI.md` in project root for persistent context that Gemini will automatically read.
 
-### Session Management
-
-List sessions: `gemini --list-sessions`
-Resume session: `echo "follow-up" | gemini -r [index] -o text`
-
 ## See Also
 
 - `reference.md` - Complete command and flag reference
 - `templates.md` - Prompt templates for common operations
 - `patterns.md` - Advanced integration patterns
 - `tools.md` - Gemini's built-in tools documentation
+- `image-generation.md` - Practical notes for image generation (nanobanana)

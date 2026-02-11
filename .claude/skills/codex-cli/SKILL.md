@@ -8,7 +8,7 @@ allowed-tools:
 
 # Codex CLI Integration Skill
 
-This skill enables Claude Code to invoke OpenAI Codex CLI (gpt-5.2-codex with high reasoning) for one-shot code review, approach validation, and cross-AI verification.
+This skill enables Claude Code to invoke OpenAI Codex CLI (gpt-5.3-codex with high reasoning) for one-shot code review, approach validation, and cross-AI verification.
 
 ## When to Use This Skill
 
@@ -45,25 +45,25 @@ This skill enables Claude Code to invoke OpenAI Codex CLI (gpt-5.2-codex with hi
 
 ### Approach Validation
 ```bash
-codex exec "Review this approach: [description]. Is it sound? What are the tradeoffs?" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1 && echo "Codex completed"
+codex exec "Review this approach: [description]. Is it sound? What are the tradeoffs?" -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1 && echo "Codex completed"
 # Then: Read tool /tmp/codex-result.md
 ```
 
 ### Code Review - Uncommitted Changes
 ```bash
-codex exec review --uncommitted -m gpt-5.2-codex --full-auto > /tmp/codex-review.md 2>&1
+codex exec review --uncommitted -m gpt-5.3-codex --full-auto > /tmp/codex-review.md 2>&1
 # Then: Read tool /tmp/codex-review.md
 ```
 
 ### Code Review - Against Branch
 ```bash
-codex exec review --base main -m gpt-5.2-codex --full-auto > /tmp/codex-review.md 2>&1
+codex exec review --base main -m gpt-5.3-codex --full-auto > /tmp/codex-review.md 2>&1
 # Then: Read tool /tmp/codex-review.md
 ```
 
 ### Custom Analysis
 ```bash
-codex exec "[prompt]" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1 && echo "Codex completed"
+codex exec "[prompt]" -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1 && echo "Codex completed"
 # Then: Read tool /tmp/codex-result.md
 ```
 
@@ -73,7 +73,7 @@ codex exec "[prompt]" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /de
 
 2. **Takes Time**: Expect 1-10 minutes depending on complexity. Use `run_in_background` for long tasks.
 
-3. **Model**: Always use `-m gpt-5.2-codex` for explicit model selection.
+3. **Model**: Always use `-m gpt-5.3-codex` for explicit model selection.
 
 4. **Full Auto**: `--full-auto` enables workspace-write sandbox with auto-approval.
 
@@ -88,14 +88,14 @@ codex exec "[prompt]" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /de
 ### For `codex exec` (custom prompts)
 ```bash
 # Run with output file + suppress verbose stdout
-codex exec "prompt" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1 && echo "Codex completed"
+codex exec "prompt" -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1 && echo "Codex completed"
 ```
 Then read result with **Read tool** (not cat): `/tmp/codex-result.md`
 
 ### For `codex exec review` (no -o flag support)
 ```bash
 # Redirect all output to file
-codex exec review --uncommitted -m gpt-5.2-codex --full-auto > /tmp/codex-review.md 2>&1
+codex exec review --uncommitted -m gpt-5.3-codex --full-auto > /tmp/codex-review.md 2>&1
 ```
 Then read result with **Read tool**: `/tmp/codex-review.md`
 
@@ -111,7 +111,7 @@ Then read result with **Read tool**: `/tmp/codex-review.md`
 ### For Task Review
 ```bash
 codex exec "Review the task specification at tasks/task-2026-01-09-feature/tech-decomposition.md
-Is the implementation plan complete? Any gaps or risks?" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
+Is the implementation plan complete? Any gaps or risks?" -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
 # Read: /tmp/codex-result.md
 ```
 
@@ -121,7 +121,7 @@ codex exec "Review implementation in these files:
 - backend/src/application/sessions/use-cases/create-session.use-case.ts
 - backend/src/infrastructure/web/dto/sessions/create-session.dto.ts
 
-Check against requirements in: tasks/task-2026-01-09-feature/tech-decomposition.md" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
+Check against requirements in: tasks/task-2026-01-09-feature/tech-decomposition.md" -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
 # Read: /tmp/codex-result.md
 ```
 
@@ -133,7 +133,7 @@ My approach:
 1. [Step 1]
 2. [Step 2]
 
-Is this aligned with the requirements?" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
+Is this aligned with the requirements?" -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
 # Read: /tmp/codex-result.md
 ```
 
@@ -149,7 +149,7 @@ For tasks that take longer, run in background:
 
 ```bash
 # Run in background using Bash tool with run_in_background=true
-codex exec "[complex prompt]" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1 && echo "Codex completed"
+codex exec "[complex prompt]" -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1 && echo "Codex completed"
 ```
 
 Then read result with **Read tool**: `/tmp/codex-result.md`
@@ -164,18 +164,18 @@ Review this plan:
 2. [Step 2]
 3. [Step 3]
 
-Is this approach sound? What issues might I encounter?" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
+Is this approach sound? What issues might I encounter?" -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
 # Read: /tmp/codex-result.md
 ```
 
 ### Security Review
 ```bash
 # Built-in review command (redirect to file)
-codex exec review --uncommitted -m gpt-5.2-codex --full-auto > /tmp/codex-review.md 2>&1
+codex exec review --uncommitted -m gpt-5.3-codex --full-auto > /tmp/codex-review.md 2>&1
 # Read: /tmp/codex-review.md
 
 # Or with custom focus:
-codex exec "Review the uncommitted changes for security vulnerabilities including XSS, injection, auth issues" -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
+codex exec "Review the uncommitted changes for security vulnerabilities including XSS, injection, auth issues" -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
 # Read: /tmp/codex-result.md
 ```
 
@@ -185,7 +185,16 @@ codex exec "I implemented [feature]. The key files are:
 - path/to/file1.ts
 - path/to/file2.ts
 
-Verify the implementation is correct and complete." -m gpt-5.2-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
+Verify the implementation is correct and complete." -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
+
+## What's New in Codex CLI 0.96.0
+
+Highlights from the latest CLI release:
+- `unified_exec` enabled on non-Windows platforms for smoother exec flows.
+- Websocket rate-limit signaling via the new `codex.rate_limits` event.
+- `thread/compact` available in the v2 app-server API with async behavior and status tracking.
+
+Source: https://developers.openai.com/codex/changelog
 # Read: /tmp/codex-result.md
 ```
 

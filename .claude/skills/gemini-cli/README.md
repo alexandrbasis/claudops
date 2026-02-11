@@ -75,32 +75,25 @@ Ready-to-use templates for:
 
 - **Generate-Review-Fix** - Quality assurance cycle
 - **Background Execution** - Parallel task processing
-- **Model Selection** - Pro vs Flash decision tree
 - **Rate Limit Handling** - Strategies for free tier limits
 
 ### Gemini's Unique Tools
 
-- `google_web_search` - Real-time internet search
-- `codebase_investigator` - Deep architecture analysis
-- `save_memory` - Cross-session persistence
+- `google_web_search` - Real-time internet search grounding
+- `web_fetch` - Fetch and summarize specific URLs
+- `run_shell_command` - Run shell commands when needed (use carefully)
 
 ## Quick Reference
 
 ```bash
 # Basic generation
-gemini "Create [description]" --yolo -o text
+gemini --model gemini-3-pro-preview "Create [description]" --yolo --output-format text
 
 # Code review
-gemini "Review [file] for bugs and security issues" -o text
+gemini --model gemini-3-pro-preview "Review @path/to/file for bugs and security issues" --output-format text
 
 # Web research
-gemini "What's new in [topic]? Use Google Search." -o text
-
-# Architecture analysis
-gemini "Use codebase_investigator to analyze this project" -o text
-
-# Faster model for simple tasks
-gemini "[prompt]" -m gemini-2.5-flash -o text
+gemini --model gemini-3-pro-preview "What's new in [topic]? Use Google Search." --output-format text
 ```
 
 ## Why Use Gemini from Claude Code?
@@ -109,7 +102,7 @@ gemini "[prompt]" -m gemini-2.5-flash -o text
 |----------|---------|
 | Second opinion | Different AI perspective on code |
 | Current info | Google Search grounding |
-| Architecture | codebase_investigator tool |
+| Automation | One-shot prompts + JSON output (`--output-format json`) |
 | Parallel work | Offload tasks while continuing |
 
 ## License

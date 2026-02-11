@@ -1,5 +1,7 @@
 ---
-paths: backend/**/*.{ts,spec.ts}
+paths:
+  - "backend/**/*.ts"
+  - "backend/**/*.spec.ts"
 ---
 
 # Testing Standards
@@ -21,3 +23,9 @@ paths: backend/**/*.{ts,spec.ts}
 - Use test factories for data setup
 - Isolate tests with proper cleanup
 - Mock external dependencies in unit tests
+
+## Quality Gates
+Pre-merge requirements:
+- Format ✓ + Lint ✓ + Type Check ✓ + Tests ✓
+- No skipped tests without justification
+- Documentation must be clear and accurate

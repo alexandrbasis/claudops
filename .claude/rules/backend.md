@@ -1,5 +1,6 @@
 ---
-paths: backend/**/*.ts
+paths:
+  - "backend/**/*.ts"
 ---
 
 # Backend Development Rules
@@ -9,10 +10,8 @@ paths: backend/**/*.ts
 - **Framework**: NestJS with TypeScript
 - **ORM**: Prisma with PostgreSQL (Supabase)
 
-## Required Reading Before Work
-- `backend/docs/project-structure.md` - DDD layers and module structure
-- `backend/docs/migration-structure.md` - Prisma migration workflow
-- `backend/AGENTS.md` - Backend-specific agent instructions
+## Reference
+See `backend/AGENTS.md` for commands, module reference, and documentation index.
 
 ## Code Standards
 - Strict TypeScript typing (`strict: true`)

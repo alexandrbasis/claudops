@@ -8,13 +8,13 @@ The most reliable pattern for quality code generation.
 
 ```bash
 # Step 1: Generate code
-gemini "Create [code description]" --yolo -o text
+gemini --model gemini-3-pro-preview "Create [code description]" --yolo --output-format text
 
 # Step 2: Have Gemini review its own work
-gemini "Review [generated file] for bugs and security issues" -o text
+gemini --model gemini-3-pro-preview "Review @path/to/generated/file for bugs and security issues" --output-format text
 
 # Step 3: Fix identified issues
-gemini "Fix these issues in [file]: [list from review]. Apply now." --yolo -o text
+gemini --model gemini-3-pro-preview "Fix these issues in @path/to/file: [list from review]. Apply now." --yolo --output-format text
 ```
 
 ### Why It Works
@@ -25,14 +25,14 @@ gemini "Fix these issues in [file]: [list from review]. Apply now." --yolo -o te
 ### Example
 ```bash
 # Generate
-gemini "Create a user authentication module with bcrypt and JWT" --yolo -o text
+gemini --model gemini-3-pro-preview "Create a user authentication module with bcrypt and JWT" --yolo --output-format text
 
 # Review
-gemini "Review auth.js for security vulnerabilities" -o text
+gemini --model gemini-3-pro-preview "Review @auth.js for security vulnerabilities" --output-format text
 # Output: "Found XSS risk, missing input validation, weak JWT secret"
 
 # Fix
-gemini "Fix in auth.js: XSS risk, add input validation, use env var for JWT secret. Apply now." --yolo -o text
+gemini --model gemini-3-pro-preview "Fix in @auth.js: XSS risk, add input validation, use env var for JWT secret. Apply now." --yolo --output-format text
 ```
 
 ## Pattern 2: JSON Output for Programmatic Processing
@@ -40,7 +40,19 @@ gemini "Fix in auth.js: XSS risk, add input validation, use env var for JWT secr
 Use JSON output when you need to process results programmatically.
 
 ```bash
-gemini "[prompt]" -o json 2>&1
+gemini --model gemini-3-pro-preview "[prompt]" --output-format json > /tmp/gemini.json 2> /tmp/gemini.err
+```
+
+### Final-output-only extraction
+
+If you want just the final answer (and minimal noise), extract `.response` into a separate file:
+
+```bash
+gemini --model gemini-3-pro-preview "Output ONLY the final answer. No reasoning. Task: [prompt]" \
+  --output-format json \
+  > /tmp/gemini.json 2> /tmp/gemini.err \
+  && jq -r '.response' /tmp/gemini.json > /tmp/gemini.out \
+  && echo "Gemini completed"
 ```
 
 ### Parsing the Response
@@ -49,7 +61,8 @@ gemini "[prompt]" -o json 2>&1
 // In Node.js or with jq
 const result = JSON.parse(output);
 const content = result.response;
-const tokenUsage = result.stats.models["gemini-2.5-flash"].tokens.total;
+const [modelName] = Object.keys(result.stats.models ?? {});
+const tokenUsage = modelName ? result.stats.models[modelName]?.tokens?.total : undefined;
 const toolCalls = result.stats.tools.byName;
 ```
 
@@ -65,12 +78,12 @@ For long-running tasks, execute in background and continue working.
 
 ```bash
 # Start in background
-gemini "[long task]" --yolo -o text 2>&1 &
+gemini --model gemini-3-pro-preview "[long task]" --yolo --output-format text > /tmp/gemini-long.txt 2>&1 &
 
 # Get process ID for later
 echo $!
 
-# Monitor output incrementally with BashOutput tool
+# Monitor output by reading /tmp/gemini-long.txt
 ```
 
 ### When to Use
@@ -81,40 +94,12 @@ echo $!
 ### Parallel Execution
 ```bash
 # Run multiple tasks simultaneously
-gemini "Create frontend" --yolo -o text 2>&1 &
-gemini "Create backend" --yolo -o text 2>&1 &
-gemini "Create tests" --yolo -o text 2>&1 &
+gemini --model gemini-3-pro-preview "Create frontend" --yolo --output-format text > /tmp/gemini-frontend.txt 2>&1 &
+gemini --model gemini-3-pro-preview "Create backend" --yolo --output-format text > /tmp/gemini-backend.txt 2>&1 &
+gemini --model gemini-3-pro-preview "Create tests" --yolo --output-format text > /tmp/gemini-tests.txt 2>&1 &
 ```
 
-## Pattern 4: Model Selection Strategy
-
-Choose the right model for the task.
-
-### Decision Tree
-
-```
-Is the task complex (architecture, multi-file, deep analysis)?
-├── Yes → Use default (Gemini 3 Pro)
-└── No → Is speed critical?
-    ├── Yes → Use gemini-2.5-flash
-    └── No → Is it trivial (formatting, simple query)?
-        ├── Yes → Use gemini-2.5-flash-lite
-        └── No → Use gemini-2.5-flash
-```
-
-### Examples
-```bash
-# Complex: Architecture analysis
-gemini "Analyze codebase architecture" -o text
-
-# Quick: Simple formatting
-gemini "Format this JSON" -m gemini-2.5-flash -o text
-
-# Trivial: One-liner
-gemini "What is 2+2?" -m gemini-2.5-flash -o text
-```
-
-## Pattern 5: Rate Limit Handling
+## Pattern 4: Rate Limit Handling
 
 Strategies for working within rate limits.
 
@@ -124,39 +109,39 @@ Default behavior - CLI retries automatically with backoff.
 ### Approach 2: Use Flash for Lower Priority
 ```bash
 # High priority: Use Pro
-gemini "[important task]" --yolo -o text
+gemini --model gemini-3-pro-preview "[important task]" --yolo --output-format text
 
-# Lower priority: Use Flash (different quota)
-gemini "[less critical task]" -m gemini-2.5-flash -o text
+# Lower priority: keep using defaults; rely on auto-retry/backoff
+gemini --model gemini-3-pro-preview "[less critical task]" --output-format text
 ```
 
 ### Approach 3: Batch Operations
 Combine related operations into single prompts:
 ```bash
 # Instead of multiple calls:
-gemini "Create file A" --yolo
-gemini "Create file B" --yolo
-gemini "Create file C" --yolo
+gemini --model gemini-3-pro-preview "Create file A" --yolo --output-format text
+gemini --model gemini-3-pro-preview "Create file B" --yolo --output-format text
+gemini --model gemini-3-pro-preview "Create file C" --yolo --output-format text
 
 # Single call:
-gemini "Create files A, B, and C with [specs]. Create all now." --yolo
+gemini --model gemini-3-pro-preview "Create files A, B, and C with [specs]. Create all now." --yolo --output-format text
 ```
 
 ### Approach 4: Sequential with Delays
 For automated scripts, add delays:
 ```bash
-gemini "[task 1]" --yolo -o text
+gemini --model gemini-3-pro-preview "[task 1]" --yolo --output-format text
 sleep 2
-gemini "[task 2]" --yolo -o text
+gemini --model gemini-3-pro-preview "[task 2]" --yolo --output-format text
 ```
 
-## Pattern 6: Context Enrichment
+## Pattern 5: Context Enrichment
 
 Provide rich context for better results.
 
 ### Using File References
 ```bash
-gemini "Based on @./package.json and @./src/index.js, suggest improvements" -o text
+gemini --model gemini-3-pro-preview "Based on @./package.json and @./src/index.js, suggest improvements" --output-format text
 ```
 
 ### Using GEMINI.md
@@ -175,15 +160,10 @@ This is a React app using TypeScript.
 
 ### Explicit Context in Prompt
 ```bash
-gemini "Given this context:
-- Project uses React 18 with TypeScript
-- State management: Zustand
-- Styling: Tailwind CSS
-
-Create a user profile component." --yolo -o text
+gemini --model gemini-3-pro-preview $'Given this context:\n- Project uses React 18 with TypeScript\n- State management: Zustand\n- Styling: Tailwind CSS\n\nCreate a user profile component.' --yolo --output-format text
 ```
 
-## Pattern 7: Validation Pipeline
+## Pattern 6: Validation Pipeline
 
 Always validate Gemini's output before using.
 
@@ -216,28 +196,28 @@ Always validate Gemini's output before using.
 ### Automated Validation Pattern
 ```bash
 # Generate
-gemini "Create utility functions" --yolo -o text
+gemini --model gemini-3-pro-preview "Create utility functions" --yolo --output-format text
 
 # Validate
 node --check utils.js && eslint utils.js && npm test
 ```
 
-## Pattern 8: Incremental Refinement
+## Pattern 7: Incremental Refinement
 
 Build complex outputs in stages.
 
 ```bash
 # Stage 1: Core structure
-gemini "Create basic Express server with routes for /api/users" --yolo -o text
+gemini --model gemini-3-pro-preview "Create basic Express server with routes for /api/users" --yolo --output-format text
 
 # Stage 2: Add feature
-gemini "Add authentication middleware to the Express server in server.js" --yolo -o text
+gemini --model gemini-3-pro-preview "Add authentication middleware to the Express server in @server.js" --yolo --output-format text
 
 # Stage 3: Add another feature
-gemini "Add rate limiting to the Express server in server.js" --yolo -o text
+gemini --model gemini-3-pro-preview "Add rate limiting to the Express server in @server.js" --yolo --output-format text
 
 # Stage 4: Review all
-gemini "Review server.js for issues and optimize" -o text
+gemini --model gemini-3-pro-preview "Review @server.js for issues and optimize" --output-format text
 ```
 
 ### Benefits
@@ -245,7 +225,7 @@ gemini "Review server.js for issues and optimize" -o text
 - Each stage validates before continuing
 - Clear audit trail
 
-## Pattern 9: Cross-Validation with Claude
+## Pattern 8: Cross-Validation with Claude
 
 Use both AIs for highest quality.
 
@@ -253,13 +233,13 @@ Use both AIs for highest quality.
 ```bash
 # 1. Claude writes code (using normal Claude Code tools)
 # 2. Gemini reviews
-gemini "Review this code for bugs and security issues: [paste code]" -o text
+gemini --model gemini-3-pro-preview "Review this code for bugs and security issues: [paste code]" --output-format text
 ```
 
 ### Gemini Generates, Claude Reviews
 ```bash
 # 1. Gemini generates
-gemini "Create [code]" --yolo -o text
+gemini --model gemini-3-pro-preview "Create [code]" --yolo --output-format text
 
 # 2. Claude reviews the output (in conversation)
 # "Review this code that Gemini generated..."
@@ -269,23 +249,16 @@ gemini "Create [code]" --yolo -o text
 - Claude: Strong on reasoning, following complex instructions
 - Gemini: Strong on current web knowledge, codebase investigation
 
-## Pattern 10: Session Continuity
+## Pattern 9: Session Continuity
 
 Use sessions for multi-turn workflows.
 
 ```bash
 # Initial task
-gemini "Analyze this codebase architecture" -o text
-# Session saved automatically
+gemini --model gemini-3-pro-preview "Analyze this codebase architecture. Use @./ to read relevant files." --output-format text
 
-# List sessions
-gemini --list-sessions
-
-# Continue with follow-up
-echo "What patterns did you find?" | gemini -r 1 -o text
-
-# Further refinement
-echo "Focus on the authentication flow" | gemini -r 1 -o text
+# For multi-turn continuity, prefer interactive commands like /resume and /chat
+# inside the `gemini` REPL (run `gemini` then type `/help` to discover commands).
 ```
 
 ### Use Cases

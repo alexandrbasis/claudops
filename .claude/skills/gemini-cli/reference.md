@@ -1,12 +1,12 @@
 # Gemini CLI Command Reference
 
-Complete reference for Gemini CLI v0.16.0+
+Self-contained reference for using Gemini CLI effectively in this workspace.
 
 ## Installation
 
 ```bash
 npm install -g @google/gemini-cli
-# Or without installing:
+# Or without installing (one-off):
 npx @google/gemini-cli
 ```
 
@@ -20,148 +20,74 @@ export GEMINI_API_KEY=your_key
 gemini  # First run prompts for auth
 ```
 
-## Command Line Flags
+## Core Modes
 
-### Essential Flags
+### Interactive (REPL)
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--yolo` | `-y` | Auto-approve all tool calls |
-| `--output-format` | `-o` | Output format: `text`, `json`, `stream-json` |
-| `--model` | `-m` | Model selection (e.g., `gemini-2.5-flash`) |
+```bash
+gemini
+```
 
-### Session Management
+### One-shot (recommended for scripts/automation)
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--resume` | `-r` | Resume session by index or "latest" |
-| `--list-sessions` | | List available sessions |
-| `--delete-session` | | Delete session by index |
+```bash
+gemini --model gemini-3-pro-preview "What is fine tuning?"
+echo "Explain this code" | gemini
+```
 
-### Execution Options
+## Key Flags
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--sandbox` | `-s` | Run in isolated sandbox |
-| `--approval-mode` | | `default`, `auto_edit`, or `yolo` |
-| `--timeout` | | Request timeout in ms |
-| `--checkpointing` | | Enable file change snapshots |
+| Flag | Short | Description | Example |
+|------|-------|-------------|---------|
+| `--model` | `-m` | Model to use (pinned in this workspace) | `gemini --model gemini-3-pro-preview "q"` |
+| `--output-format` | `-o` | `text` (default), `json`, `stream-json` | `gemini "q" --output-format json` |
+| `--debug` | `-d` | Enable debug output | `gemini "q" --debug` |
+| `--include-directories` | | Add extra workspace dirs | `--include-directories src,docs` |
+| `--yolo` | `-y` | Auto-approve all actions | `gemini "q" --yolo` |
+| `--approval-mode` | | Set approval mode | `--approval-mode auto_edit` |
 
-### Context & Tools
+Note: `--prompt/-p` exists but is **deprecated** in the current CLI. Prefer the positional prompt: `gemini "..."`.
 
-| Flag | Description |
-|------|-------------|
-| `--include-directories` | Add directories to workspace |
-| `--allowed-tools` | Restrict available tools |
-| `--allowed-mcp-server-names` | Restrict MCP servers |
+For the full current flag list, run:
 
-### Other Options
-
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--debug` | `-d` | Enable debug output |
-| `--version` | `-v` | Show version |
-| `--help` | `-h` | Show help |
-| `--list-extensions` | `-l` | List installed extensions |
-| `--prompt-interactive` | `-i` | Interactive mode with initial prompt |
+```bash
+gemini --help
+```
 
 ## Output Formats
 
-### Text (`-o text`)
+### Text (default)
+
 ```bash
-gemini "prompt" -o text
-# Returns: Human-readable response
+gemini --model gemini-3-pro-preview "prompt"
 ```
 
-### JSON (`-o json`)
+### JSON
+
 ```bash
-gemini "prompt" -o json
+gemini --model gemini-3-pro-preview "prompt" --output-format json > /tmp/gemini.json
+jq -r '.response' /tmp/gemini.json
 ```
 
-Returns structured data:
-```json
-{
-  "response": "The actual response content",
-  "stats": {
-    "models": {
-      "gemini-2.5-flash": {
-        "api": {
-          "totalRequests": 3,
-          "totalErrors": 0,
-          "totalLatencyMs": 5000
-        },
-        "tokens": {
-          "prompt": 1500,
-          "candidates": 500,
-          "total": 2000,
-          "cached": 800,
-          "thoughts": 150,
-          "tool": 50
-        }
-      }
-    },
-    "tools": {
-      "totalCalls": 2,
-      "totalSuccess": 2,
-      "totalFail": 0,
-      "byName": {
-        "google_web_search": {
-          "count": 1,
-          "success": 1,
-          "durationMs": 3000
-        }
-      }
-    }
-  }
-}
-```
+### Stream JSON
 
-### Stream JSON (`-o stream-json`)
-Real-time newline-delimited JSON events for monitoring long tasks.
-
-## Model Selection
-
-### Available Models
-
-| Model | Use Case | Context |
-|-------|----------|---------|
-| `gemini-3-pro` | Complex tasks (default) | 1M tokens |
-| `gemini-2.5-flash` | Quick tasks, lower latency | Large |
-| `gemini-2.5-flash-lite` | Fastest, simplest tasks | Medium |
-
-### Usage
 ```bash
-# Default (Pro)
-gemini "complex analysis" -o text
-
-# Flash for speed
-gemini "simple task" -m gemini-2.5-flash -o text
+gemini --output-format stream-json "Analyze this code" > /tmp/events.jsonl
 ```
+
+## Interactive Command Prefixes
+
+Gemini CLI supports commands prefixed with:
+- **`/`**: meta commands (help, settings, memory, etc.)
+- **`@`**: inject file/directory contents into your prompt (git-aware filtering)
+- **`!`**: shell mode / execute shell commands from within the CLI
 
 ## Configuration Files
 
 ### Settings Location
-Priority order (highest first):
-1. `/etc/gemini-cli/settings.json` (system)
-2. `~/.gemini/settings.json` (user)
-3. `.gemini/settings.json` (project)
-
-### Example Settings
-```json
-{
-  "security": {
-    "auth": {
-      "selectedType": "oauth-personal"
-    }
-  },
-  "general": {
-    "previewFeatures": true,
-    "vimMode": false,
-    "checkpointing": true
-  },
-  "mcpServers": {}
-}
-```
+Common locations referenced in the docs:
+- `~/.gemini/settings.json` (user)
+- `.gemini/settings.json` (project)
 
 ### Project Context (GEMINI.md)
 
@@ -188,74 +114,27 @@ dist/
 .env
 ```
 
-## Session Management
-
-### List Sessions
-```bash
-gemini --list-sessions
-```
-
-Output:
-```
-Available sessions for this project (5):
-  1. Create task manager (10 minutes ago) [uuid]
-  2. Review code (20 minutes ago) [uuid]
-  ...
-```
-
-### Resume Session
-```bash
-# By index
-echo "follow-up question" | gemini -r 1 -o text
-
-# Latest session
-echo "continue" | gemini -r latest -o text
-```
-
 ## Rate Limits
-
-### Free Tier Limits
-- 60 requests per minute
-- 1000 requests per day
 
 ### Rate Limit Behavior
 - CLI auto-retries with exponential backoff
 - Message: `"quota will reset after Xs"`
-- Typical wait: 1-5 seconds
 
 ### Mitigation
-1. Use `gemini-2.5-flash` for simple tasks
-2. Batch operations into single prompts
-3. Run long tasks in background
-
-## Interactive Commands
-
-In interactive mode, these slash commands are available:
-
-| Command | Purpose |
-|---------|---------|
-| `/help` | Show available commands |
-| `/tools` | List available tools |
-| `/stats` | Show token usage |
-| `/compress` | Summarize context to save tokens |
-| `/restore` | Restore file checkpoints |
-| `/chat save <tag>` | Save conversation |
-| `/chat resume <tag>` | Resume conversation |
-| `/memory show` | Display GEMINI.md context |
-| `/memory refresh` | Reload context files |
+1. Batch operations into single prompts
+2. Run long tasks in background
 
 ## Piping & Scripting
 
 ### Pipe Input
 ```bash
-echo "What is 2+2?" | gemini -o text
-cat file.txt | gemini "summarize this" -o text
+echo "What is 2+2?" | gemini
 ```
 
 ### File Reference Syntax
 In prompts, reference files with `@`:
 ```bash
-gemini "Review @./src/main.js for bugs" -o text
+gemini --model gemini-3-pro-preview "Review @./src/main.js for bugs" --output-format text
 ```
 
 ### Shell Command Execution
@@ -282,11 +161,11 @@ In interactive mode, prefix with `!`:
 | "API key not found" | Set `GEMINI_API_KEY` env var |
 | "Rate limit exceeded" | Wait for auto-retry or use Flash |
 | "Context too large" | Use `.geminiignore` or be specific |
-| "Tool call failed" | Check JSON stats for details |
+| "Tool call failed" | Use `--output-format json` and inspect `.stats` / `.error` |
 
 ### Debug Mode
 ```bash
-gemini "prompt" --debug -o text
+gemini --model gemini-3-pro-preview "prompt" --debug --output-format text
 ```
 
 ### Error Reports

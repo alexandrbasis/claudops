@@ -8,6 +8,7 @@ When changes are detected in either file, the corresponding counterpart is updat
 File pairs to synchronize:
 1. Root: claude.md ↔ agents.md
 2. Backend: backend/claude.md ↔ backend/AGENTS.md
+3. Mobile App: mobile-app/CLAUDE.md ↔ mobile-app/AGENTS.md
 """
 
 import os
@@ -33,18 +34,59 @@ def calculate_file_hash(file_path):
 
 def get_file_pairs(base_path):
     """Define the file pairs that should be synchronized"""
-    project_root = Path(base_path).parent
+    base_path = Path(base_path).resolve()
+
+    # Find repository root (directory that contains ".claude/")
+    project_root = None
+    for candidate in [base_path] + list(base_path.parents):
+        if (candidate / ".claude").exists():
+            project_root = candidate
+            break
+
+    # Fallback (shouldn't normally happen)
+    if project_root is None:
+        project_root = Path.cwd().resolve()
+
+    def resolve_existing_path(*candidates: Path) -> Path:
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+        return candidates[0]
+
+    root_claude = resolve_existing_path(project_root / "CLAUDE.md", project_root / "claude.md")
+    root_agents = resolve_existing_path(project_root / "AGENTS.md", project_root / "agents.md")
+    backend_claude = resolve_existing_path(
+        project_root / "backend" / "CLAUDE.md",
+        project_root / "backend" / "claude.md",
+    )
+    backend_agents = resolve_existing_path(
+        project_root / "backend" / "AGENTS.md",
+        project_root / "backend" / "agents.md",
+    )
+    mobile_claude = resolve_existing_path(
+        project_root / "mobile-app" / "CLAUDE.md",
+        project_root / "mobile-app" / "claude.md",
+    )
+    mobile_agents = resolve_existing_path(
+        project_root / "mobile-app" / "AGENTS.md",
+        project_root / "mobile-app" / "agents.md",
+    )
 
     return [
         {
-            "source": project_root / "CLAUDE.md",
-            "target": project_root / "AGENTS.md",
+            "source": root_claude,
+            "target": root_agents,
             "name": "Root"
         },
         {
-            "source": project_root / "backend" / "CLAUDE.md",
-            "target": project_root / "backend" / "AGENTS.md",
+            "source": backend_claude,
+            "target": backend_agents,
             "name": "Backend"
+        },
+        {
+            "source": mobile_claude,
+            "target": mobile_agents,
+            "name": "Mobile App"
         }
     ]
 
@@ -60,11 +102,23 @@ def find_pair_for_file(changed_file, file_pairs):
     """Find the corresponding pair for a changed file"""
     changed_path = Path(changed_file).resolve()
 
+    def is_same_file(a: Path, b: Path) -> bool:
+        """
+        Robust file identity check across case-insensitive filesystems (macOS)
+        and case-sensitive ones (Linux/CI).
+        """
+        try:
+            if a.exists() and b.exists():
+                return a.samefile(b)
+        except Exception:
+            pass
+        return a.resolve() == b.resolve()
+
     for pair in file_pairs:
         source_path = Path(pair["source"]).resolve()
         target_path = Path(pair["target"]).resolve()
 
-        if changed_path == source_path or changed_path == target_path:
+        if is_same_file(changed_path, source_path) or is_same_file(changed_path, target_path):
             return pair
 
     return None
@@ -77,8 +131,16 @@ def synchronize_files(pair, changed_file):
 
     log_message(f"Processing synchronization for {pair['name']} files")
 
+    def is_same_file(a: Path, b: Path) -> bool:
+        try:
+            if a.exists() and b.exists():
+                return a.resolve().samefile(b.resolve())
+        except Exception:
+            pass
+        return a.resolve() == b.resolve()
+
     # Determine which file was changed and which needs to be updated
-    if changed_path == source_path:
+    if is_same_file(changed_path, source_path):
         source = source_path
         target = target_path
         direction = "CLAUDE.md → AGENTS.md"
@@ -136,8 +198,8 @@ def synchronize_files(pair, changed_file):
 
 def main():
     """Main hook function"""
-    # Get the repository root directory
-    repo_root = Path(__file__).parent.parent
+    # Prefer repository root computed from this file location
+    repo_root = Path(__file__).resolve()
 
     # Get the changed file from environment variable or command line argument
     changed_file = os.environ.get('FILE_PATH', '')

@@ -21,10 +21,13 @@ Use this skill when you believe part of the work can be done in parallel **witho
 - **Safety first**:
   - **Git writes are forbidden unless explicitly approved** (branch/commit/push/merge).
   - If git writes are not approved, workers still produce results, but do not create branches or commits.
+  - **Task docs are orchestrator-owned in parallel mode**: workers must not edit shared task documents (to avoid conflicts). The orchestrator updates task docs after applying/merging worker outputs.
 
 ## Critical Rule (true parallelism)
 
-To actually run workers concurrently, **spawn ALL Task calls in a SINGLE assistant message** and set `run_in_background: true` for each worker (if supported in your Task tool).
+To maximize concurrency, **spawn ALL worker Task calls in a SINGLE assistant message**.
+
+If your Task runtime supports background execution flags, you may enable them, but the workflow must remain correct without any tool-specific background setting.
 
 ## Inputs
 
@@ -52,11 +55,11 @@ For each selected item, spawn a worker (use the same prompt structure for consis
 ```
 Use Task tool:
 subagent_type: "developer-agent"
-run_in_background: true
 prompt: "Implement criterion [N] (scoped work item) for task at [task_path].
 
 Inputs:
 - task_document_path: [task_document_path]
+- criterion_number: [N]
 - context_summary_path: [context_summary_path or 'none']
 - branch_name: [branch_name or 'none']
 - git_writes_approved: [true|false]
@@ -65,6 +68,7 @@ Constraints:
 - Implement ONLY criterion [N]
 - Follow TDD (RED→GREEN→REFACTOR) inside scope
 - Do NOT do any git operations unless git_writes_approved=true
+- Do NOT edit shared task documents; return notes for orchestrator to update docs
 
 Return JSON result when done."
 ```
@@ -76,6 +80,7 @@ Return JSON result when done."
   - Merge each sub-branch into the main feature branch.
 - If `git_writes_approved=false`:
   - Apply changes manually in the main working tree based on worker outputs (files changed + summary).
+- Update the task document (checkboxes/changelog/tests) **once**, after worker outputs are applied/merged, to avoid parallel edit conflicts.
 
 ### 4) Run validation (example: backend)
 

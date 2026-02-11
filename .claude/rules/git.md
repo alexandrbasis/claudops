@@ -8,14 +8,20 @@
 
 ## Commit Format
 ```
-Type: Brief summary (50 chars)
+<type>(<optional-scope>): <summary>
 
-- Details if needed
-- Reference: WYT-123
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-Co-Authored-By: Claude <noreply@anthropic.com>
+- Body (optional): why + what changed
+- Refs (recommended): `Refs: WYT-123`
 ```
+
+### Allowed Types
+- `feat` - new user-facing feature
+- `fix` - bug fix
+- `refactor` - code change that neither fixes a bug nor adds a feature
+- `docs` - documentation only
+- `test` - tests only
+- `chore` - tooling/maintenance (no production behavior change)
+- `ci` - CI-only changes
 
 ## Commit Rules (CRITICAL)
 - **NEVER commit without user permission**

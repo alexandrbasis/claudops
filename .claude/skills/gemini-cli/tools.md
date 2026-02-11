@@ -1,344 +1,76 @@
-# Gemini CLI Built-in Tools
+# Gemini CLI Tools
 
-Reference for Gemini's built-in tools and their capabilities.
+This file summarizes the key built-in tools you can rely on when using Gemini CLI.
 
-## Unique Tools (Not in Claude Code)
+In most cases you **do not call tools directly**. You describe the task, and Gemini selects tools. You can still nudge tool usage (“use Google Search”, “fetch this URL”, etc.).
 
-These tools are available only through Gemini CLI:
+## Web search tool (`google_web_search`)
 
-### google_web_search
+Use when you need **current** information from the web (latest versions, docs changes, benchmarks).
 
-Performs web search using Google Search API.
-
-**Capabilities:**
-- Real-time internet search
-- Current information (news, releases, docs)
-- Grounded responses with sources
-
-**Usage:**
-```bash
-gemini "What are the latest React 19 features? Use Google Search." -o text
-```
-
-**Best For:**
-- Current events and news
-- Latest library versions
-- Recent documentation updates
-- Community opinions and benchmarks
-
-**Example Queries:**
-- "What are the security vulnerabilities in lodash 4.x? Use Google Search."
-- "What's new in TypeScript 5.4? Use Google Search."
-- "Best practices for Next.js 14 app router in November 2025."
-
----
-
-### codebase_investigator
-
-Specialized tool for deep codebase analysis.
-
-**Capabilities:**
-- Architectural mapping
-- Dependency analysis
-- Cross-file relationship detection
-- System-wide pattern identification
-
-**Usage:**
-```bash
-gemini "Use the codebase_investigator tool to analyze this project" -o text
-```
-
-**Output Includes:**
-- Overall architecture description
-- Key file purposes
-- Component relationships
-- Dependency chains
-- Potential issues/inconsistencies
-
-**Best For:**
-- Onboarding to new codebases
-- Understanding legacy systems
-- Finding hidden dependencies
-- Architecture documentation
-
-**Example:**
-```bash
-gemini "Use codebase_investigator to map the authentication flow in this project" -o text
-```
-
----
-
-### save_memory
-
-Saves information to persistent long-term memory.
-
-**Capabilities:**
-- Cross-session persistence
-- Key-value storage
-- Recall in future sessions
-
-**Usage:**
-```bash
-gemini "Remember that this project uses Zustand for state management. Save this to memory." -o text
-```
-
-**Best For:**
-- Project conventions
-- User preferences
-- Recurring context
-- Custom instructions
-
----
-
-## Standard Tools
-
-These tools are similar to Claude Code's capabilities:
-
-### list_directory
-
-Lists files and subdirectories in a path.
-
-**Parameters:**
-- `path`: Directory to list
-- `ignore`: Glob patterns to exclude
-
-**Example Output:**
-```
-src/
-  components/
-  utils/
-  index.js
-package.json
-README.md
-```
-
----
-
-### read_file
-
-Reads file content with truncation for large files.
-
-**Supported Formats:**
-- Text files (all types)
-- Images (PNG, JPG, GIF, WEBP, SVG, BMP)
-- PDF documents
-
-**Parameters:**
-- `path`: File path
-- `offset`: Starting line (for large files)
-- `limit`: Number of lines
-
-**Large File Handling:**
-If file exceeds limit, output indicates truncation and provides instructions for reading more with offset/limit.
-
----
-
-### search_file_content
-
-Fast content search powered by ripgrep.
-
-**Advantages over grep:**
-- Optimized performance
-- Automatic output limiting (max 20k matches)
-- Better pattern matching
-
-**Parameters:**
-- `pattern`: Regex pattern
-- `path`: Search root
-- Various ripgrep flags
-
----
-
-### glob
-
-Pattern-based file finding.
-
-**Returns:**
-- Absolute paths
-- Sorted by modification time (newest first)
-
-**Example Patterns:**
-- `src/**/*.ts` - All TypeScript files in src
-- `**/*.test.js` - All test files
-- `**/README.md` - All READMEs
-
----
-
-### web_fetch
-
-Fetches content from URLs.
-
-**Capabilities:**
-- HTTP/HTTPS URLs
-- Local addresses (localhost)
-- Up to 20 URLs per request
-
-**Usage:**
-```bash
-gemini "Fetch and summarize https://example.com/docs" -o text
-```
-
----
-
-### write_todos
-
-Internal task tracking.
-
-**Capabilities:**
-- Track subtasks for complex requests
-- Organize multi-step work
-- Prevent missed steps
-
-**Automatic Usage:**
-Gemini uses this internally for complex tasks.
-
----
-
-## Tool Invocation
-
-### Automatic Tool Selection
-
-Gemini automatically selects appropriate tools based on the prompt:
-
-| Prompt Type | Tool Selected |
-|-------------|---------------|
-| "What files are in src/" | list_directory |
-| "Find all TODO comments" | search_file_content |
-| "Read package.json" | read_file |
-| "Find all React components" | glob |
-| "What's new in Vue 4?" | google_web_search |
-| "Analyze this codebase" | codebase_investigator |
-
-### Explicit Tool Requests
-
-You can explicitly request tools:
+Example prompt:
 
 ```bash
-gemini "Use the codebase_investigator tool to..." -o text
-gemini "Search the web for..." -o text
-gemini "Use glob to find all..." -o text
+gemini --model gemini-3-pro-preview "What's new in TypeScript? Use Google Search and cite sources." --output-format text
 ```
 
----
+## Web fetch tool (`web_fetch`)
 
-## Tool Statistics in JSON Output
+Use when you want Gemini to **summarize / compare / extract** info from specific URLs.
 
-When using `-o json`, tool usage is reported:
-
-```json
-{
-  "stats": {
-    "tools": {
-      "totalCalls": 3,
-      "totalSuccess": 3,
-      "totalFail": 0,
-      "totalDurationMs": 5000,
-      "totalDecisions": {
-        "accept": 0,
-        "reject": 0,
-        "modify": 0,
-        "auto_accept": 3
-      },
-      "byName": {
-        "google_web_search": {
-          "count": 1,
-          "success": 1,
-          "fail": 0,
-          "durationMs": 3000,
-          "decisions": {
-            "auto_accept": 1
-          }
-        },
-        "read_file": {
-          "count": 2,
-          "success": 2,
-          "fail": 0,
-          "durationMs": 2000,
-          "decisions": {
-            "auto_accept": 2
-          }
-        }
-      }
-    }
-  }
-}
-```
-
----
-
-## Comparison with Claude Code Tools
-
-| Capability | Claude Code | Gemini CLI |
-|------------|-------------|------------|
-| File listing | LS, Glob | list_directory, glob |
-| File reading | Read | read_file |
-| File writing | Write, Edit | write_file (in YOLO) |
-| Code search | Grep | search_file_content |
-| Web fetch | WebFetch | web_fetch |
-| Web search | WebSearch | **google_web_search** |
-| Architecture | Task (Explore) | **codebase_investigator** |
-| Memory | N/A | **save_memory** |
-| Task tracking | TodoWrite | write_todos |
-
-**Bold** = Gemini's unique advantage
-
----
-
-## Tool Restrictions
-
-### Using allowed-tools
-
-In settings or command line, restrict available tools:
+Example prompt:
 
 ```bash
-gemini --allowed-tools "read_file,glob" "Find config files" -o text
+gemini --model gemini-3-pro-preview "Summarize the main points of https://example.com/docs" --output-format text
 ```
 
-### In Settings
-```json
-{
-  "security": {
-    "allowedTools": ["read_file", "list_directory", "glob"]
-  }
-}
-```
+## Shell tool (`run_shell_command`)
 
----
+Use when the task requires executing local commands (build, tests, git, etc.). Treat it as powerful and potentially dangerous; prefer narrower instructions.
 
-## Best Practices
+Example prompt:
 
-### When to Use Specific Tools
-
-**google_web_search:**
-- Need current/recent information
-- Checking latest versions
-- Finding documentation updates
-- Community solutions to problems
-
-**codebase_investigator:**
-- New to a codebase
-- Understanding complex systems
-- Finding hidden dependencies
-- Creating documentation
-
-**save_memory:**
-- Recurring project context
-- User preferences
-- Custom conventions
-
-### Tool Combination Patterns
-
-**Research → Implement:**
 ```bash
-gemini "Use Google Search to find best practices for [topic], then implement them" --yolo -o text
+gemini --model gemini-3-pro-preview "Run tests, then summarize failures. Use shell commands as needed." --output-format text
 ```
 
-**Analyze → Report:**
+## File system tools
+
+Gemini CLI includes a suite of file-system tools (read/write/search/etc.) for working with your local workspace.
+
+When you want Gemini to understand code, you’ll usually get the best results by injecting files via `@path`:
+
 ```bash
-gemini "Use codebase_investigator to analyze the project, then write a summary report" --yolo -o text
+gemini --model gemini-3-pro-preview "@src/ Summarize the architecture and main flows." --output-format text
 ```
 
-**Search → Read → Modify:**
+## Tool stats in JSON output
+
+If you run with `--output-format json`, tool usage appears under `.stats.tools`.
+
 ```bash
-gemini "Find all files using deprecated API, read them, and suggest updates" -o text
+gemini --model gemini-3-pro-preview "Search the web for the latest Node LTS and summarize." --output-format json > /tmp/gemini.json
+jq '.stats.tools' /tmp/gemini.json
 ```
+
+## Restricting risky shell usage (settings)
+
+The docs describe restricting shell commands via settings (e.g. allowing only certain commands or excluding `rm`, `git push`, etc.). If you need tighter safety, configure `run_shell_command` restrictions in `~/.gemini/settings.json` or `.gemini/settings.json`.
+
+## Image generation (nanobanana extension)
+
+This workspace has the `nanobanana` extension installed (see `image-generation.md`).
+
+Quick start (interactive):
+
+```bash
+gemini --model gemini-3-pro-preview
+```
+
+Then run:
+- `/generate "..."` to generate images
+- `/edit <file> "..."` to edit
+- `/restore <file> "..."` to restore
+
+Note: to switch the underlying **image model** to “Pro”, set:
+- `NANOBANANA_MODEL=gemini-3-pro-image-preview` (this workspace’s default)

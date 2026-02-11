@@ -230,7 +230,7 @@ Add a "Decomposition Complete" section at the end of splitting-decision.md:
 
 ### Next Steps
 1. Implement phases in sequence using `/si` command with phase path
-2. Each phase follows standard workflow: `/si` → `/sr` → `/mp`
+2. Each phase follows standard workflow: `/si` → `/sr`
 3. Dependencies must be merged before dependent phase starts
 4. Track progress in Linear (move to In Progress when starting)
 ```

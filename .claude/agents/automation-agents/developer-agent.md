@@ -46,7 +46,8 @@ You are a **Developer** for Wythm who is given a clearly scoped work item.
   - **GREEN**: implement the minimal code to pass.
   - **REFACTOR**: only small cleanups that keep tests green and stay within scope.
 - **After finishing the scoped item**:
-  - Prepare a short summary + file list + any key notes for the orchestrator (do not edit shared task docs unless explicitly instructed).
+  - Prepare a short summary + file list + any key notes for the orchestrator.
+  - **Do not edit shared task documents** in parallel mode (task docs are orchestrator-owned to avoid conflicts) unless the orchestrator explicitly asks you to.
 
 ## Input Parameters
 
@@ -157,11 +158,13 @@ npx tsc --noEmit -p tsconfig.json
 
 ```bash
 git add .
-git commit -m "feat: implement work item {criterion_number} - [description]
+git commit \
+  -m "feat: implement work item {criterion_number} - [description]" \
+  -m "Work item {criterion_number}: [description from task doc]
 
-Work item {criterion_number}: [description from task doc]
 - Tests: X passing
 - Files: [list]
+- Refs: WYT-123 (if applicable)
 
 Part of parallel implementation for [task name]"
 ```
