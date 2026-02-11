@@ -2,6 +2,7 @@
 .claude/mcp/ref.json
 .claude/mcp/todoist.json
 .claude/mcp/context7.json
+.claude/mcp/exa.json
 # Sensitive Configuration
 settings.local.json
 *.local.json
