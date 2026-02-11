@@ -1,6 +1,6 @@
 # Wythm Claude Code Workflows
 
-> Production-ready Claude Code workflows, hooks, agents, and commands for AI-assisted software development
+> Production-ready Claude Code workflows, hooks, agents, and skills for AI-assisted software development
 
 **Follow us:** [@wythmapp](https://x.com/wythmapp) | [@MishkaKey](https://x.com/MishkaKey) | [@alexandrbasis](https://x.com/alexandrbasis)
 
@@ -10,36 +10,33 @@ This repository showcases the complete Claude Code setup used in the [Wythm](htt
 
 ## Highlights
 
-- **24 specialized agents** for TDD, code review, task validation, and more
-- **14 slash commands** + 7 utility commands for streamlined workflows
-- **9 skills** including cross-AI integrations (Gemini CLI, Codex CLI)
+- **20 specialized agents** for TDD, code review, task validation, and more
+- **33 skills** covering the full dev lifecycle, cross-AI integrations (Gemini CLI, Codex CLI), and mobile development
 - **Cross-AI Plan Review** — automatic Gemini verification of Claude's plans
-- **Hookify rules system** — declarative behavior control
+- **Hookify rules system** — declarative behavior control with 9 rules
 - **Linear integration** — seamless project management
 
 ---
 
 ## What's Inside
 
-### Agents (24 total)
+### Agents (20 total)
 
 Specialized agents organized by function:
 
 **Automation Agents** (`.claude/agents/automation-agents/`)
 | Agent | Purpose |
 |-------|---------|
-| `test-developer` | TDD specialist — writes failing tests first |
-| `implementation-developer` | Makes tests pass with clean code |
 | `automated-quality-gate` | Runs lint, types, tests before review |
 | `developer-agent` | Universal agent for scoped work items |
 | `integration-test-runner` | E2E and integration test execution |
-| `code-review-orchestrator` | Orchestrates multi-agent code review |
-| `senior-approach-reviewer` | Reviews approach, TDD compliance, solution quality |
+| `senior-architecture-reviewer` | Reviews approach, architecture, TDD compliance |
 
 **Code Review Agents** (`.claude/agents/code-review-agents/`)
 | Agent | Focus |
 |-------|-------|
 | `code-quality-reviewer` | SOLID, maintainability, code smells |
+| `code-simplifier` | Reduces complexity, simplifies code |
 | `security-code-reviewer` | OWASP Top 10, injection, auth issues |
 | `performance-reviewer` | N+1 queries, caching, optimization |
 | `test-coverage-reviewer` | Coverage gaps, test quality |
@@ -53,7 +50,6 @@ Specialized agents organized by function:
 | `task-splitter` | Evaluates if task needs breakdown |
 | `task-decomposer` | Creates phase structure for split tasks |
 | `task-validator` | Pre-flight validation before implementation |
-| `architect-review` | Architecture consistency review |
 
 **Workflow Agents** (`.claude/agents/wf-agents/`)
 | Agent | Purpose |
@@ -67,58 +63,77 @@ Specialized agents organized by function:
 |-------|---------|
 | `comprehensive-researcher` | In-depth research tasks |
 | `conversation-analyzer` | Analyzes conversations for hookify rules |
-| `nextjs-architecture-expert` | Next.js best practices and optimization |
 
 ---
 
-### Slash Commands
+### Skills (33 total)
 
-**Core Development Workflow** (`.claude/commands/`)
+All workflows are powered by skills in `.claude/skills/`. Skills replace the previous slash commands system and provide richer, context-aware capabilities.
 
-| Command | Description |
-|---------|-------------|
-| `/ct` | Create task documentation (JTBD-based) |
-| `/cb` | Create branch from Linear task |
-| `/si` | Structured TDD implementation |
-| `/dev` | Full orchestrator: implement → review → PR |
-| `/nf` | New feature discovery interview |
-| `/ph` | Prepare handover documentation |
-| `/sr` | Comprehensive code review before PR |
-| `/prc` | Review and address PR comments |
-| `/fci` | Fix CI pipeline failures |
-| `/mm` | Create and deploy Prisma migrations |
-| `/mp` | Merge approved PR and archive task |
-| `/brainstorm` | General brainstorming on any topic |
+**Core Development Workflow**
+| Skill | Command | Description |
+|-------|---------|-------------|
+| `ct` | `/ct` | Create task documentation (JTBD-based) |
+| `si` | `/si` | Structured TDD implementation |
+| `sr` | `/sr` | Comprehensive code review before PR |
+| `prc` | `/prc` | Review and address PR comments |
+| `fci` | `/fci` | Fix CI pipeline failures |
+| `mm` | `/mm` | Create and deploy Prisma migrations |
+| `ph` | `/ph` | Prepare handover documentation |
 
-**Utility Commands** (`.claude/commands/other/`)
+**Feature Discovery & Design**
+| Skill | Command | Description |
+|-------|---------|-------------|
+| `nf` | `/nf` | New feature discovery interview |
+| `brainstorm` | `/brainstorm` | Collaborative brainstorming on any topic |
+| `product` | `/product` | Create product documentation (JTBD or PRD) |
+| `vp` | `/vp` | Visual prototype playground for user approval |
+| `design-exploration` | — | Pre-implementation design exploration (auto-triggered) |
+| `design-tokens` | — | Design token naming and creation rules |
 
-| Command | Description |
-|---------|-------------|
-| `/other:product` | Create product documentation (JTBD or PRD) |
-| `/other:dopmwork` | Sync meeting discussions to Linear tasks |
-| `/other:onboard` | Junior developer onboarding guide |
-| `/other:rip` | Review implementation plan for business alignment |
-| `/other:sbs` | Interactive step-by-step teaching |
-| `/other:hookify` | Create hookify rules |
-| `/other:sync-public` | Sync config to this public repository |
+**Cross-AI Integrations**
+| Skill | Command | Description |
+|-------|---------|-------------|
+| `gemini-cli` | — | Google Gemini CLI for web-grounded research, automation, image generation |
+| `codex-cli` | — | OpenAI Codex CLI for second-opinion code review |
+| `cc-linear` | — | Linear operations via Claude Code sessions |
 
----
+**Code Quality & Analysis**
+| Skill | Command | Description |
+|-------|---------|-------------|
+| `code-analysis` | `/code-analysis` | Deep code analysis with metrics and patterns |
+| `dbg` | `/dbg` | Debug mode with runtime evidence and instrumentation |
+| `web-design-guidelines` | — | Review UI code for Web Interface Guidelines compliance |
+| `so` | `/so` | Analyze and improve existing skills |
 
-### Skills (9 total)
+**Research & Learning**
+| Skill | Command | Description |
+|-------|---------|-------------|
+| `deep-research` | `/deep-research` | In-depth technical research with multiple sources |
+| `sbs` | `/sbs` | Interactive step-by-step teaching |
+| `docs-index` | — | Documentation index and reference lookup |
 
-Advanced capabilities in `.claude/skills/`:
+**Mobile Development**
+| Skill | Command | Description |
+|-------|---------|-------------|
+| `react-native-expo-mobile` | — | 35+ rules for React Native/Expo best practices |
 
-| Skill | Description |
-|-------|-------------|
-| `gemini-cli` | Google Gemini CLI for web-grounded research, automation, cross-AI validation |
-| `codex-cli` | OpenAI Codex CLI for second-opinion code review and approach validation |
-| `cc-linear` | Linear operations via Claude Code sessions (create issues, update status) |
-| `context-loader` | Load project context before implementation |
-| `parallelization` | Orchestrate parallel implementation with scoped workers |
-| `brainstorming` | Creative exploration before implementation |
-| `code-analysis` | Deep code analysis with metrics and patterns |
-| `deep-research` | In-depth technical research with multiple sources |
-| `hookify` | Create rules to prevent unwanted behaviors |
+**Workflow Automation**
+| Skill | Command | Description |
+|-------|---------|-------------|
+| `parallelization` | — | Orchestrate parallel implementation with scoped workers |
+| `dopmwork` | — | Sync meeting discussions to Linear tasks |
+| `rip` | `/rip` | Review implementation plan for business alignment |
+| `hookify` | `/hookify` | Create hookify rules to prevent unwanted behaviors |
+| `sync` | — | CLAUDE.md and agents.md file synchronization |
+| `sync-public` | `/sync-public` | Sync config to this public repository |
+| `udoc` | — | Documentation updates |
+
+**Meta & Tooling**
+| Skill | Command | Description |
+|-------|---------|-------------|
+| `skill-creator` | — | Guide for creating new skills |
+| `template-skill` | — | Skill template for bootstrapping |
 
 ---
 
@@ -175,6 +190,11 @@ Declarative behavior control in `.claude/hooks/hookify/rules/`:
 | `interface-naming.local.md` | Enforce interface naming conventions |
 | `first-commit-reminder.local.md` | First commit guidelines |
 
+Additional hooks beyond hookify:
+- **lint/** — Auto-lint on file write
+- **sync/** — Auto-sync public repo, CLAUDE.md/agents sync
+- **validation/** — Pre-commit validation
+
 ---
 
 ### Project Rules
@@ -184,10 +204,10 @@ Development guidelines in `.claude/rules/`:
 | Rule | Scope |
 |------|-------|
 | `backend.md` | Backend architecture (NestJS, DDD, Clean Architecture) |
+| `mobile-app.md` | Mobile app architecture (React Native, Expo) |
 | `testing.md` | Testing standards and patterns |
 | `git.md` | Git workflow and commit conventions |
-| `research.md` | Research guidelines (Exa + Ref MCP) |
-| `sync.md` | File synchronization rules |
+| `tasks.md` | Task documentation workflow |
 
 ---
 
@@ -195,18 +215,19 @@ Development guidelines in `.claude/rules/`:
 
 ```
 .claude/
-├── agents/                       # 24 specialized agents
-│   ├── automation-agents/        # TDD, quality gates, orchestration
-│   ├── code-review-agents/       # Quality, security, performance
+├── agents/                       # 20 specialized agents
+│   ├── automation-agents/        # Quality gates, orchestration
+│   ├── code-review-agents/       # Quality, security, performance, simplification
 │   ├── tasks-validators-agents/  # Task validation & splitting
 │   ├── wf-agents/                # Workflow automation
 │   ├── helpful-agents/           # Research helpers
 │   └── hookify-agents/           # Rule creation helpers
-├── commands/                     # 14 slash commands
-│   └── other/                    # 7 utility commands
 ├── hooks/
-│   └── hookify/                  # 9 declarative behavior rules
-├── skills/                       # 9 specialized capabilities
+│   ├── hookify/                  # 9 declarative behavior rules + engine
+│   ├── lint/                     # Auto-lint on write
+│   ├── sync/                     # File synchronization hooks
+│   └── validation/               # Pre-commit validation
+├── skills/                       # 33 specialized capabilities
 ├── rules/                        # 5 project-wide rules
 ├── scripts/                      # Automation scripts
 │   ├── review-plan-gemini.sh     # Cross-AI plan review
@@ -237,6 +258,10 @@ cp -r wythm-claude-workflows/.claude your-project/
 cp wythm-claude-workflows/.claude/agents/automation-agents/developer-agent.md \
    your-project/.claude/agents/
 
+# Copy a skill (e.g., TDD implementation)
+cp -r wythm-claude-workflows/.claude/skills/si \
+   your-project/.claude/skills/
+
 # Copy Gemini plan review
 cp wythm-claude-workflows/.claude/scripts/review-plan-gemini.sh \
    your-project/.claude/scripts/
@@ -255,21 +280,21 @@ Study the patterns and create your own workflows based on these examples.
 
 ### 1. TDD-Driven Development Pipeline
 ```
-test-developer → implementation-developer → automated-quality-gate → senior-approach-reviewer
+/ct (create task) → /si (implement with TDD) → automated-quality-gate → senior-architecture-reviewer
 ```
 
 ### 2. Multi-Agent Code Review
 ```
-code-quality-reviewer + security-code-reviewer + performance-reviewer + test-coverage-reviewer
+code-quality-reviewer + security-code-reviewer + performance-reviewer + test-coverage-reviewer + code-simplifier
 ```
 
 ### 3. Task-Driven Development (JTBD)
 ```
-/ct (create task) → /cb (create branch) → /si (implement) → /sr (review) → /mp (merge)
+/ct (create task) → /si (implement) → /sr (review) → /prc (address comments) → merge
 ```
 
 ### 4. Cross-AI Orchestration
-- Gemini CLI for plan review and web-grounded research
+- Gemini CLI for plan review, web-grounded research, and image generation
 - Codex CLI for second-opinion code review
 - Multiple AI perspectives on critical decisions
 
@@ -300,6 +325,11 @@ This setup powers a NestJS backend with:
 - Clean Architecture
 - Comprehensive testing (Jest)
 
+And a React Native mobile app (planned) with:
+- Expo + TypeScript
+- Zustand state management
+- Reanimated + Gesture Handler
+
 ---
 
 ## Security & Privacy
@@ -310,7 +340,7 @@ This setup powers a NestJS backend with:
 - MCP configs with credentials
 
 **Safe to share:**
-- All agents, commands, skills
+- All agents, skills, rules
 - Hook scripts and rules
 - Configuration templates
 
@@ -341,4 +371,4 @@ MIT License — See [LICENSE](LICENSE) for details
 
 Built with [Claude Code](https://claude.com/claude-code) by Anthropic
 
-**Last update:** 2026-01-22
+**Last update:** 2026-02-11
