@@ -54,7 +54,7 @@ We love new ideas! To suggest an enhancement:
    - Update documentation if needed
 
 4. **Test your changes**
-   - Test agents, commands, and hooks locally
+   - Test agents, skills, and hooks locally
    - Ensure no sensitive data is included
    - Verify hook logs for errors
 
@@ -116,7 +116,7 @@ Have a cool workflow pattern? Share it!
 **What we're looking for:**
 - Novel agent configurations
 - Useful hook automations
-- Helpful slash commands
+- Helpful skills and workflows
 - Productivity tips
 - Integration patterns
 
