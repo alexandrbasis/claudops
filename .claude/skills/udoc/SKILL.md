@@ -1,11 +1,17 @@
 ---
 name: udoc
-description: Update documentation and generate changelog from task implementation
+description: >-
+  Update documentation and generate changelog after task implementation. Use when
+  asked to 'update docs', 'generate changelog', 'sync documentation with code',
+  or when a task is complete and docs need updating.
+  NOT for creating new product docs (use /product).
 argument-hint: [task-path]
 disable-model-invocation: true
 ---
 
 # Update Documentation (UDOC)
+
+> **Announcement**: Begin with: "I'm using the **udoc** skill for documentation update and changelog."
 
 ## PRIMARY OBJECTIVE
 Generate documentation updates and changelog entries from a completed task implementation.

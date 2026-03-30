@@ -3,7 +3,10 @@ name: nf
 description: >-
   Conduct in-depth feature discovery interview to explore, challenge, and document a new feature.
   Use when asked to 'detail a feature', 'explore a new feature', 'feature discovery',
-  'interview about feature', or 'spec out a feature'. NOT for quick brainstorming (use /brainstorm),
+  'interview about feature', 'spec out a feature', 'design a feature',
+  'think through a feature', 'let's spec this out', 'deep dive on a feature',
+  'what should we consider for [feature]', or 'discover [feature-name]'.
+  NOT for quick brainstorming (use /brainstorm),
   NOT for PRD/JTBD docs (use /product), NOT for implementation tasks (use /ct).
 argument-hint: [feature-name]
 allowed-tools: Read, Write, Edit, Grep, Glob, AskUserQuestion, Task, Skill
@@ -11,13 +14,14 @@ allowed-tools: Read, Write, Edit, Grep, Glob, AskUserQuestion, Task, Skill
 
 # New Feature Discovery
 
+> **Announcement**: Begin with: "I'm using the **nf** skill for feature discovery."
+
 ## Objective
-Conduct a comprehensive interview to fully understand and document a new feature using collaborative brainstorming, then create a formal specification.
+Conduct a comprehensive interview to fully understand and document a new feature through collaborative exploration and structured challenge, then create a formal specification.
 
 ## Guidelines
-- Invoke design-exploration skill first for discovery and exploration
-- **Use `AskUserQuestion` tool for ALL clarifications** - provides interactive options for user to choose from
-- **Never assume behavior**: if any behavior is unclear/ambiguous (UX flow, edge cases, error handling, states), you MUST ask the user to define expected behavior (preferred via `AskUserQuestion`).
+- **Use `AskUserQuestion` tool for ALL clarifications** — provides interactive options for user to choose from
+- **Never assume behavior**: if any behavior is unclear/ambiguous (UX flow, edge cases, error handling, states), ask the user to define expected behavior (preferred via `AskUserQuestion`)
 - Ask non-obvious and thought-provoking questions
 - Actively challenge assumptions; do not be a yes-boy. Grill.
 - Offer alternatives, shortcuts, and "go deeper" paths
@@ -25,6 +29,26 @@ Conduct a comprehensive interview to fully understand and document a new feature
 - Document everything in the specification file
 
 ## Workflow
+
+### Argument Validation
+
+**If no `[feature-name]` argument is provided:**
+1. Use `AskUserQuestion`: "What feature would you like to explore?"
+   - Search `tasks/` and recent Linear issues for planned/in-progress features as options
+   - Include a free-text "Describe a new feature" option
+2. Derive the feature-name slug from the user's response
+
+### Resume Check
+
+Before starting a new discovery, check for an existing draft:
+1. Search for `tasks/task-*-[feature-name]/discovery-[feature-name].md`
+2. If found with `Status: Draft`:
+   - Read the existing document
+   - `AskUserQuestion`: "Found existing draft discovery for [feature-name]."
+     Options: "Continue from where we left off" / "Start fresh (overwrite)" / "Review and revise existing"
+   - **Continue**: identify which sections are complete vs template placeholders, pick up from the first incomplete section
+   - **Start fresh**: proceed with full workflow
+   - **Review**: present the existing document for user feedback, then revise
 
 ### Mobile-app Skill Gate (MANDATORY when feature touches `mobile-app/`)
 
@@ -37,22 +61,31 @@ Conduct a comprehensive interview to fully understand and document a new feature
 - Explicitly state in the discovery/spec that the skill was read and will be applied in implementation.
 - Extract the relevant rules for this feature area (minimum: Core Rendering; plus Animation/List Performance/React Compiler/UI as applicable) and record them under a short section like: "Skill Compliance: react-native-expo-mobile".
 
-### Step 1: Codebase Exploration
+### Step 1: Context Gathering & Design Exploration
 
-Launch 1-3 parallel Explore agents (with Sonnet) based on feature complexity. Use Task tool in **single message**.
+**Invoke the `design-exploration` skill** — it handles both codebase scanning and design proposal in one pass:
+- Launches 1-3 parallel Explore agents (Sonnet) to gather codebase context
+- Asks questions to refine the idea (batches related questions)
+- Proposes 2-3 different approaches with trade-offs
+- Presents design incrementally (200-300 word sections) for validation
 
-**Agents:**
-1. Code & patterns in `backend/`
-2. Data models, schemas, APIs (if 2+ agents)
-3. Docs, ADRs, tests (if 3 agents)
+**Before invoking**, pass the feature context:
+- Feature name and initial description from user
+- Known constraints or requirements mentioned so far
+- Specific areas to explore (e.g., "focus on backend/src/application/sessions/")
 
-Synthesize findings, then proceed to design exploration.
+**After design-exploration returns**, synthesize:
+- Key codebase findings (existing patterns, data models, integration points)
+- Initial design approach with alternatives considered
+- Questions raised during exploration
+
+**Checkpoint:** Present findings summary and initial approach. `AskUserQuestion`: "Does this direction look right?" Options: "Continue with this approach" / "Explore a different direction" / "I have corrections"
 
 ### Step 2: External Research (If Needed)
 
 When you need current information, best practices, or technical research:
 
-- **Quick lookups**: Use Exa MCP tools (`get_code_context_exa`, `web_search_exa`) directly
+- **Quick lookups**: Use Exa MCP tools directly
 - **In-depth research**: Spawn `comprehensive-researcher` subagent via Task tool for complex topics requiring multiple sources and cross-verification
 
 Topics to research:
@@ -61,21 +94,9 @@ Topics to research:
 - API/library capabilities and limitations
 - Security considerations and compliance requirements
 
-### Step 3: Design Exploration Phase
-**Invoke the `design-exploration` skill** with gathered context:
-- Ask questions to refine the idea (batch related questions)
-- Propose 2-3 different approaches with trade-offs
-- Present design incrementally (200-300 word sections) for validation
+### Step 3: Deep-Dive Questions
 
-### Step 4: "Grill Me" Challenge Round
-After initial design exploration, run a structured challenge:
-- Identify assumptions and question each one
-- Suggest 2-3 alternative approaches (including a "lean/shortcut" path), if applicable and worth it
-- Flag potential risks, hidden costs, or complexity traps
-- Recommend where to cut scope vs where to deepen investment
-
-### Step 5: Deep-Dive Questions
-After design exploration, ask additional **non-obvious** questions if needed:
+Ask additional **non-obvious** questions to build the complete picture before challenging it:
 
 **Technical Implementation:**
 - Edge cases and failure scenarios
@@ -98,9 +119,29 @@ After design exploration, ask additional **non-obvious** questions if needed:
 - Development speed vs technical debt
 - Short-term wins vs long-term maintainability
 
-### Step 6: Specification Writing
+Continue deep-dive until user confirms all questions are addressed.
 
-After design exploration and interview completion:
+### Step 4: "Grill Me" Challenge Round
+
+Now that the full picture is gathered, **invoke the `/grill-me` skill** to run a structured challenge on the feature design.
+
+**Before invoking**, summarize the current state for the grill session:
+- Feature name and description
+- Design approach chosen in Steps 1-3
+- Key assumptions and decisions made so far
+- Any areas of uncertainty or risk already identified
+
+**Invoke:** `Skill("grill-me")` — this will interview the user relentlessly about the design, walking down each branch of the decision tree and resolving dependencies one-by-one.
+
+**After the grill session completes:**
+- Incorporate all findings and decisions back into the feature understanding
+- Update any design choices that changed during the challenge
+
+**Checkpoint:** `AskUserQuestion`: "How should we proceed?" Options: "Proceed to specification" / "Revisit design based on findings" / "Cut scope based on grill findings"
+
+### Step 5: Specification Writing
+
+After interview completion:
 
 1. **Read template**: Read `docs/product-docs/templates/discovery-template.md` to load the structure
 2. **Create task directory**: `tasks/task-YYYY-MM-DD-[feature-name]/`
@@ -110,18 +151,32 @@ After design exploration and interview completion:
 
 **If design exploration reveals the feature is not viable**: Document the reasons in a brief `discovery-[feature-name]-rejected.md` with rationale, and stop here.
 
-### Step 7: Codex Validation
+### Step 6: Cross-AI Validation
 
-After discovery document is created, invoke `/codex-cli` skill for cross-AI validation.
+Invoke `/codex-cli`, `/gemini-cli`, and `/cursor-cli` skills in parallel.
+Format output per `docs/product-docs/templates/cross-ai-protocol.md` (comparison table, validation, verdict).
 
-**Verification focus:** Discovery document review as senior product analyst
-- Completeness, consistency, clarity, feasibility, scope definition
-- No conflicts with existing codebase architecture and patterns
-- No critical gaps or missing considerations
+- **FOCUS**: Discovery document review as senior product analyst — completeness, consistency, clarity, feasibility, scope, no conflicts with existing architecture
+- **FILE_REFS**: `discovery-[feature-name].md` + relevant codebase paths
+- **OUTPUT**: Append "Cross-AI Validation: PASSED/FAILED" with consolidated verdict
 
-**Process feedback:** Update discovery if needed, add "Cross-AI Validation: PASSED" when approved.
+**If validation fails**: Present valid findings via `AskUserQuestion`: "Revise discovery doc" / "Override and proceed" / "Abandon feature".
 
-**If validation fails:** Present the issues to the user via `AskUserQuestion` with options: "Revise discovery doc", "Override and proceed", "Abandon feature".
+**Skip conditions**: No CLI available, or user explicitly skips.
 
 ## Output
 `tasks/task-YYYY-MM-DD-[feature-name]/discovery-[feature-name].md`
+
+## Handoff — Next Steps
+
+After discovery is complete, present to the user:
+
+```
+Discovery complete for [feature-name]:
+- Document: tasks/task-YYYY-MM-DD-[feature-name]/discovery-[feature-name].md
+
+Next steps:
+→ Visualize the design: /vp [feature-name]
+→ Skip to tech planning: /ct [feature-name]
+→ Create product docs: /product jtbd [feature-name]
+```

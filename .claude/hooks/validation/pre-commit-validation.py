@@ -98,7 +98,9 @@ def extract_files_from_command(command: str) -> List[str]:
                 files = [
                     line.strip()
                     for line in result.stdout.split("\n")
-                    if line.strip().endswith(".py") and os.path.exists(line.strip())
+                    if line.strip()
+                    and any(line.strip().endswith(ext) for ext in (".py", ".ts", ".tsx"))
+                    and os.path.exists(line.strip())
                 ]
         except Exception as e:
             log_debug(f"Error getting all files: {e}")
@@ -133,27 +135,30 @@ def extract_files_from_command(command: str) -> List[str]:
     if current_file.strip():
         files.append(current_file.strip())
 
-    # Фильтруем только .py файлы и проверяем существование
-    python_files = [
+    # Фильтруем .py и .ts/.tsx файлы, проверяем существование
+    supported_files = [
         f for f in files
-        if f.endswith(".py") and os.path.exists(f)
+        if (f.endswith(".py") or f.endswith(".ts") or f.endswith(".tsx"))
+        and os.path.exists(f)
     ]
 
-    return python_files
+    return supported_files
 
 
-def get_staged_python_files(command: str = "") -> List[str]:
+def get_staged_files(command: str = "") -> List[str]:
     """
-    Получить список Python файлов для проверки.
+    Получить список Python и TypeScript файлов для проверки.
 
     Сначала пытается извлечь из команды git add,
     потом проверяет staged files в git index.
     """
+    supported_exts = (".py", ".ts", ".tsx")
+
     # Метод 1: Извлечь из команды
     if command:
         files_from_command = extract_files_from_command(command)
         if files_from_command:
-            log_debug(f"Extracted {len(files_from_command)} Python files from command")
+            log_debug(f"Extracted {len(files_from_command)} files from command")
             return files_from_command
 
     # Метод 2: Проверить staged files
@@ -168,10 +173,10 @@ def get_staged_python_files(command: str = "") -> List[str]:
             files = [
                 line.strip()
                 for line in result.stdout.split("\n")
-                if line.strip().endswith(".py")
+                if line.strip() and any(line.strip().endswith(ext) for ext in supported_exts)
             ]
             if files:
-                log_debug(f"Found {len(files)} staged Python files in git index")
+                log_debug(f"Found {len(files)} staged files in git index")
             return files
         return []
     except Exception as e:
@@ -180,9 +185,11 @@ def get_staged_python_files(command: str = "") -> List[str]:
 
 
 def check_python_syntax(files: List[str]) -> Tuple[bool, List[str]]:
-    """Проверка синтаксиса Python."""
+    """Проверка синтаксиса Python (TS syntax checked by separate typecheck hook)."""
     errors = []
     for file_path in files:
+        if not file_path.endswith(".py"):
+            continue
         if not os.path.exists(file_path):
             continue
         try:
@@ -228,12 +235,23 @@ def check_merge_conflicts(files: List[str]) -> Tuple[bool, List[str]]:
 
 def check_debug_code(files: List[str]) -> Tuple[bool, List[str]]:
     """Проверка debug-кода (предупреждение, не блокировка)."""
-    debug_patterns = [
+    # Python debug patterns
+    python_patterns = [
         (r"pdb\.set_trace\(\)", "pdb.set_trace()"),
         (r"\bbreakpoint\(\)", "breakpoint()"),
         (r"import pdb", "import pdb"),
         (r'print\s*\(\s*["\']DEBUG', 'print("DEBUG...'),
+    ]
+    # TypeScript debug patterns
+    ts_patterns = [
+        (r"\bconsole\.log\(", "console.log()"),
+        (r"\bdebugger\b", "debugger statement"),
+    ]
+    # Shared patterns
+    shared_patterns = [
+        (r"//\s*TODO:\s*remove", "// TODO: remove"),
         (r"#\s*TODO:\s*remove", "# TODO: remove"),
+        (r"//\s*FIXME:\s*remove", "// FIXME: remove"),
         (r"#\s*FIXME:\s*remove", "# FIXME: remove"),
     ]
 
@@ -244,10 +262,20 @@ def check_debug_code(files: List[str]) -> Tuple[bool, List[str]]:
             continue
         if not os.path.exists(file_path):
             continue
+
+        # Select patterns based on file type
+        is_ts = file_path.endswith((".ts", ".tsx"))
+        is_py = file_path.endswith(".py")
+        active_patterns = shared_patterns[:]
+        if is_py:
+            active_patterns.extend(python_patterns)
+        if is_ts:
+            active_patterns.extend(ts_patterns)
+
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
-                for pattern, description in debug_patterns:
+                for pattern, description in active_patterns:
                     if re.search(pattern, content):
                         warnings.append(f"{file_path}: Found {description}")
         except Exception as e:
@@ -400,14 +428,13 @@ def main() -> None:
         log_debug("Running quick pre-commit checks")
 
         # Получаем список staged файлов
-        staged_files = get_staged_python_files(command)
+        staged_files = get_staged_files(command)
 
         if not staged_files:
-            log_debug("No Python files to check")
-            # Разрешаем коммит без Python файлов
+            log_debug("No Python/TypeScript files to check")
             sys.exit(0)
 
-        log_debug(f"Checking {len(staged_files)} Python files", {"files": staged_files})
+        log_debug(f"Checking {len(staged_files)} files", {"files": staged_files})
 
         # Выполняем проверки
         syntax_ok, syntax_errors = check_python_syntax(staged_files)

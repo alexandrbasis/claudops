@@ -12,6 +12,8 @@ allowed-tools: Bash, Read, Edit, Glob, Grep, AskUserQuestion, TodoWrite
 
 # PR Review Comments Handler
 
+> **Announcement**: Begin with: "I'm using the **prc** skill for PR comment resolution."
+
 ## PRIMARY OBJECTIVE
 
 Fetch, analyze, and address code review comments on the current PR. Present an action plan for user approval before implementing fixes, then commit and reply to reviewers.

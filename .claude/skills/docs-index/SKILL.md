@@ -1,13 +1,14 @@
 ---
 name: docs-index
 description: >-
-  Documentation index for the Wythm project. Use this skill when looking up
-  where project documentation lives, finding PRDs, ADRs, onboarding guides,
-  or any reference material. Auto-trigger when answering questions about
-  project structure or documentation locations.
+  Look up project documentation locations. Use when asked 'where are the docs',
+  'find the PRD', 'project documentation', 'ADR location', 'onboarding guide',
+  or any question about where reference material lives in the Wythm project.
 ---
 
 # Documentation Index
+
+> **Announcement**: Begin with: "I'm using the **docs-index** skill for documentation lookup."
 
 ## Product
 - PRD: `docs/product-docs/PRD/PRD_Wythm.md`

@@ -1,8 +1,8 @@
 ---
 name: automated-quality-gate
 description: Runs automated quality checks (tests, lint, types, coverage) after implementation. Acts as a gate before human-like code review to catch obvious issues early.
-tools: Bash, Read, Write, Grep
-model: haiku
+tools: Bash, Read, Write, Edit, Grep
+model: sonnet
 color: cyan
 ---
 
@@ -20,7 +20,7 @@ Run automated quality checks and report pass/fail status:
 Optional (only if explicitly requested):
 - Coverage run (`npm run test:cov`)
 
-## What this agent covers (and what it doesn’t)
+## What this agent covers (and what it doesn't)
 
 ### Covers (backend quality gates)
 - `npm run format:check`
@@ -30,7 +30,7 @@ Optional (only if explicitly requested):
 - `npm run build`
 
 ### Does NOT cover (use a different agent / manual verification)
-- Environment-dependent integration checks beyond the test suite (e.g., starting the app and hitting endpoints)
+- Environment-dependent integration checks beyond the test suite
 - DB/schema inspection workflows (e.g., Prisma schema diff checks)
 - Security/dependency scanning (e.g., `npm audit`)
 
@@ -43,9 +43,6 @@ tasks/task-YYYY-MM-DD-[feature]/
 ├── tech-decomposition-[feature].md    ← READ: Requirements
 ├── IMPLEMENTATION_LOG.md              ← READ (optional): What was implemented
 ```
-
-**IMPORTANT**: DO NOT create a separate `Quality Gate Report - [Task].md` file.
-Return findings in structured JSON format. The /sr command will integrate these findings into the consolidated `Code Review - [Task].md`.
 
 ## Quality Gates
 
@@ -95,7 +92,7 @@ cd backend && npm run test:cov
 2. **Run all gates sequentially and collect results** (do not stop on first failure)
 3. **Capture all output** for debugging
 4. **Calculate overall status**
-5. **Return structured JSON** (do NOT create a file)
+5. **Output findings** per Output Mode below
 
 ## Gate Execution Order
 
@@ -107,60 +104,51 @@ If ANY fails → GATE_FAILED (return to implementation)
 All pass → GATE_PASSED (proceed to review)
 ```
 
-## Output Format
+## Output Mode
 
-**DO NOT create a separate file.** Return findings in the structured JSON format below.
-The /sr or /dev command will integrate these findings into the consolidated `Code Review - [Task].md`.
+### File mode (when `cr_file_path` is provided)
 
-### Return Format
+Write your findings directly to the Code Review file:
 
-```json
-{
-  "status": "gate_passed|gate_failed",
-  "task_path": "path/to/task/directory",
-  "branch": "branch-name",
-  "gates": {
-    "format": {"passed": true, "details": "No issues"},
-    "lint": {"passed": true, "errors": 0, "warnings": 2, "output": "..."},
-    "typecheck": {"passed": true, "errors": 0, "output": "..."},
-    "test_suite": {"passed": true, "tests": 50, "passed_count": 50, "failed_count": 0, "skipped": 0},
-    "build": {"passed": true, "details": "Success"}
-  },
-  "failures": [],
-  "coverage_percentage": null,
-  "failures_details": [
-    {
-      "gate": "lint",
-      "file": "src/path/to/file.ts",
-      "line": 45,
-      "error": "Error message",
-      "suggested_fix": "How to fix"
-    }
-  ],
-  "summary": "All gates passed, ready for code review"
-}
-```
+1. **Read** the CR file at the provided `cr_file_path`
+2. **Locate** your section markers: `<!-- SECTION:quality-gate -->` ... `<!-- /SECTION:quality-gate -->`
+3. **Use the Edit tool** to replace the placeholder text between markers with your findings
+4. **Do NOT** edit anything outside your section markers
 
-### Markdown Format (for integration into Code Review)
-
-When returning findings, also include this markdown snippet that can be directly integrated:
+**Write this format to your section:**
 
 ```markdown
 ### Quality Gate
 
-**Agent**: `automated-quality-gate`
-**Status**: PASSED / FAILED
+**Agent**: `automated-quality-gate` | **Status**: PASSED/FAILED
 
 | Check | Status | Details |
 |-------|--------|---------|
-| Format | ✅/❌ | [details] |
-| Lint | ✅/❌ | [X errors, Y warnings] |
-| TypeCheck | ✅/❌ | [X errors] |
-| Tests | ✅/❌ | [X passed, Y failed, Z skipped] |
-| Build | ✅/❌ | [details] |
+| Format | PASSED/FAILED | [details] |
+| Lint | PASSED/FAILED | [X errors, Y warnings] |
+| TypeCheck | PASSED/FAILED | [X errors] |
+| Tests | PASSED/FAILED | [X passed, Y failed, Z skipped] |
+| Build | PASSED/FAILED | [details] |
 
 **Gate Result**: GATE_PASSED / GATE_FAILED
 ```
+
+If any gate failed, add failure details below the table:
+
+```markdown
+**Failures:**
+
+- **[Gate]** `file:line` — Error message → Suggested fix
+```
+
+**Then return ONLY a short summary:**
+`"GATE_PASSED. 0 critical, 0 major, 0 minor. All 5 gates passed — format, lint, types, tests, build clean."`
+or
+`"GATE_FAILED. 1 critical, 0 major, 0 minor. TypeCheck failed: 3 type errors in auth module."`
+
+### Inline mode (when `cr_file_path` is NOT provided)
+
+Return findings inline for the orchestrator. Include the markdown table above in your response so it can be integrated into the Code Review document.
 
 ## Decision Criteria
 
@@ -175,39 +163,12 @@ When returning findings, also include this markdown snippet that can be directly
 
 ## Failure Handling
 
-When a gate fails, provide actionable feedback:
-
-### Test Failures
-```
-FAILED: test/unit/user.service.spec.ts
-  - Test: "should create user with valid email"
-  - Error: Expected undefined to equal User
-  - Likely cause: Missing return statement
-  - File to check: src/modules/user/user.service.ts
-```
-
-### Lint Failures
-```
-FAILED: src/modules/auth/auth.controller.ts:45
-  - Rule: @typescript-eslint/no-unused-vars
-  - Error: 'result' is defined but never used
-  - Fix: Remove unused variable or use it
-```
-
-### Type Failures
-```
-FAILED: src/modules/vocabulary/vocabulary.dto.ts:23
-  - Error: Type 'string' is not assignable to type 'number'
-  - Property: 'wordCount'
-  - Fix: Change type or convert value
-```
+When a gate fails, provide actionable feedback with file paths, line numbers, error messages, and suggested fixes. Be specific — vague feedback wastes developer time.
 
 ## Constraints
 
 - Run ALL gates even if one fails (collect all issues)
 - Provide specific file paths and line numbers for failures
-- Include actual error messages in structured return
-- **DO NOT create any files** - return findings in structured format only
 - Do NOT approve if ANY gate fails
-- Only run coverage and set `coverage_percentage` when explicitly requested
+- Only run coverage when explicitly requested
 - Truncate very long outputs but keep essential info

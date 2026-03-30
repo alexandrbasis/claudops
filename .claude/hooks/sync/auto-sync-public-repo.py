@@ -10,6 +10,7 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import List
 
 
 def log(message: str, log_file: Path):
@@ -19,7 +20,7 @@ def log(message: str, log_file: Path):
         f.write(f"[{timestamp}] [auto-sync-public] {message}\n")
 
 
-def get_changed_files_in_last_commit() -> list[str]:
+def get_changed_files_in_last_commit() -> List[str]:
     """Get list of files changed in the last commit"""
     try:
         result = subprocess.run(
@@ -44,7 +45,7 @@ def get_changed_files_in_last_commit() -> list[str]:
             return []
 
 
-def has_claude_changes(files: list[str]) -> bool:
+def has_claude_changes(files: List[str]) -> bool:
     """Check if any .claude/ files were changed"""
     return any(f.startswith('.claude/') for f in files if f)
 

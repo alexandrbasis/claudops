@@ -1,11 +1,17 @@
 ---
 name: product
-description: Create product documentation (JTBD or PRD)
+description: >-
+  Create JTBD or PRD product documentation. Use when asked to 'create JTBD',
+  'write a PRD', 'product requirements', 'jobs to be done', 'product documentation',
+  or when a feature needs formal product-level documentation before technical planning.
+  NOT for technical decomposition (use /ct), NOT for feature discovery (use /nf).
 argument-hint: jtbd [feature] | prd [feature]
 allowed-tools: Read, Write, Edit, Grep, Glob
 ---
 
 # Product Documentation
+
+> **Announcement**: Begin with: "I'm using the **product** skill for product documentation creation."
 
 You are an experienced Product Manager. Create product documentation based on sub-command.
 

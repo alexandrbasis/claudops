@@ -3,227 +3,204 @@ name: vp
 description: >-
   Create interactive visual prototype playground for user approval before technical decomposition.
   Use when asked to 'create prototype', 'visual mockup', 'preview design', 'design playground',
-  or 'show me the feature'. NOT for brainstorming (use /brainstorm), NOT for feature discovery
-  (use /nf), NOT for implementation tasks (use /ct).
+  'show me the feature', 'what would this look like', 'mockup the UI', 'visualize the architecture',
+  'preview before building', 'let me see the design', or anytime the user wants to see or approve
+  a visual representation of a feature before coding begins. Also trigger when /nf discovery is
+  complete and the user says 'looks good, let's see it', 'now show me', or 'visualize this'.
+  NOT for brainstorming (use /brainstorm), NOT for feature discovery (use /nf),
+  NOT for implementation tasks (use /ct), NOT for quick one-off diagrams (use /generate-web-diagram).
 argument-hint: [task-directory or feature-name]
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, AskUserQuestion
 ---
 
 # Visual Prototype Command
 
-## PRIMARY OBJECTIVE
-Create interactive HTML playground for visual approval of feature designs before technical decomposition. Works for both UI-facing tasks (mobile/web screens) and backend tasks (architecture diagrams with Mermaid.js).
+> **Announcement**: Begin with: "I'm using the **vp** skill for visual prototype creation."
 
-## PREREQUISITES
-- Discovery document exists (`/nf` completed)
-- Task directory created at `tasks/task-YYYY-MM-DD-[feature-name]/`
+## Purpose
 
-## WORKFLOW STEPS
+Create an interactive HTML playground so the user can see and approve a feature's design before committing to technical decomposition. This bridges the gap between discovery (`/nf`) and implementation planning (`/ct`).
 
-### GATE 0: Task Discovery
+Works for both UI-facing tasks (mobile/web screen mockups) and backend tasks (architecture diagrams with Mermaid.js).
+
+**Routing — wrong skill?**
+- Feature discovery/interview → `/nf`
+- Technical decomposition → `/ct`
+- Implementation/coding → `/si`
+- Brainstorming ideas → `/brainstorm`
+- Quick one-off diagram → `/generate-web-diagram`
+- Component lookup → `/component-library`
+
+---
+
+## GATE 0: Task Discovery
 
 1. **Locate task directory:**
-   - If argument provided: Use `tasks/task-YYYY-MM-DD-[argument]/` or match partial name
-   - If no argument: List recent task directories, ask user to select
+   - If argument provided: match against `tasks/task-YYYY-MM-DD-*[argument]*/`
+   - If no argument: list recent task directories, ask user to select
 
-2. **Validate discovery document exists:**
+2. **Check for discovery document:**
    - Look for `discovery-[feature-name].md` in task directory
-   - **STOP if missing:** "No discovery document found. Run `/nf` first to create feature specification."
+   - **If found:** read it, extract feature overview, requirements, UI/UX specs, technical considerations. Proceed to GATE 1.
+   - **If NOT found:** offer the user a choice via AskUserQuestion:
+     - **Run /nf first** (recommended) — full discovery interview for complex features
+     - **Quick prototype** — describe the feature briefly, create an exploratory mockup
 
-3. **Read discovery document:**
-   - Extract: Feature overview, requirements, UI/UX specifications, technical considerations
-   - Identify key screens, flows, entities, and interactions
-
----
-
-### GATE 1: Task Type Detection
-
-**Analyze discovery document for keywords to determine playground type:**
-
-**UI_FACING** (use design-playground template):
-- Contains "Screen:", "Button", "Input", "Modal", "Navigation", "Card", "List"
-- Has ASCII wireframes or user flow diagrams
-- References mobile/web components
-- Contains "UI/UX Specifications" section with detail
-
-**BACKEND** (use code-map template):
-- Contains "Service", "Repository", "Use Case", "API endpoint", "Entity"
-- References database/schema changes
-- Contains "Technical Considerations" without UI specs
-- DDD layer references (Domain, Application, Infrastructure)
-
-**Detection logic:**
-```
-IF UI keywords count > Backend keywords count AND has UI/UX section:
-  → UI_FACING_TASK
-ELSE IF Backend keywords count > UI keywords count OR no UI section:
-  → BACKEND_TASK
-ELSE:
-  → ASK_USER with AskUserQuestion tool
-```
-
-**Confirm with user via AskUserQuestion:**
-"Detected [UI-facing/backend] task. Creating [design playground/architecture diagram]. Proceed?"
+3. **Quick prototype mode** (if user chose it):
+   - Ask 3-5 targeted questions via AskUserQuestion:
+     - What is the feature in one sentence?
+     - What are the key screens or components? (UI) / What are the main services and entities? (Backend)
+     - What's the primary user flow or data flow?
+     - Any specific constraints or must-haves?
+   - Label the output as an "Exploratory Prototype" (not yet validated by discovery)
+   - Skip directly to GATE 2 after collecting answers
 
 ---
 
-### GATE 2: Playground Generation
+## GATE 1: Task Type Detection
 
-**Invoke the `playground` skill** with context from discovery document.
+Read the discovery document holistically. The question is not "which keywords appear more" — it's **"what does the user need to validate visually?"**
 
-#### For UI-Facing Tasks:
+**UI_FACING** — the user needs to see how the feature *looks and feels*:
+- Screens, layouts, interactions, navigation flows
+- The discovery doc has a substantive "UI/UX Specifications" section
+- The value of the prototype is seeing the visual design
 
-```
-Use the playground skill to create a design playground for [FEATURE_NAME].
+**BACKEND** — the user needs to see how the feature *is structured*:
+- Services, data flow, API contracts, entity relationships
+- The discovery doc focuses on technical architecture and DDD layers
+- The value of the prototype is understanding the system design
 
-**Context from discovery:** [PASTE UI/UX SPECIFICATIONS SECTION]
+**MIXED** — both UI and architecture are significant:
+- Offer to create both, or ask which the user wants to validate first
 
-**Requirements:**
-- Use Wythm design system tokens (read `.claude/skills/design-tokens/SKILL.md` for current palette, fonts, spacing)
-- Reference colors, fonts, and spacing from the project's design token definitions
-- Phone frame: 375x780px with notch
-- Three-column layout: Controls | Preview | Implementation Notes
+Confirm the detected type with the user via AskUserQuestion before proceeding.
 
-**Scenarios to include:**
-1. Happy Path: [Main flow from discovery]
-2. Edge Cases: [From discovery edge cases section]
-3. Error States: [From error handling section]
-4. Empty State: [If applicable]
+---
 
-**Output file:** [TASK_DIRECTORY]/playground-[feature-name].html
-```
+## GATE 2: Playground Generation
 
-#### For Backend Tasks:
+**Invoke the `playground` skill** with the appropriate template.
 
-```
-Use the playground skill to create a code-map playground for [FEATURE_NAME].
+- **UI-facing tasks:** read `references/ui-playground-template.md` for the full prompt template
+- **Backend tasks:** read `references/backend-playground-template.md` for the full prompt template
 
-**Context from discovery:** [PASTE TECHNICAL CONSIDERATIONS SECTION]
+**Wythm design token quick reference** (pass to playground for UI tasks):
+- Brand: `color.background.brand` / `color.text.on-brand`
+- Backgrounds: `color.background.base`, `color.background.secondary` (cards/surfaces)
+- Text: `color.text.base` (primary), `color.text.secondary` (muted), `color.text.tertiary`
+- Borders: `color.border.base`, `color.border.secondary`
+- Fields: `color.field.background`, `color.field.border-danger` (errors)
+- Icons: `color.icon.base`, `color.icon.brand`, `color.icon.on-brand`
+- Overlay: `color.background.overlay` (modal backdrops)
 
-**Requirements:**
-- SVG-based architecture diagram with Mermaid.js (prefer C4 diagram type for DDD layer visualization, flowcharts for processes)
-- Show DDD layers: Domain, Application, Infrastructure
-- Click-to-comment enabled on all components
-- Connection types: data-flow (blue), dependency (gray), event (red)
+For the full token palette, read `.claude/skills/design-tokens/SKILL.md`.
 
-**Components to visualize:**
-- Entities: [From discovery]
-- Use Cases: [From discovery]
-- Repositories: [From discovery]
-- API Endpoints: [From discovery]
+**Fallback:** if the `playground` skill is not available, generate the HTML file directly:
+- Self-contained single file (inline CSS/JS, no external deps)
+- Dark theme, single state object pattern, live preview updates
+- Include a "Copy Prompt" button for implementation notes
 
-**Presets:**
-1. Full System - All layers visible
-2. Domain Focus - Entities and domain services only
-3. API Flow - Request path through layers
-
-**Output file:** [TASK_DIRECTORY]/playground-[feature-name].html
-```
-
-**After playground created:**
+**After playground is created:**
 ```bash
 open [TASK_DIRECTORY]/playground-[feature-name].html
 ```
 
 ---
 
-### GATE 3: User Interaction and Approval
+## GATE 3: User Approval
 
-**Iterative approval loop** - allows refinement without restarting.
+Iterative approval loop — allows refinement without restarting.
 
-1. **Present to user:**
-   ```
-   Playground created and opened in browser.
-
-   Please explore the prototype and provide your decision:
-   ```
+1. **Present to user:** "Playground created and opened in browser. Please explore and provide your decision."
 
 2. **Use AskUserQuestion with options:**
-   - **Approve** - Ready for technical decomposition
-   - **Request Changes** - Specify modifications (stays in /vp)
-   - **Reject** - Needs significant discovery rework
+   - **Approve** — ready for technical decomposition
+   - **Request Changes** — specify modifications (stays in /vp loop)
+   - **Reject** — needs significant discovery rework
 
 3. **Handle each decision:**
 
-   **If APPROVED:**
-   - Capture any final notes from user
-   - Proceed to GATE 4
+   **APPROVED:** capture any final notes, proceed to GATE 4.
 
-   **If CHANGES_REQUESTED:**
+   **CHANGES_REQUESTED:**
    - Capture specific change requests
    - Re-invoke playground skill with modifications
    - Regenerate playground file
-   - Return to step 1 of GATE 3 (loop until approved/rejected)
+   - Return to step 1 (loop until approved or rejected)
 
-   **If REJECTED:**
+   **REJECTED:**
    - Capture rejection reason
-   - Update discovery doc with rejection status
+   - Write rejection to `vp-approval.md` (see GATE 4 format)
    - Advise: "Discovery needs refinement. Consider running `/nf` again with additional context."
    - **STOP**
 
 ---
 
-### GATE 4: Documentation Update
+## GATE 4: Documentation Update
 
-**Update discovery document with approval status:**
+Write approval status to a **separate sidecar file** (keeps the discovery doc clean):
 
-1. **Add Visual Prototype Approval section** at end of discovery doc:
+**File:** `[TASK_DIR]/vp-approval.md`
 
 ```markdown
----
+# Visual Prototype Approval
 
-## Visual Prototype Approval
-
-**Status**: APPROVED
+**Status**: APPROVED | CHANGES_REQUESTED | REJECTED
 **Date**: [TODAY]
 **Prototype**: `playground-[feature-name].html`
+**Iteration**: [number of revision cycles]
 
-### User Feedback
-[Captured feedback from user interaction]
+## User Feedback
+[Captured feedback from approval loop]
 
-### Key Decisions Confirmed
+## Key Decisions Confirmed
 - [Decisions validated during prototype review]
 
-### Notes for Technical Decomposition
-[Any clarifications discovered during prototype review]
+## Notes for Technical Decomposition
+[Clarifications discovered during prototype review]
 ```
 
-2. **Notify user:**
-   ```
-   Visual prototype approved!
+**Notify user:**
+```
+Visual prototype approved!
 
-   - Playground: playground-[feature-name].html
-   - Discovery updated with approval status
-   - Ready for /ct (Create Task) to proceed with technical decomposition
-   ```
+- Playground: playground-[feature-name].html
+- Approval recorded: vp-approval.md
+- Ready for /ct to proceed with technical decomposition
+```
 
 ---
 
-## OUTPUT
+## Output
 
-**Files created/modified:**
+**Files created:**
 - `tasks/task-YYYY-MM-DD-[feature-name]/playground-[feature-name].html` (new)
-- `tasks/task-YYYY-MM-DD-[feature-name]/discovery-[feature-name].md` (updated)
+- `tasks/task-YYYY-MM-DD-[feature-name]/vp-approval.md` (new)
 
-**Next step:** Run `/ct` to create technical decomposition based on approved visual prototype.
+**Next step:** run `/ct` to create technical decomposition based on the approved visual prototype.
 
 ---
 
-## TIPS FOR EFFECTIVE PLAYGROUNDS
+## Reference Files
 
-**UI Playgrounds:**
-- Include realistic data (names, numbers, text) not lorem ipsum
-- Show loading states and transitions
-- Test with different content lengths
-- Include accessibility indicators
+Read these as needed — they contain prompt templates and detailed guidance:
 
-**Backend Playgrounds:**
-- Focus on data flow, not implementation details
-- Use comments to capture architectural concerns
-- Show error paths, not just happy path
-- Indicate async vs sync operations
+| File | When to read |
+|------|-------------|
+| `references/ui-playground-template.md` | Generating a UI-facing playground |
+| `references/backend-playground-template.md` | Generating a backend architecture playground |
+| `references/tips.md` | Before generating any playground (quality tips) |
 
-**Prompt Output:**
-- The playground's "Copy Prompt" button generates implementation notes
-- These notes can be pasted directly into `/ct` for technical decomposition
-- Include in discovery doc under "Notes for Technical Decomposition"
+## Handoff — Next Steps
+
+After visual prototype is approved, present to the user:
+
+```
+Visual prototype approved for [feature-name]:
+- Playground: tasks/task-YYYY-MM-DD-[feature-name]/playground-[feature-name].html
+- Approval: tasks/task-YYYY-MM-DD-[feature-name]/vp-approval.md
+
+Next steps:
+→ Create tech plan: /ct [feature-name]
+```

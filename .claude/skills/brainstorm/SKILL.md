@@ -3,131 +3,155 @@ name: brainstorm
 description: >-
   Collaborative brainstorming session on any topic — project-related or general.
   Use when asked to 'brainstorm', 'let's brainstorm', 'explore ideas', 'think through',
-  or 'brainstorm about [topic]'. NOT for feature discovery (use /nf),
+  'brainstorm about [topic]', 'what are our options for', 'let's think about',
+  'pros and cons of', 'help me decide', or 'weigh the options'.
+  NOT for feature discovery (use /nf),
   NOT for PRD/JTBD docs (use /product), NOT for deep research (use /deep-research),
   NOT for pre-implementation design (auto-triggered by design-exploration skill).
 argument-hint: [topic]
-allowed-tools: Read, Write, Edit, Grep, Glob, AskUserQuestion, Task, Skill
+allowed-tools: Read, Write, Edit, Grep, Glob, AskUserQuestion, Agent, Skill
 ---
 
 # Brainstorming Session
 
+> **Announcement**: Begin with: "I'm using the **brainstorm** skill for collaborative brainstorming."
+
 ## Objective
-Conduct a collaborative brainstorming session on any topic - project-related or general - through natural dialogue, exploration of options, and structured capture of insights.
+Conduct a collaborative brainstorming session through natural dialogue, exploration of options, and structured capture of insights. Brainstorms can be project-related or general — the skill adapts its depth and tooling accordingly.
 
 ## Guidelines
-- **Use `AskUserQuestion` tool for ALL clarifications** - provides interactive options for user to choose from
+- **Use `AskUserQuestion` tool for ALL clarifications** — provides interactive options for user to choose from
 - Ask **non-obvious and thought-provoking** questions that challenge assumptions
-- **Continue until the topic is fully explored** - don't stop early
 - Present multiple perspectives and approaches
 - Capture key insights and decisions in the brainstorm notes
 
+## Argument Validation
+
+**If no `[topic]` argument is provided:**
+1. Use `AskUserQuestion`: "What would you like to brainstorm about?"
+   - Search `docs/brainstorming/` for recent brainstorms as context
+   - Search `tasks/` for in-progress work that might spark ideas
+   - Include a free-text option
+2. Derive the topic slug from the user's response
+
+## Resume Check
+
+Before starting a new session, check for existing drafts:
+1. Search for `docs/brainstorming/brainstorm-*-[topic-slug].md`
+2. If found:
+   - Read the existing document
+   - `AskUserQuestion`: "Found an existing brainstorm on this topic."
+     Options: "Continue from where we left off" / "Start fresh" / "Review and build on it"
+   - **Continue**: identify which sections are complete, pick up from the first incomplete area
+   - **Start fresh**: proceed with full workflow
+   - **Review**: present existing document for feedback, then expand
+
 ## Workflow
 
-### Step 1: Determine Scope
-Ask the user whether the topic is:
-- **Project-related**: Will explore codebase context first
-- **General**: Skip context gathering, proceed to exploration
+### Step 1: Calibrate Depth
 
-### Step 2: Context Phase (Project-Related Only)
-If project-related, **invoke the `design-exploration` skill** which will:
-- Use multiple Explore agents in parallel (Sonnet) to gather project context
-- Identify relevant files, patterns, and existing implementations
-- Build understanding of constraints and opportunities
+Brainstorms vary widely in scope. Quickly assess what kind of session this is — the answer shapes everything else (how many questions to ask, whether to research, how formal the capture should be).
 
-### Step 3: Exploration Phase
-For ALL topics (project-related or general):
+`AskUserQuestion` with options:
+- **Quick decision** — "I need to pick between a few options" (5-10 min, 2-3 questions, lightweight capture)
+- **Exploration** — "I want to think through something" (15-30 min, structured exploration, standard capture)
+- **Deep dive** — "This is a big topic, let's go deep" (30+ min, full exploration with research, detailed capture)
+
+### Step 2: Context Gathering (Adaptive)
+
+Context gathering is not a gate — it happens organically as the brainstorm progresses. Start with what's immediately relevant and pull in more context as needed.
+
+**For project-related topics:**
+- If the topic clearly touches existing code, invoke the `design-exploration` skill to scan the codebase
+- If the scope is unclear, start with the brainstorm conversation and invoke design-exploration later when specific areas of the codebase become relevant
+
+**For general topics:**
+- Skip codebase context entirely
+- Jump straight to exploration
+
+### Step 3: Exploration
+
+The core of the brainstorm. Adapt the depth to the calibration from Step 1.
 
 **Understanding the Topic:**
-- Ask clarifying questions (batch related questions)
-- Prefer multiple choice when possible
+- Ask clarifying questions (batch related questions via `AskUserQuestion`)
 - Focus on: goals, constraints, success criteria, concerns
 
 **Exploring Approaches:**
 - Propose 2-3 different perspectives or options
-- Present trade-offs clearly
+- Present trade-offs clearly using a consistent format:
+  - Option name, brief description, pros, cons
 - Lead with your recommendation and reasoning
 
-**Deep Exploration** - Ask non-obvious questions across categories:
+**Deep Exploration** (for Exploration/Deep Dive depth):
 
-**Practical & Implementation:**
-- What could go wrong? Edge cases?
-- What resources/dependencies are needed?
-- How would this scale or evolve?
+| Category | Questions to Consider |
+|---|---|
+| **Practical** | What could go wrong? Edge cases? Resources needed? How does this scale? |
+| **Assumptions** | What are we assuming? Who else is affected? What's the opposite approach? |
+| **Impact** | How do we measure success? What's the MVP? What if we don't do this? |
+| **Trade-offs** | Speed vs quality? Short-term vs long-term? Complexity vs simplicity? |
 
-**Perspective & Assumptions:**
-- What assumptions are we making?
-- Who else is affected by this?
-- What's the opposite approach look like?
+Present ideas in 200-300 word sections and validate understanding after each section before continuing. Be ready to pivot if direction changes.
 
-**Impact & Value:**
-- How do we measure success?
-- What's the minimum viable version?
-- What happens if we don't do this?
+**Completion signals** — the brainstorm is "done" when:
+- For Quick Decision: user has enough info to decide
+- For Exploration: all major angles have been discussed and user confirms
+- For Deep Dive: all question categories explored, user has no more "what about..." questions
 
-**Trade-offs:**
-- Speed vs quality considerations
-- Short-term vs long-term implications
-- Complexity vs simplicity
+### Step 4: Research (When Needed)
 
-**Presenting Ideas:**
-- Break into 200-300 word sections
-- Validate understanding after each section
-- Be ready to pivot if direction changes
+Launch research proactively when the conversation reveals knowledge gaps — no permission needed. Inform the user what's being researched and continue brainstorming while agents work in the background.
 
-### Step 4: Research Phase (When Needed)
-If exploration reveals topics requiring code context or external research:
-
-**Code Research (Project-Related):**
-- Use Explore agents with Sonnet to scan relevant modules, patterns, and prior art
-- Capture constraints, existing APIs, and integration points
-
-**Quick Research (Exa MCP):**
+**Quick lookups:**
 - `get_code_context_exa` — for code-related context, APIs, libraries
 - `web_search_exa` — for trends, market data, best practices
 
-**Deep Research:**
-- Launch `comprehensive-researcher` agent (Task tool) for topics requiring:
-  - Multiple sources and cross-verification
-  - Industry benchmarks or competitive analysis
-  - Technical documentation deep-dives
-- **Parallel research**: Launch multiple researcher agents simultaneously for different topics
+**In-depth research:**
+- Spawn `comprehensive-researcher` agent via Agent tool for topics requiring multiple sources and cross-verification
+- Launch multiple researcher agents simultaneously for different sub-topics
 
-**Launch research proactively when:**
+**Code context (project-related):**
+- Use Explore agents (Sonnet) to scan relevant modules, patterns, and prior art
+
+**Trigger research when:**
 - Topic requires current or up-to-date information
 - Market trends, competitor analysis, or industry standards are relevant
 - Technical decisions benefit from external validation
-- Exploring unfamiliar domains or technologies
 - Knowledge gaps are identified during exploration
 
-**No permission needed** - launch research agents proactively when the conversation reveals a need. Inform user what's being researched and continue the brainstorming while agents work in background.
+### Step 5: Capture
 
-### Step 5: Capture Phase
-After exploration is complete:
+After exploration is complete, create the brainstorm artifact. The format adapts to the session depth.
 
-1. **Create brainstorm notes**: `docs/brainstorming/brainstorm-YYYY-MM-DD-[topic-slug].md`
-2. **Use template**: `docs/product-docs/templates/brainstorm-template.md`
-3. **Include**:
+**For Quick Decision depth:**
+- `AskUserQuestion`: "Want me to save these notes, or was the conversation enough?"
+  - If no: skip capture entirely — the conversation itself is the artifact
+  - If yes: write a brief summary (skip the full template)
+
+**For Exploration / Deep Dive depth:**
+1. Create brainstorm notes: `docs/brainstorming/brainstorm-YYYY-MM-DD-[topic-slug].md`
+2. Use template: `docs/product-docs/templates/brainstorm-template.md`
+3. Include:
    - Topic overview and type (project/general)
    - Key questions explored
    - Options discussed with pros/cons
    - Conclusions and insights
+   - Research findings (if any)
    - Action items (if any)
-4. **Present summary** to user for confirmation
+4. Present summary to user for confirmation
 
-### Step 6: Codex Validation (Project-Related Only, Optional)
-For **project-related** brainstorms with significant scope, offer cross-AI validation.
+### Step 6: Next Steps
 
-AskUserQuestion: "Run cross-AI validation on brainstorm notes via `/codex-cli`?"
-- "Yes" — invoke `/codex-cli` for review
-- "Skip" — finalize without validation
+After capture, offer a natural handoff to the next skill based on what emerged from the brainstorm.
 
-**If approved:**
-- Invoke `/codex-cli` for brainstorm notes review as senior product analyst
-- Focus: completeness, feasibility, no conflicts with existing architecture
-- Update notes if needed, add "Cross-AI Validation: PASSED" when approved
+`AskUserQuestion`: "What would you like to do next?"
+- **"Create a feature spec"** — invoke `/nf` with the topic context
+- **"Create a task"** — invoke `/ct` with conclusions as input
+- **"Write a PRD"** — invoke `/product` with brainstorm insights
+- **"Nothing, we're done"** — wrap up
 
-**Skip this step entirely for general (non-project) brainstorms.**
+Skip this step for general (non-project) brainstorms unless the user explicitly wants to act on the results.
 
 ## Scope Boundaries
 - Feature discovery interviews: use `/nf`
@@ -137,4 +161,4 @@ AskUserQuestion: "Run cross-AI validation on brainstorm notes via `/codex-cli`?"
 - Task creation: use `/ct`
 
 ## Output
-`docs/brainstorming/brainstorm-YYYY-MM-DD-[topic-slug].md`
+`docs/brainstorming/brainstorm-YYYY-MM-DD-[topic-slug].md` (optional for Quick Decision depth)

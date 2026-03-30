@@ -89,6 +89,10 @@ EXCLUDE_PATTERNS=(
     "mcp/todoist.json"
     "mcp/context7.json"
     "mcp/ref.json"
+    "mcp/exa.json"
+    "mcp/supabase.json"
+    # Worktrees (local only)
+    "worktrees"
 )
 
 # Build rsync exclude parameters

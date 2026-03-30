@@ -1,182 +1,207 @@
 # Gemini CLI Prompt Templates
 
-Reusable prompt templates for common operations.
+> **Model**: Auto routing (do NOT pass `-m`). Classifier → `gemini-3-flash-preview` or `gemini-3.1-pro-preview` based on complexity. Fallback: 2.5 Pro → 2.5 Flash.
 
-## One-shot prompt rule (critical)
-
-`gemini "..."` is a **one-shot** call by default. There is no back-and-forth unless you explicitly start an interactive session (`gemini` REPL or `-i/--prompt-interactive`).
-
-So prompts must be **complete**: include inputs (`@path`), constraints, and the exact deliverable.
-
-## Code Generation
-
-### Single-File Application
+**Output pipeline** (appended to every template — shown once, abbreviated as `# ...pipeline` below):
 ```bash
-gemini --model gemini-3-pro-preview "Create a [description] with [features]. Include [requirements]. Output the complete file content." --yolo --output-format text
+--approval-mode=yolo -o json > /tmp/gemini.json 2> /dev/null \
+&& jq -r '.response' /tmp/gemini.json > /tmp/gemini-result.txt \
+&& echo "Gemini completed"
+```
+Read result with **Read tool** on `/tmp/gemini-result.txt` — never `cat`.
+
+---
+
+## Approach Validation
+
+### Architecture Decision
+```bash
+gemini -p "Output ONLY the final answer.
+I need to decide between approaches for [feature]:
+Option A: [Description] — Pros: [...] Cons: [...]
+Option B: [Description] — Pros: [...] Cons: [...]
+Context: [project context, file paths]. Requirements: [key requirements].
+Which approach would you recommend and why?" # ...pipeline
 ```
 
-**Example:**
+### Pre-Implementation Review
 ```bash
-gemini --model gemini-3-pro-preview "Create a single-file HTML/CSS/JS calculator with: basic operations, history display, keyboard support, dark mode toggle, responsive design. Output the complete file content." --yolo --output-format text
+gemini -p "Output ONLY the final answer.
+Review this implementation approach for @[task-file-path]:
+1. [Step 1]  2. [Step 2]  3. [Step 3]
+Is this aligned with requirements? What issues might I encounter?" # ...pipeline
 ```
 
-### Multi-File Project
-```bash
-gemini --model gemini-3-pro-preview "Create a [project type] with [stack]. Include [features]. Create all necessary files and make it runnable. Use modern best practices. START BUILDING NOW." --yolo --output-format text
-```
-
-**Example:**
-```bash
-gemini --model gemini-3-pro-preview "Create a REST API with Express, SQLite, and JWT auth. Include user CRUD, input validation, error handling. Create all necessary files and make it runnable. START BUILDING NOW." --yolo --output-format text
-```
-
-### Component/Module
-```bash
-gemini --model gemini-3-pro-preview "Create a [component type] that [functionality]. Follow [standards]. Include [requirements]. Output the code." --yolo --output-format text
-```
-
-**Example:**
-```bash
-gemini --model gemini-3-pro-preview "Create a React hook useLocalStorage that syncs state with localStorage. Follow React 18 best practices. Include TypeScript types. Output the code." --yolo --output-format text
-```
+---
 
 ## Code Review
 
-### Comprehensive Review
+### Custom Review Focus
 ```bash
-gemini --model gemini-3-pro-preview $'Review @path/to/file and tell me:\n1) What features it has\n2) Any bugs or security issues\n3) Suggestions for improvement\n4) Code quality assessment' --output-format text
+gemini -p "Output ONLY the final answer.
+Review uncommitted changes in this repository. Focus on:
+1. [Focus area 1]  2. [Focus area 2]  3. [Focus area 3]
+Provide specific feedback for each area." # ...pipeline
 ```
 
-### Security-Focused Review
+### File-Specific Review with Context
 ```bash
-gemini --model gemini-3-pro-preview $'Review @path/to/file for security vulnerabilities including:\n- XSS (cross-site scripting)\n- SQL injection\n- Command injection\n- Insecure data handling\n- Authentication issues\nReport findings with severity levels.' --output-format text
+gemini -p "Output ONLY the final answer.
+Review implementation in @[file1.ts] and @[file2.ts].
+Check against requirements in @[tech-decomposition.md].
+Focus on: correctness, edge cases, error handling." # ...pipeline
 ```
 
-### Performance Review
+---
+
+## Security Review
+
+### General Security Audit
 ```bash
-gemini --model gemini-3-pro-preview $'Analyze @path/to/file for performance issues:\n- Inefficient algorithms\n- Memory leaks\n- Unnecessary re-renders\n- Blocking operations\n- Optimization opportunities\nProvide specific recommendations.' --output-format text
+gemini -p "Output ONLY the final answer.
+Security review of uncommitted changes. Check for: SQL/NoSQL injection, XSS,
+command injection, auth issues, sensitive data exposure, input validation gaps.
+Report findings with severity (Critical/High/Medium/Low)." # ...pipeline
 ```
 
-## Bug Fixing
-
-### Fix Identified Bugs
+### API Security Review
 ```bash
-gemini --model gemini-3-pro-preview $'Fix these bugs in @path/to/file:\n1) [Bug description]\n2) [Bug description]\n3) [Bug description]\nApply fixes now.' --yolo --output-format text
+gemini -p "Output ONLY the final answer.
+Review @[file/endpoint] for API security: rate limiting, input validation,
+authentication, authorization, error info leakage, CORS configuration." # ...pipeline
 ```
 
-### Auto-Detect and Fix
+---
+
+## Implementation Verification
+
+### Feature Completion Check
 ```bash
-gemini --model gemini-3-pro-preview "Analyze @path/to/file for bugs, then fix all issues you find. Apply fixes immediately." --yolo --output-format text
+gemini -p "Output ONLY the final answer.
+Verify [feature] implementation is complete per @[task-file-path].
+Requirements: 1. [...] 2. [...] 3. [...]
+Key files: @[file1] @[file2]
+Check: all requirements met? Edge cases? Error handling? Test coverage?" # ...pipeline
 ```
 
-## Test Generation
-
-### Unit Tests
+### Refactoring Verification
 ```bash
-gemini --model gemini-3-pro-preview $'Generate [framework] unit tests for @path/to/file. Cover:\n- All public functions\n- Edge cases\n- Error handling\n- [Specific areas]\nOutput the complete test file.' --yolo --output-format text
+gemini -p "Output ONLY the final answer.
+Verify this refactoring preserves behavior.
+Original behavior: [description]. Changed files: @[file1] @[file2].
+Check: functionality preserved? Subtle behavior changes? New edge case bugs?" # ...pipeline
 ```
 
-**Example:**
+---
+
+## Test Assessment
+
+### Test Coverage Review
 ```bash
-gemini --model gemini-3-pro-preview $'Generate Jest unit tests for @utils.js. Cover:\n- All exported functions\n- Edge cases (empty input, null, undefined)\n- Error handling\n- Boundary conditions\nOutput the complete test file.' --yolo --output-format text
+gemini -p "Output ONLY the final answer.
+Review test coverage for @[file/module]. Key functionality: [Function 1], [Function 2].
+All public functions tested? Edge cases? Error paths? What is missing?" # ...pipeline
 ```
 
-### Integration Tests
+---
+
+## Performance & Bug Investigation
+
+### Performance Analysis
 ```bash
-gemini --model gemini-3-pro-preview $'Generate integration tests for [component/API]. Test:\n- Happy path scenarios\n- Error scenarios\n- Edge cases\nUse [framework]. Output complete test file.' --yolo --output-format text
+gemini -p "Output ONLY the final answer.
+Analyze @[file/function] for performance: inefficient algorithms, memory leaks,
+blocking operations, missing caching, N+1 query patterns." # ...pipeline
 ```
 
-## Documentation
-
-### JSDoc/TSDoc
+### Bug Root Cause Analysis
 ```bash
-gemini --model gemini-3-pro-preview $'Generate [JSDoc/TSDoc] documentation for all functions in @path/to/file. Include:\n- Function descriptions\n- Parameter types and descriptions\n- Return types and descriptions\n- Usage examples\nOutput as [format].' --yolo --output-format text
+gemini -p "Output ONLY the final answer.
+Investigate bug — Symptom: [what happens]. Expected: [what should happen].
+Context: [relevant info]. Suspected files: @[file1] @[file2].
+Find root cause and suggest a fix." # ...pipeline
 ```
 
-### README Generation
+---
+
+## Web Research (Gemini-Specific)
+
+Gemini has built-in Google Search grounding — its unique advantage over other CLI tools.
+
+### Current Information with Google Search
 ```bash
-gemini --model gemini-3-pro-preview $'Generate a README.md for this project. Include:\n- Project description\n- Installation instructions\n- Usage examples\n- API reference\n- Contributing guidelines\nUse the codebase to gather accurate information. Use @./ to read the project.' --yolo --output-format text
-```
-
-### API Documentation
-```bash
-gemini --model gemini-3-pro-preview $'Document all API endpoints in @path/to/file_or_directory. Include:\n- HTTP method and path\n- Request parameters\n- Request body schema\n- Response schema\n- Example requests/responses\nOutput in [Markdown/OpenAPI] format.' --yolo --output-format text
-```
-
-## Code Transformation
-
-### Refactoring
-```bash
-gemini --model gemini-3-pro-preview $'Refactor @path/to/file to:\n- [Specific improvement]\n- [Specific improvement]\nMaintain all existing functionality. Apply changes now.' --yolo --output-format text
-```
-
-### Language Translation
-```bash
-gemini --model gemini-3-pro-preview $'Translate @path/to/file from [source language] to [target language]. Maintain:\n- Same functionality\n- Similar code structure\n- Idiomatic patterns for target language\nOutput the translated code.' --yolo --output-format text
-```
-
-### Framework Migration
-```bash
-gemini --model gemini-3-pro-preview "Convert @path/to/file from [old framework] to [new framework]. Maintain all functionality. Use [new framework] best practices. Output the converted code." --yolo --output-format text
-```
-
-## Web Research
-
-### Current Information
-```bash
-gemini --model gemini-3-pro-preview "What are the latest [topic] as of [date]? Use Google Search to find current information. Summarize key points." --output-format text
+gemini -p "Output ONLY the final answer.
+Use Google Search to find current information about [topic] as of [date].
+Summarize key points with sources." # ...pipeline
 ```
 
 ### Library/API Research
 ```bash
-gemini --model gemini-3-pro-preview $'Research [library/API] and provide:\n- Latest version and changes\n- Best practices\n- Common patterns\n- Gotchas to avoid\nUse Google Search for current information.' --output-format text
+gemini -p "Output ONLY the final answer.
+Research [library/API] via Google Search: latest version, recent changes,
+best practices, common patterns, known gotchas, migration notes from [version]." \
+  # ...pipeline
 ```
 
 ### Comparison Research
 ```bash
-gemini --model gemini-3-pro-preview "Compare [option A] vs [option B] for [use case]. Use Google Search for current benchmarks and community opinions. Provide recommendation." --output-format text
+gemini -p "Output ONLY the final answer.
+Compare [option A] vs [option B] for [use case]. Use Google Search for current
+benchmarks and community opinions. Provide recommendation with rationale." # ...pipeline
 ```
 
-## Architecture Analysis
+---
 
-### Project Analysis
+## Integration Patterns
+
+### Generate-Review-Fix Cycle
+
+Claude generates code, Gemini reviews, Claude fixes — three-step quality loop.
+
 ```bash
-gemini --model gemini-3-pro-preview $'Analyze this project. Use @./ to read relevant files. Report on:\n- Overall architecture\n- Key dependencies\n- Component relationships\n- Potential issues' --output-format text
+# 1. Claude generates code (in this conversation)
+# 2. Gemini reviews Claude's work
+gemini -p "Output ONLY the final answer.
+Review @[generated-file] for bugs, security issues, and improvements.
+List each finding with severity." # ...pipeline
+# 3. Claude reads review via Read tool and applies fixes
 ```
 
-### Dependency Analysis
+### Cross-Validation with Claude
+
+Second opinion on architecture, security, or complex logic.
+
 ```bash
-gemini --model gemini-3-pro-preview $'Analyze dependencies in this project:\n- Direct vs transitive\n- Outdated packages\n- Security vulnerabilities\n- Bundle size impact\nUse @./package.json and @./package-lock.json (or pnpm/yarn equivalents).' --output-format text
+gemini -p "Output ONLY the final answer.
+Evaluate this approach: [Claude's proposed approach].
+Risks, blind spots, or better alternatives?" # ...pipeline
 ```
 
-## Specialized Tasks
+### JSON Output for Programmatic Processing
 
-### Git Commit Message
+Extract structured data from Gemini for further processing.
+
 ```bash
-gemini --model gemini-3-pro-preview "Analyze staged changes and generate a commit message. Be concise but descriptive." --output-format text
+gemini -p "Output ONLY valid JSON. No markdown fences. No explanation.
+[PROMPT requiring structured output]" --approval-mode=yolo -o json \
+  > /tmp/gemini.json 2> /dev/null \
+  && jq -r '.response' /tmp/gemini.json | jq '.' > /tmp/gemini-structured.json \
+  && echo "Gemini completed"
 ```
 
-### Code Explanation
+### Multi-line Prompt with HEREDOC
+
+For prompts too long for inline quoting.
+
 ```bash
-gemini --model gemini-3-pro-preview $'Explain what @path/to/file (or a function inside it) does in detail:\n- Purpose and use case\n- How it works step by step\n- Key algorithms/patterns used\n- Dependencies and side effects' --output-format text
+PROMPT=$(cat <<'GEMINI_PROMPT'
+Output ONLY the final answer.
+[Long multi-line prompt here.
+Include @file/paths for context.]
+GEMINI_PROMPT
+)
+gemini -p "$PROMPT" --approval-mode=yolo -o json \
+  > /tmp/gemini.json 2> /dev/null \
+  && jq -r '.response' /tmp/gemini.json > /tmp/gemini-result.txt \
+  && echo "Gemini completed"
 ```
-
-### Error Diagnosis
-```bash
-gemini --model gemini-3-pro-preview $'Diagnose this error:\n[error message]\nContext: [relevant context]\nProvide:\n- Root cause\n- Solution steps\n- Prevention tips' --output-format text
-```
-
-## Template Variables
-
-Use these placeholders in templates:
-
-- `[file]` - File path or name
-- `[directory]` - Directory path
-- `[description]` - Brief description
-- `[features]` - List of features
-- `[requirements]` - Specific requirements
-- `[framework]` - Testing/UI framework
-- `[language]` - Programming language
-- `[format]` - Output format (markdown, JSON, etc.)
-- `[date]` - Date for time-sensitive queries
-- `[topic]` - Subject matter for research

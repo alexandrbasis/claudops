@@ -1,6 +1,10 @@
 ---
 name: codex-cli
-description: Invoke OpenAI Codex CLI for second-opinion code review, approach validation, and task verification. Use when you need cross-AI validation, a fresh perspective on implementation, or automated code review. Takes 1-10 minutes per request.
+description: >-
+  Run OpenAI Codex CLI for cross-AI code review or validation. Use when asked for
+  'second opinion', 'codex review', 'cross-AI check', 'ask codex', 'run codex',
+  or when another workflow needs cross-AI verification.
+  NOT for interactive conversations (codex is one-shot only).
 allowed-tools:
   - Bash
   - Read
@@ -8,197 +12,212 @@ allowed-tools:
 
 # Codex CLI Integration Skill
 
-This skill enables Claude Code to invoke OpenAI Codex CLI (gpt-5.3-codex with high reasoning) for one-shot code review, approach validation, and cross-AI verification.
+> **Announcement**: Begin with: "I'm using the **codex-cli** skill for cross-AI validation with Codex."
 
-## When to Use This Skill
+Invoke OpenAI Codex CLI for one-shot code review, approach validation, and cross-AI verification.
 
-### Ideal Use Cases
+## Self-Update: Official Documentation
 
-1. **Second Opinion / Cross-Validation**
-   - Verify your implementation approach before writing code
-   - Get a different AI perspective on your solution
-   - Validate architectural decisions
+When the skill feels outdated (wrong flags, unknown model, new features), consult these
+official sources to update commands and reference files:
 
-2. **Code Review**
-   - Review uncommitted changes before commit
-   - Review changes against a base branch before PR
-   - Security-focused code review
+| Resource | URL |
+|---|---|
+| CLI Overview | https://developers.openai.com/codex/cli/ |
+| CLI Features | https://developers.openai.com/codex/cli/features/ |
+| Command Reference | https://developers.openai.com/codex/cli/reference/ |
+| Config Reference | https://developers.openai.com/codex/cli/config-reference/ |
+| Changelog | https://developers.openai.com/codex/changelog/ |
+| GitHub Repo | https://github.com/openai/codex |
+| npm Package | https://www.npmjs.com/package/@openai/codex |
 
-3. **Task Verification**
-   - Confirm implementation meets requirements
-   - Validate that refactoring preserved behavior
-   - Check for missed edge cases
+Use `WebFetch` or `mcp__exa__web_search_exa` to check for updates when:
+- A codex command fails with an unknown flag error
+- The user mentions a codex feature not covered here
+- It's been a while since the skill was last updated
 
-4. **Approach Validation**
-   - Before starting complex implementation
-   - When choosing between multiple approaches
-   - For architectural decisions
+> **Last verified**: v0.116.0 (March 2026), default model `gpt-5.4`
 
-### When NOT to Use
+## Prerequisite: Update First
 
-- Simple, quick tasks (overhead not worth 1-10 min wait)
-- Tasks requiring interactive conversation/refinement
-- When immediate response is critical
-- Trivial changes (typos, formatting)
+**Always update codex to latest before running any command.** Codex releases frequently and older versions may have bugs (e.g., v0.115-0.116 approval loop regression).
 
-## Core Commands
-
-### Approach Validation
 ```bash
-codex exec "Review this approach: [description]. Is it sound? What are the tradeoffs?" -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1 && echo "Codex completed"
-# Then: Read tool /tmp/codex-result.md
+# Step 1: Update to latest
+npm i -g @openai/codex@latest > /dev/null 2>&1
+
+# Step 2: Verify
+codex --version
 ```
 
-### Code Review - Uncommitted Changes
+If codex is not installed at all:
 ```bash
-codex exec review --uncommitted -m gpt-5.3-codex --full-auto > /tmp/codex-review.md 2>&1
-# Then: Read tool /tmp/codex-review.md
+npm i -g @openai/codex
 ```
 
-### Code Review - Against Branch
+## Critical: `codex review` vs `codex exec review`
+
+These are **NOT equivalent** — they have different flag sets:
+
+| Command | Has `--full-auto`? | Has `-m`? | Has `-o` (working)? | Prompt + scope flags? |
+|---|---|---|---|---|
+| `codex review` (top-level) | NO | NO | NO | N/A |
+| `codex exec review` | YES | YES | `-o` writes empty! | **Mutually exclusive** |
+| `codex exec` | YES | YES | YES (works) | N/A |
+
+**Use `codex exec review`** for scoped reviews (scope flags auto-select the diff).
+**Use `codex exec`** when you need both a custom prompt AND full output capture via `-o`.
+
+The top-level `codex review` only supports: `--uncommitted`, `--base`, `--commit`, `--title`, `-c`, `--enable`, `--disable`.
+
+## Core Patterns
+
+### 1. Custom Prompt (most common)
+
 ```bash
-codex exec review --base main -m gpt-5.3-codex --full-auto > /tmp/codex-review.md 2>&1
-# Then: Read tool /tmp/codex-review.md
+codex exec "[prompt with explicit file paths]" \
+  -m gpt-5.4 --full-auto \
+  -o /tmp/codex-result.md > /dev/null 2>&1 && echo "Codex completed"
+```
+Then read with **Read tool**: `/tmp/codex-result.md`
+
+### 2. Code Review
+
+**v0.116.0 constraints** (tested and verified):
+- Scope flags (`--uncommitted`, `--base`, `--commit`) are **mutually exclusive** with `[PROMPT]`
+- `-o` flag writes **empty** for review commands — review output goes to stderr
+- Must capture stderr to file: `2> /tmp/codex-review.md`
+
+#### Option A: Scoped review (no custom prompt — codex decides what to focus on)
+
+```bash
+# Against branch (auto-generated review)
+codex exec review --base main \
+  -m gpt-5.4 --full-auto \
+  2> /tmp/codex-review.md && echo "Review completed"
+
+# Uncommitted changes
+codex exec review --uncommitted \
+  -m gpt-5.4 --full-auto \
+  2> /tmp/codex-review.md && echo "Review completed"
+
+# Specific commit
+codex exec review --commit [SHA] \
+  -m gpt-5.4 --full-auto \
+  2> /tmp/codex-review.md && echo "Review completed"
 ```
 
-### Custom Analysis
+#### Option B: Custom prompt review (codex decides scope — PREFERRED)
+
+Pass a detailed prompt WITHOUT scope flags. Codex will figure out the diff context.
+
 ```bash
-codex exec "[prompt]" -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1 && echo "Codex completed"
-# Then: Read tool /tmp/codex-result.md
+codex exec review \
+  -m gpt-5.4 --full-auto \
+  "Review the uncommitted changes in this repo. Focus on:
+1. Correctness and edge cases
+2. Error handling
+3. Security concerns
+
+Key files: [list relevant files or modules]
+Requirements: [link to task doc or brief description]" \
+  2> /tmp/codex-review.md && echo "Review completed"
 ```
 
-## Important Notes
+#### Option C: Use `codex exec` instead of `codex exec review` (full control)
 
-1. **One-Shot Only**: Codex runs non-interactively. No follow-up questions possible.
+When you need both scope control AND a custom prompt, use plain `codex exec`:
 
-2. **Takes Time**: Expect 1-10 minutes depending on complexity. Use `run_in_background` for long tasks.
-
-3. **Model**: Always use `-m gpt-5.3-codex` for explicit model selection.
-
-4. **Full Auto**: `--full-auto` enables workspace-write sandbox with auto-approval.
-
-5. **Output File**: Use `-o /tmp/codex-result.md` to capture just the final response.
-
-6. **CRITICAL - Token Optimization**: Always redirect stdout to `/dev/null` and read from file. See "Output Handling" below.
-
-## Output Handling Best Practice
-
-**Why this matters:** Without optimization, Bash returns ~4700+ tokens of verbose output (reasoning steps, tool calls, MCP logs). With optimization, you get ~30 tokens + clean file read.
-
-### For `codex exec` (custom prompts)
 ```bash
-# Run with output file + suppress verbose stdout
-codex exec "prompt" -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1 && echo "Codex completed"
+codex exec "Review the git diff between main and HEAD. Focus on:
+1. [Focus area 1]
+2. [Focus area 2]
+
+Context: [what this branch implements]
+Check against: [task-file-path]" \
+  -m gpt-5.4 --full-auto \
+  -o /tmp/codex-review.md > /dev/null 2>&1 && echo "Review completed"
 ```
-Then read result with **Read tool** (not cat): `/tmp/codex-result.md`
+Then read with **Read tool**: `/tmp/codex-review.md`
 
-### For `codex exec review` (no -o flag support)
+> **Note on stderr capture**: Review output in stderr includes verbose logs (diffs, commands).
+> The actual review findings are at the **end** of the file. When reading, scan for lines
+> starting with `- [P` (priority findings) or `Review comment:` markers.
+
+### 3. Background Execution (for long tasks)
+
+For complex tasks that take 2-10 minutes:
+
 ```bash
-# Redirect all output to file
-codex exec review --uncommitted -m gpt-5.3-codex --full-auto > /tmp/codex-review.md 2>&1
-```
-Then read result with **Read tool**: `/tmp/codex-review.md`
-
-### Workflow
-1. Run codex command with output redirection
-2. **Read result file** with Read tool (not Bash cat)
-3. Summarize findings to user
-
-## Critical: Provide File Paths in Prompts
-
-**Codex has NO context from Claude Code conversation.** Always include explicit file paths in your prompts:
-
-### For Task Review
-```bash
-codex exec "Review the task specification at tasks/task-2026-01-09-feature/tech-decomposition.md
-Is the implementation plan complete? Any gaps or risks?" -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
-# Read: /tmp/codex-result.md
+# Use Bash tool with run_in_background=true
+codex exec "[complex prompt]" -m gpt-5.4 --full-auto \
+  -o /tmp/codex-result.md > /dev/null 2>&1 && echo "Codex completed"
 ```
 
-### For Code Review with Context
+**Workflow**:
+1. Run with `run_in_background: true` on the Bash tool
+2. Continue working on other tasks while codex runs
+3. You'll be notified automatically when it completes
+4. Read `/tmp/codex-result.md` with the Read tool
+5. Summarize findings to the user
+
+## Critical Rules
+
+### Token Optimization (mandatory)
+
+Without redirection, Bash returns ~4700+ tokens of verbose output. With `-o` + redirect, you get ~30 tokens.
+
+**Pattern**: `-o /tmp/codex-result.md > /dev/null 2>&1 && echo "Codex completed"`
+
+Always read the result with the **Read tool**, never `cat`.
+
+### Codex Has No Context From This Conversation
+
+Codex starts with zero context. **Every invocation is a cold start.** Always include in your prompt:
+- **Task/requirement file paths** — so codex knows what to check against
+- **Implementation file paths** — so codex knows what to review
+- **Directory paths** — for broader context
+- **What to focus on** — specific concerns, not generic "review this"
+- **Brief context** — what the feature/change does (1-2 sentences)
+
+This applies to ALL commands including `codex exec review` — the `--uncommitted`/`--base` flags
+only tell codex WHICH diff to look at, not HOW to review it. The prompt provides the HOW.
+
+**Example**:
 ```bash
-codex exec "Review implementation in these files:
+codex exec "Review the implementation in:
 - backend/src/application/sessions/use-cases/create-session.use-case.ts
 - backend/src/infrastructure/web/dto/sessions/create-session.dto.ts
 
-Check against requirements in: tasks/task-2026-01-09-feature/tech-decomposition.md" -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
-# Read: /tmp/codex-result.md
+Check against requirements in: tasks/task-2026-01-09-feature/tech-decomposition.md
+Focus on: correctness, edge cases, error handling" \
+  -m gpt-5.4 --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
 ```
 
-### For Approach Validation
-```bash
-codex exec "I'm implementing the feature described in tasks/task-2026-01-09-feature/tech-decomposition.md
+### One-Shot Only
 
-My approach:
-1. [Step 1]
-2. [Step 2]
+Codex runs non-interactively. No follow-up questions, no conversation. Craft your prompt to be complete and self-contained.
 
-Is this aligned with the requirements?" -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
-# Read: /tmp/codex-result.md
-```
+### Web Search
 
-### Best Practice
-Always include:
-- **Task file path** - so Codex knows the requirements
-- **Implementation file paths** - so Codex knows what to review
-- **Directory path** - for broader context (e.g., `backend/src/application/sessions/`)
-
-## Background Execution Pattern
-
-For tasks that take longer, run in background:
+Codex has built-in web search (cached by default). Add `--search` for live results:
 
 ```bash
-# Run in background using Bash tool with run_in_background=true
-codex exec "[complex prompt]" -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1 && echo "Codex completed"
+codex exec "Research best practices for [topic]" \
+  -m gpt-5.4 --full-auto --search -o /tmp/codex-result.md > /dev/null 2>&1
 ```
 
-Then read result with **Read tool**: `/tmp/codex-result.md`
+### When NOT to Use
 
-## Example Workflows
+- Simple, quick tasks (overhead not worth the 1-10 min wait)
+- Tasks requiring interactive conversation/refinement
+- Trivial changes (typos, formatting)
 
-### Pre-Implementation Validation
-```bash
-codex exec "I'm about to implement [feature] using [approach].
-Review this plan:
-1. [Step 1]
-2. [Step 2]
-3. [Step 3]
+## Reference Files
 
-Is this approach sound? What issues might I encounter?" -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
-# Read: /tmp/codex-result.md
-```
+Read these as needed — they are NOT loaded into context automatically:
 
-### Security Review
-```bash
-# Built-in review command (redirect to file)
-codex exec review --uncommitted -m gpt-5.3-codex --full-auto > /tmp/codex-review.md 2>&1
-# Read: /tmp/codex-review.md
-
-# Or with custom focus:
-codex exec "Review the uncommitted changes for security vulnerabilities including XSS, injection, auth issues" -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
-# Read: /tmp/codex-result.md
-```
-
-### Cross-AI Verification
-```bash
-codex exec "I implemented [feature]. The key files are:
-- path/to/file1.ts
-- path/to/file2.ts
-
-Verify the implementation is correct and complete." -m gpt-5.3-codex --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
-
-## What's New in Codex CLI 0.96.0
-
-Highlights from the latest CLI release:
-- `unified_exec` enabled on non-Windows platforms for smoother exec flows.
-- Websocket rate-limit signaling via the new `codex.rate_limits` event.
-- `thread/compact` available in the v2 app-server API with async behavior and status tracking.
-
-Source: https://developers.openai.com/codex/changelog
-# Read: /tmp/codex-result.md
-```
-
-## See Also
-
-- `templates.md` - Prompt templates for common operations
-- `reference.md` - Complete command and flag reference
+| File | When to Read |
+|---|---|
+| `reference.md` | Need exact flag syntax, sandbox modes, config options, or error handling |
+| `templates.md` | Need a structured prompt template for a specific review type |

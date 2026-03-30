@@ -8,7 +8,7 @@
 - `technical-decomposition.md` - Optional implementation details
 - `splitting-decision.md` - Optional if task-splitter recommends split
 
-## Legacy Workflow
+## Legacy Workflow (read-only — for existing tasks before JTBD migration, do not use for new tasks)
 - `business-requirements.md` - WHAT & WHY
 - `technical-decomposition.md` - HOW
 

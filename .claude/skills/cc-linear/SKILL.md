@@ -1,226 +1,142 @@
 ---
 name: cc-linear
-description: Execute atomic Linear operations via one-shot `cc` session with Linear MCP. Use for creating issues, updating status, adding comments, querying tasks. CRITICAL: Each command performs ONE operation only. For multi-step workflows (update status THEN add comment), execute SEPARATE `cc` commands sequentially. Spawned sessions cannot ask clarifying questions - prompts must be self-contained and unambiguous. See OPERATIONS.md for patterns and anti-patterns.
+description: >
+  Execute Linear operations via direct GraphQL API — create issues, update
+  status/priority/title, add comments, search tasks, manage labels, assign work,
+  and link PRs. Use this skill whenever the user mentions Linear, refers to
+  WYT-* issue identifiers, says "create a ticket/issue", "move to done/in
+  progress/review", "update the task status", "close the issue", "what's in our
+  backlog", "assign this to", "my issues", or any project management operation
+  targeting Linear. Also trigger when other skills (ct, si, sr) need to sync
+  state with Linear.
 ---
 
 # CC Linear
 
-Interact with Linear task management via `cc` alias — spawns a one-shot Claude Code session with Linear MCP connected.
+> **Announcement**: Begin with: "I'm using the **cc-linear** skill for Linear project management."
 
-## When to Use
+Interact with Linear via `.claude/scripts/linear-api.sh` — a direct `curl` wrapper over Linear's GraphQL API. Each command is atomic and deterministic.
 
-- Create Linear issues from current session
-- Update issue status (In Progress, In Review, Done, etc.)
-- Query issue details or search issues
-- Add comments to issues
-- Any Linear operation without leaving current context
+## Commands
 
-## Critical: One-Shot Limitation
-
-```
-Main Chat → Bash → cc session (one-shot) → Results back
-                        ↑
-                  NO FEEDBACK LOOP
-```
-
-**The Problem:**
-- Spawned session executes prompt and returns output
-- If it asks a clarifying question → you see it but CANNOT respond
-- `--dangerously-skip-permissions` removes permission prompts, but NOT clarification questions
-
-**The Solution: Self-Contained Prompts**
-
-All prompts MUST be:
-- **Concrete** — specify exactly what to do
-- **Self-contained** — include ALL required parameters
-- **Unambiguous** — no room for interpretation
-
-## Standard Syntax: Always Use Pipe
-
-**All prompts go through pipe** — consistent, reliable, no escaping issues.
-
+### Issues
 ```bash
-echo 'Your prompt here' | cc --mcp-config .claude/mcp/linear.json -p -
-```
-
-**Why pipe:**
-- No shell escaping issues with quotes, `$`, backticks
-- No command line length limits
-- Works identically for short and long prompts
-- Single pattern to remember
-
-**For multiline prompts use heredoc:**
-```bash
-cat <<'EOF' | cc --mcp-config .claude/mcp/linear.json -p -
-Create Linear issue in WYT team:
-- title: "Add logout button"
-- description: "Add logout functionality to settings page"
-- priority: 3
-Return the created issue ID.
+.claude/scripts/linear-api.sh get-issue WYT-66
+.claude/scripts/linear-api.sh search "authentication" 5
+.claude/scripts/linear-api.sh ai-search "error handling in mobile app" 5
+.claude/scripts/linear-api.sh create-issue "Title" "Description" 3
+.claude/scripts/linear-api.sh create-issue "Title" "-" 3 <<< "Multiline desc"
+.claude/scripts/linear-api.sh update-issue WYT-66 --title "New Title"
+.claude/scripts/linear-api.sh update-issue WYT-66 --description "New desc"
+.claude/scripts/linear-api.sh update-issue WYT-66 --priority 2
+.claude/scripts/linear-api.sh update-status WYT-66 "In Progress"
+.claude/scripts/linear-api.sh add-comment WYT-66 "Comment body"
+.claude/scripts/linear-api.sh add-comment WYT-66 "-" <<'EOF'
+Multiline comment here
 EOF
+.claude/scripts/linear-api.sh list-comments WYT-66
 ```
 
-## Linear Operations
-
-### Get Issues
-
+### Labels, Assignment & Relations
 ```bash
-# Top tasks from project
-echo 'Get top 5 tasks from WYT project ordered by priority' | cc --mcp-config .claude/mcp/linear.json -p -
-
-# Specific issue details
-echo 'Get details for issue WYT-66' | cc --mcp-config .claude/mcp/linear.json -p -
-
-# Search issues
-echo 'Search WYT issues containing "authentication"' | cc --mcp-config .claude/mcp/linear.json -p -
+.claude/scripts/linear-api.sh add-label WYT-66 "Bug"
+.claude/scripts/linear-api.sh remove-label WYT-66 "Bug"
+.claude/scripts/linear-api.sh assign WYT-66 "Alexander Basis"
+.claude/scripts/linear-api.sh add-relation WYT-66 WYT-67 "blocks"
+.claude/scripts/linear-api.sh link-pr WYT-66 "https://github.com/org/repo/pull/123"
 ```
 
-### Create Issue
-
+### Listings & Queries
 ```bash
-cat <<'EOF' | cc --mcp-config .claude/mcp/linear.json -p -
-Create Linear issue in WYT team:
-- title: "Add user logout functionality"
-- description: "Implement logout button in settings page that clears session and redirects to login"
-- priority: 3 (Normal)
-Return the created issue ID and URL.
-EOF
+.claude/scripts/linear-api.sh list-issues 10
+.claude/scripts/linear-api.sh my-issues                    # Current user's active issues
+.claude/scripts/linear-api.sh my-issues 20                 # With custom limit
+.claude/scripts/linear-api.sh list-states
+.claude/scripts/linear-api.sh list-labels
+.claude/scripts/linear-api.sh list-users
 ```
 
-### Update Issue Status
+## Output Formatting
 
-```bash
-# Update to In Progress
-echo 'Update WYT-66 status to "In Progress". Do NOT modify description.' | cc --mcp-config .claude/mcp/linear.json -p -
+The script returns raw JSON. Present results to the user clearly:
 
-# Update to In Review
-echo 'Update WYT-66 status to "In Review". Do NOT modify description.' | cc --mcp-config .claude/mcp/linear.json -p -
+- **get-issue**: Show identifier, title, status, priority, assignee, labels, and URL
+- **search / ai-search**: Numbered list with identifier, title, and status
+- **create-issue**: Confirm with identifier and URL
+- **update-status / update-issue**: Confirm the change (e.g., "WYT-66: Todo → In Progress")
+- **list-comments**: Show author, date, and body for each comment
+- **my-issues**: Show as a compact table grouped by status
+- **list-***: Show as a compact table
 
-# Update to Done
-echo 'Update WYT-66 status to "Done". Do NOT modify description.' | cc --mcp-config .claude/mcp/linear.json -p -
-```
-
-### Add Comment
-
-```bash
-cat <<'EOF' | cc --mcp-config .claude/mcp/linear.json -p -
-Add comment to WYT-66:
-"Implementation completed. PR #123 ready for review.
-- Added logout endpoint
-- Updated auth middleware
-- Tests passing"
-EOF
-```
-
-## Critical: Separate Operations
-
-**NEVER combine status updates and comments in one prompt!**
-
-The cc session may interpret "Add comment" as modifying the description field, causing loss of the original task description.
-
-### WRONG - Combined prompt:
-```bash
-# DO NOT DO THIS - causes description overwrite
-echo 'Update WYT-66: 1. Set status to In Review 2. Add comment: Implementation completed' | cc --mcp-config .claude/mcp/linear.json -p -
-```
-
-### CORRECT - Separate prompts:
-```bash
-# First: Update status only
-echo 'Update WYT-66 status to "In Review". Do NOT modify description.' | cc --mcp-config .claude/mcp/linear.json -p -
-
-# Second: Add comment separately
-echo 'Add comment to WYT-66: "Implementation completed. PR ready for review."' | cc --mcp-config .claude/mcp/linear.json -p -
-```
+Always include the Linear URL so the user can click through.
 
 ## Configuration
 
-### WYT Project Settings
-
-```yaml
-Team ID: WYT
-```
+| Setting | Value |
+|---------|-------|
+| Team Key | WYT |
+| API Key | `LINEAR_API_KEY` env var |
 
 ### Task States (in order)
 
-```yaml
-- Backlog
-- Ready for Implementation
-- In Progress
-- In Review
-- Needs Fixes
-- Ready to Merge
-- Done
-- Canceled
+```
+Backlog → Todo → In Progress → In Review → Done | Canceled | Duplicate
 ```
 
 ### Priority Levels
 
-```yaml
-0: None
-1: Urgent
-2: High
-3: Normal (default)
-4: Low
+```
+0: None  1: Urgent  2: High  3: Normal (default)  4: Low
 ```
 
-## Usage in Commands
+## Workflow Patterns
 
-When commands (like `/ct`, `/si`, `/sr`) need Linear operations:
+Common multi-step sequences. Each command is atomic — chain them together.
 
+### Start Implementation
 ```bash
-cat <<'EOF' | cc --mcp-config .claude/mcp/linear.json -p -
-Create Linear issue in WYT:
-- title: "[Task Title]"
-- description: "[Full description with context, requirements, acceptance criteria]"
-- priority: [0-4]
-Return the created issue ID and URL.
+.claude/scripts/linear-api.sh update-status WYT-66 "In Progress"
+.claude/scripts/linear-api.sh add-comment WYT-66 "Implementation started. Branch: feature/wyt-66-feature-name"
+```
+
+### Submit for Review
+```bash
+.claude/scripts/linear-api.sh update-status WYT-66 "In Review"
+.claude/scripts/linear-api.sh add-comment WYT-66 "-" <<'EOF'
+Implementation completed.
+- Key changes: [list]
+- Test coverage: [X]%
+- PR ready for review.
 EOF
 ```
 
-### Template for Any Operation
-
+### Task Done
 ```bash
-cat <<'EOF' | cc --mcp-config .claude/mcp/linear.json -p -
-ACTION: [create_issue | update_issue | add_comment | get_issue | search_issues]
-
-TARGET: [issue ID if applicable, e.g., WYT-66]
-
-PARAMETERS:
-- team: WYT
-- [action-specific params...]
-
-CONSTRAINTS:
-- Do NOT modify fields other than [specified field]
-
-RETURN: [what you need back]
-EOF
+.claude/scripts/linear-api.sh update-status WYT-66 "Done"
+.claude/scripts/linear-api.sh add-comment WYT-66 "Task completed and PR merged. SHA: abc123"
 ```
 
-## Important Notes
+## Cross-Skill Integration
 
-1. **MCP Config Path**: Always use `.claude/mcp/linear.json`
-2. **Working Directory**: Run from project root
-3. **No Session Context**: Spawned session knows nothing about parent conversation
-4. **Auth**: Linear MCP uses SSO — ensure authenticated in browser first
-5. **Pipe + `-p -`**: The `-` tells cc to read prompt from stdin
+When working with other skills, proactively suggest or perform Linear operations:
 
-## Troubleshooting
+| Skill | When | Linear Action |
+|-------|------|---------------|
+| `/ct` | After creating task docs | `create-issue` with task title + link to task doc |
+| `/si` | On implementation start | `update-status` → "In Progress" + comment with branch |
+| `/sr` | After code review passes | `update-status` → "In Review" or "Done" |
+| PR creation | After `gh pr create` | `link-pr` + `update-status` → "In Review" |
 
-### Empty or Unexpected Output
+Don't force these — suggest them when the context is clear (e.g., a WYT-* ID is visible in the task doc or branch name).
 
-Prompt was too vague. Add team ID, full description, exact parameters.
+## Error Recovery
 
-### MCP Connection Failed
-
-```bash
-echo 'List all available Linear MCP tools' | cc --mcp-config .claude/mcp/linear.json -p -
-```
-
-### Authentication Issues
-
-Linear MCP uses browser SSO. Open Linear in browser, ensure logged in, then retry.
+- If a command fails mid-sequence, retry the failed command — completed steps are idempotent.
+- If "State not found", run `list-states` to refresh the cache, then retry.
+- If "Label/User not found", run `list-labels` or `list-users` to check exact names.
+- Clear all caches: `rm /tmp/linear-WYT-*.json`
+- Never silently swallow errors — always report failures to the user.
 
 ## References
 
-See `references/linear-mcp-tools.md` for detailed MCP tool signatures.
+See `references/linear-api-reference.md` for GraphQL queries used by the script.

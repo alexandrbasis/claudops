@@ -21,6 +21,8 @@ allowed-tools:
 
 # React Native + Expo Best Practices
 
+> **Announcement**: Begin with: "I'm using the **react-native-expo-mobile** skill for React Native/Expo best practices."
+
 React Native and Expo best practices for building performant mobile apps for Wythm.
 
 ## When to use this skill

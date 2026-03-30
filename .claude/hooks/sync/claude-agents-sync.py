@@ -2,16 +2,15 @@
 """
 Claude/Agents Files Synchronization Hook
 
-This hook ensures that claude.md and agents.md files stay synchronized across the entire project.
+This hook ensures that CLAUDE.md and AGENTS.md files stay synchronized across the entire project.
 When changes are detected in either file, the corresponding counterpart is updated automatically.
 
 File pairs to synchronize:
-1. Root: claude.md ↔ agents.md
-2. Backend: backend/claude.md ↔ backend/AGENTS.md
+1. Root: CLAUDE.md ↔ AGENTS.md
+2. Backend: backend/CLAUDE.md ↔ backend/AGENTS.md
 3. Mobile App: mobile-app/CLAUDE.md ↔ mobile-app/AGENTS.md
 """
 
-import os
 import sys
 import json
 import hashlib
@@ -19,10 +18,10 @@ from pathlib import Path
 from datetime import datetime
 
 def log_message(message, level="INFO"):
-    """Log messages with timestamp"""
+    """Log messages with timestamp to stderr (stdout is reserved for hook JSON output)"""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{timestamp}] {level}: {message}")
-    sys.stdout.flush()
+    print(f"[{timestamp}] {level}: {message}", file=sys.stderr)
+    sys.stderr.flush()
 
 def calculate_file_hash(file_path):
     """Calculate MD5 hash of file content"""
@@ -197,48 +196,69 @@ def synchronize_files(pair, changed_file):
         return False
 
 def main():
-    """Main hook function"""
-    # Prefer repository root computed from this file location
-    repo_root = Path(__file__).resolve()
+    """Main hook function — reads PostToolUse JSON from stdin."""
+    try:
+        # Read hook input from stdin (Claude Code hook protocol)
+        input_data = json.load(sys.stdin)
 
-    # Get the changed file from environment variable or command line argument
-    changed_file = os.environ.get('FILE_PATH', '')
-    if len(sys.argv) > 1:
-        changed_file = sys.argv[1]
+        tool_name = input_data.get("tool_name", "")
+        tool_input = input_data.get("tool_input", {})
+        cwd = input_data.get("cwd", "")
 
-    if not changed_file:
-        log_message("No file path provided", "ERROR")
-        sys.exit(1)
+        # Only process Write/Edit events
+        if tool_name not in ("Write", "Edit"):
+            sys.exit(0)
 
-    # Convert to absolute path
-    changed_file = Path(changed_file).resolve()
+        # Extract file path from tool input
+        changed_file = tool_input.get("file_path", "")
+        if not changed_file:
+            sys.exit(0)
 
-    log_message(f"File change detected: {changed_file}")
+        # Use cwd from hook input to resolve relative paths correctly
+        project_dir = Path(cwd).resolve() if cwd else Path.cwd().resolve()
 
-    # Check if this file should trigger synchronization
-    if not should_sync_file(changed_file):
-        log_message("File does not require synchronization")
+        # Convert to absolute path (anchor to project cwd, not process cwd)
+        changed_path = Path(changed_file)
+        if not changed_path.is_absolute():
+            changed_file = (project_dir / changed_path).resolve()
+        else:
+            changed_file = changed_path.resolve()
+
+        log_message(f"File change detected: {changed_file}")
+
+        # Check if this file should trigger synchronization
+        if not should_sync_file(changed_file):
+            sys.exit(0)
+
+        # Get all file pairs
+        file_pairs = get_file_pairs(project_dir)
+
+        # Find the pair that contains the changed file
+        pair = find_pair_for_file(changed_file, file_pairs)
+
+        if not pair:
+            log_message("No matching file pair found")
+            sys.exit(0)
+
+        # Perform synchronization
+        success = synchronize_files(pair, changed_file)
+
+        if success:
+            log_message("Synchronization completed successfully")
+        else:
+            log_message("Synchronization failed", "WARNING")
+
+        # Always exit 0 — never block operations due to sync issues
         sys.exit(0)
 
-    # Get all file pairs
-    file_pairs = get_file_pairs(repo_root)
-
-    # Find the pair that contains the changed file
-    pair = find_pair_for_file(changed_file, file_pairs)
-
-    if not pair:
-        log_message("No matching file pair found", "ERROR")
-        sys.exit(1)
-
-    # Perform synchronization
-    success = synchronize_files(pair, changed_file)
-
-    if success:
-        log_message("Synchronization completed successfully")
+    except json.JSONDecodeError:
+        # Can't parse input — pass through
         sys.exit(0)
-    else:
-        log_message("Synchronization failed", "ERROR")
-        sys.exit(1)
+    except Exception as e:
+        log_message(f"Unexpected error: {e}", "ERROR")
+        # Never block operations due to hook errors
+        sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

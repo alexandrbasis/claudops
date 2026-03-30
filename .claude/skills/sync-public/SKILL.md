@@ -1,8 +1,15 @@
 ---
 name: sync-public
-description: Sync Claude Code config to public repository
+description: >-
+  Sync Claude Code configuration to the public wythm-claude-workflows repository.
+  Use when asked to 'sync to public', 'update public repo', 'push workflows',
+  or 'sync-public'. NOT for CLAUDE.md/AGENTS.md sync (use /sync).
 disable-model-invocation: true
 ---
+
+# Sync to Public Repository
+
+> **Announcement**: Begin with: "I'm using the **sync-public** skill for syncing to public repository."
 
 When the user requests to sync the Claude Code configuration to the public repository:
 

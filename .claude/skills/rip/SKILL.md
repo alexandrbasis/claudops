@@ -12,6 +12,8 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion
 
 # Review Implementation Plan (RIP)
 
+> **Announcement**: Begin with: "I'm using the **rip** skill for implementation plan review."
+
 Step-by-step review of implementation plan. Focus: **business value** through technical understanding.
 
 ## Protocol

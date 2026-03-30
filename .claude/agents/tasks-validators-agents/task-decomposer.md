@@ -50,10 +50,12 @@ For each sub-task in splitting-decision, create a phase folder:
 mkdir "phase-N-[phase-name-kebab-case]"
 ```
 
-**Naming Convention**:
-- `phase-1-domain-types/`
-- `phase-2-word-group-service/`
-- `phase-3-use-case-controller/`
+**Naming Convention** (prefer use-case names over layer names):
+- `phase-1-profile-lookup-endpoint/`
+- `phase-2-word-normalization-logic/`
+- `phase-3-cli-lookup-integration/`
+
+**Avoid layer-based names** like `domain-types/`, `hooks-integration/`, `use-case-controller/`. Name phases after the use case or capability they deliver, not the architectural layer they touch.
 
 ### Step 3: Generate Phase Tech-Decompositions
 
@@ -131,6 +133,14 @@ For each phase, create `tech-decomposition-phase-N-[name].md` using this structu
 [Phase-specific notes, considerations, or warnings]
 ```
 
+**Vertical Slice Validation**:
+Before finalizing each phase tech-decomposition, verify:
+1. Does this phase deliver at least one complete use case end-to-end?
+2. Can this phase be meaningfully tested with behavioral tests (not just type-checking)?
+3. Does this phase create any types/interfaces that have no consumer within the same phase?
+
+If a phase fails these checks, reconsider the split boundaries. Consult the splitting-decision's "Splitting Approach Justification" section.
+
 **Extraction Logic**:
 1. **Test Cases**: Use the splitting-decision's "Technical Changes" and "Use cases included" to identify which test suites belong to this phase
 2. **Implementation Steps**: Match steps from parent to the scope defined in splitting-decision
@@ -148,12 +158,11 @@ This preserves the original for reference while making it clear it's no longer t
 
 ### Step 5: Create Linear Sub-Issues
 
-For each phase, create a Linear issue using cc-linear skill:
+For each phase, create a Linear issue using `linear-api.sh` (see `.claude/skills/cc-linear/SKILL.md`):
 
 ```bash
-cc --mcp-config .claude/mcp/linear.json -p "Create Linear issue in WYT team:
-- title: 'Phase N: [Phase Name]'
-- description: '## Objective
+.claude/scripts/linear-api.sh create-issue "Phase N: [Phase Name]" "-" 3 <<'EOF'
+## Objective
 [Phase objective from tech-decomposition]
 
 ## Scope
@@ -164,38 +173,25 @@ cc --mcp-config .claude/mcp/linear.json -p "Create Linear issue in WYT team:
 - Blocks: [Phase N+1 / None]
 
 ## Parent Task
-[Parent Issue ID] - [Parent Issue Name]'
-- priority: 3
-
-Return the created issue ID and URL in format:
-- Issue ID: WYT-XXX
-- URL: https://linear.app/..."
+[Parent Issue ID] - [Parent Issue Name]
+EOF
 ```
 
-**Execute sequentially** - one cc command per phase.
+**Execute sequentially** — one command per phase. Parse JSON response for `identifier` and `url`.
 
 ### Step 5.5: Set Linear Blocking Relationships
 
-After ALL phase issues are created, set up blocking dependencies in Linear:
+After ALL phase issues are created, set up blocking dependencies:
 
-```bash
-# For each phase N > 1, set blocking relationship
-cc --mcp-config .claude/mcp/linear.json -p "Add blocking relationship: WYT-[Phase N issue] is blocked by WYT-[Phase N-1 issue]. Use the Linear MCP to create this dependency relationship."
-```
-
-**Example for 3 phases (WYT-103, WYT-104, WYT-105)**:
 ```bash
 # Phase 2 blocked by Phase 1
-cc --mcp-config .claude/mcp/linear.json -p "Add blocking relationship: WYT-104 is blocked by WYT-103. Use the Linear MCP to create this dependency relationship."
+.claude/scripts/linear-api.sh add-relation WYT-[Phase1] WYT-[Phase2] "blocks"
 
 # Phase 3 blocked by Phase 2
-cc --mcp-config .claude/mcp/linear.json -p "Add blocking relationship: WYT-105 is blocked by WYT-104. Use the Linear MCP to create this dependency relationship."
+.claude/scripts/linear-api.sh add-relation WYT-[Phase2] WYT-[Phase3] "blocks"
 ```
 
-**Important**:
-- Execute AFTER all issues are created (need issue IDs)
-- Execute sequentially - one blocking relationship per cc command
-- This ensures Linear shows the dependency chain correctly
+**Execute AFTER all issues are created** (need issue IDs). First arg blocks the second.
 
 ### Step 6: Update Phase Docs with Linear IDs
 

@@ -230,6 +230,8 @@ Return JSON result to orchestrator:
 3. **Minimal implementation** - only what tests require
 4. **No cross-item changes** - stay in your scope
 5. **Complete validation** - all checks must pass
+6. **Deviation rules** - follow `.claude/docs/references/deviation-rules.md` for auto-fix vs ask, attempt limits, and scope boundaries
+7. **Structured return** - follow `.claude/docs/references/agent-return-protocol.md` header protocol (STATUS/SUMMARY/FINDINGS before JSON)
 
 ## Anti-Patterns
 

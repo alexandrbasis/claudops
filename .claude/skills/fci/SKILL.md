@@ -11,6 +11,8 @@ disable-model-invocation: true
 
 # Fix CI Issues Command
 
+> **Announcement**: Begin with: "I'm using the **fci** skill for CI failure resolution."
+
 ## PRIMARY OBJECTIVE
 Fix all CI pipeline failures blocking the PR merge while maintaining code quality and test integrity.
 

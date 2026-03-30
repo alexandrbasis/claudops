@@ -1,6 +1,15 @@
 ---
 name: deep-research
-description: "In-depth research on technical topics using web search, documentation, and codebase analysis. Use when asked to 'research', 'investigate', 'find out about', or explore unfamiliar technologies."
+description: >-
+  In-depth research on technical topics using web search, documentation, and codebase analysis.
+  Use when asked to 'research', 'investigate', 'find out about', 'look into', 'dig into',
+  'compare X vs Y', 'what's the best library for', 'how does X work', 'should we use',
+  'find alternatives to', 'evaluate options for', 'what are others doing for',
+  or explore unfamiliar technologies, libraries, or architectural patterns.
+  Also triggers for technology evaluation, migration research, and dependency decisions.
+  NOT for quick brainstorming (use /brainstorm), NOT for feature discovery (use /nf),
+  NOT for static code analysis (use /code-analysis).
+argument-hint: "[topic or question]"
 context: fork
 allowed-tools:
   - WebSearch
@@ -9,119 +18,159 @@ allowed-tools:
   - Grep
   - Glob
   - Task
+  - mcp__exa__web_search_exa
+  - mcp__exa__get_code_context_exa
+  - mcp__ref__ref_search_documentation
+  - mcp__ref__ref_read_url
 ---
 
 # Deep Research
 
+> **Announcement**: Begin with: "I'm using the **deep-research** skill for in-depth technical research."
+
 ## Overview
 
-Conduct comprehensive research on technical topics, synthesizing information from multiple sources. Since this runs in a forked context, explore extensively - only the final findings return to the main conversation.
+Conduct comprehensive research on technical topics, synthesizing information from multiple sources. Since this runs in a forked context, explore extensively — only the final findings return to the main conversation.
 
-## Research Process
+## 1. Determine Research Depth
 
-### 1. Clarify Scope
-Before diving in, understand:
-- What specifically needs to be researched?
-- What decisions will this inform?
-- Any constraints (technology, timeline, team expertise)?
+Not every request needs a 10-source report. Match the depth to the question:
 
-### 2. Source Prioritization
+| Depth | When | Output |
+|-------|------|--------|
+| **Quick** | Simple factual question, "how do I X", single-topic lookup | Direct answer with 1-2 sources |
+| **Comparison** | "X vs Y", "which library for", "should we use" | Comparison table + recommendation |
+| **Deep** | Technology evaluation, migration analysis, architectural decision | Full structured report |
 
-| Priority | Source | Use For |
-|----------|--------|---------|
-| 1 | Official docs | Authoritative information |
-| 2 | GitHub repos | Real implementations, issues |
-| 3 | Technical blogs | Best practices, gotchas |
-| 4 | Stack Overflow | Common problems, solutions |
-| 5 | Codebase analysis | How it relates to our code |
+If the user's intent is ambiguous, default to **Comparison** — it's the most common need.
 
-### 3. Research Strategy
+## 2. Source Strategy
 
-**For Technology Evaluation:**
-```
+### Tool Priority (Exa-first)
+
+Research tools should be used in this order — Exa provides the fastest, most code-aware results:
+
+1. **`get_code_context_exa`** — code-oriented queries (API usage, library examples, patterns)
+2. **`web_search_exa`** — broader technical topics, comparisons, ecosystem info
+3. **`ref_search_documentation`** — only when Exa results seem outdated or contradictory
+4. **`ref_read_url`** — read primary docs when clarification is needed
+5. **`WebSearch` / `WebFetch`** — fallback for anything Exa/Ref can't reach
+
+### Parallel Search
+
+Since this runs in a fork, optimize for speed by launching parallel queries:
+- Fire Exa code context + Exa web search simultaneously for different facets of the question
+- While web results load, scan the local codebase (`Grep`, `Glob`) for relevant existing patterns
+- Use multiple small, focused queries rather than one broad query
+
+### Source Types
+
+| Source | Best For |
+|--------|----------|
+| Official docs | Authoritative API/config info |
+| GitHub repos | Real implementations, issue discussions, activity signals |
+| Technical blogs | Best practices, gotchas, real-world experience |
+| Stack Overflow | Common problems, community-vetted solutions |
+| Local codebase | Integration points, existing patterns, constraints |
+
+## 3. Research Strategies
+
+**Technology Evaluation:**
 1. Official documentation overview
-2. GitHub - stars, activity, issues
+2. GitHub — stars, recent activity, open issues, release cadence
 3. Comparison articles (vs alternatives)
-4. Real-world case studies
-5. Our codebase - integration points
-```
+4. Real-world adoption signals (who uses it, at what scale)
+5. Local codebase — integration points, migration effort
 
-**For Problem Solving:**
-```
-1. Error message / symptom search
+**Problem Solving:**
+1. Error message / symptom search (Exa code context)
 2. GitHub issues in relevant repos
 3. Stack Overflow discussions
 4. Official troubleshooting guides
-5. Our codebase - similar patterns
+5. Local codebase — similar patterns or workarounds
+
+**Best Practices:**
+1. Official style guides and recommendations
+2. Community conventions (popular repos, conference talks)
+3. Existing patterns in our codebase
+4. Project preferences (read from CLAUDE.md)
+
+## 4. Cross-Verification
+
+- Never rely on a single source — triangulate across at least 2-3
+- Verify claims against official docs
+- Check publication dates — prefer content from the last 12 months
+- Look for consensus; flag disagreements explicitly
+- Be skeptical of AI-generated content in search results
+
+## 5. Output Format
+
+Adapt output to the research depth determined in step 1.
+
+### Quick Answer
+```
+**Answer**: [concise answer]
+
+**Source**: [url] — [what it confirmed]
+
+**Caveat**: [any important limitations or conditions]
 ```
 
-**For Best Practices:**
+### Comparison
 ```
-1. Official style guides
-2. Community conventions
-3. Popular open-source examples
-4. Our existing patterns
-5. Team preferences (from CLAUDE.md)
+## [X] vs [Y] for [use case]
+
+| Criteria | X | Y |
+|----------|---|---|
+| [criterion] | [assessment] | [assessment] |
+
+**Recommendation**: [which and why, considering our project context]
+**Sources**: [urls]
 ```
 
-### 4. Cross-Verification
-- Never trust single source
-- Verify with official docs
-- Check publication date (prefer recent)
-- Look for consensus across sources
-
-## Output Format
-
-Return structured findings:
-
+### Full Report
 ```markdown
-# Research Report: [Topic]
+# Research: [Topic]
 
-**Research Question**: [what was investigated]
+**Question**: [what was investigated]
 **Date**: [ISO date]
-**Sources Consulted**: [count]
+**Sources**: [count]
 
-## Executive Summary
+## Summary
 [3-5 sentences answering the research question]
 
-## Key Findings
+## Findings
 
-### Finding 1: [title]
-**Confidence**: HIGH/MEDIUM/LOW
+### [Finding title]
+**Confidence**: HIGH / MEDIUM / LOW
 **Sources**: [list]
-
-[detailed finding]
-
-### Finding 2: [title]
-...
+[details]
 
 ## Recommendations
-Based on research:
 1. [recommendation with rationale]
 2. [recommendation with rationale]
 
 ## Sources
-- [Source 1](url) - [what it provided]
-- [Source 2](url) - [what it provided]
+- [Source](url) — [what it provided]
 
 ## Open Questions
-- [anything that couldn't be answered]
+- [anything unresolved]
 ```
 
-## Research Quality Checklist
+## 6. Project Context
 
-Before returning findings:
-- [ ] Multiple sources consulted
-- [ ] Official documentation checked
-- [ ] Information is current (check dates)
-- [ ] Relevance to Wythm project verified
-- [ ] Recommendations are actionable
-- [ ] Sources are cited
+Instead of relying on a static list, read project context dynamically:
+- Check `CLAUDE.md` at the repo root for current stack and architecture
+- Check `backend/AGENTS.md` for backend-specific constraints
+- Check `package.json` / `tsconfig.json` for actual dependencies and versions
+- Reference existing patterns in the codebase when making recommendations
 
-## Wythm Context
+This ensures recommendations stay aligned with the project as it evolves.
 
-When researching, consider our stack:
-- **Backend**: NestJS, TypeScript, Prisma, PostgreSQL
-- **Architecture**: DDD + Clean Architecture
-- **Future Mobile**: React Native + Expo
-- **AI Integration**: OpenAI, Anthropic APIs
+## 7. Before Returning
+
+- [ ] Sources are cited with URLs
+- [ ] Information is current (dates checked)
+- [ ] Findings are relevant to our project context
+- [ ] Recommendations are actionable (not just "it depends")
+- [ ] Conflicting information is flagged, not hidden

@@ -1,322 +1,193 @@
 ---
 name: gemini-cli
-description: Use Google's Gemini CLI for web-grounded research (Google Search), automation via one-shot prompts, and second-opinion review. Use when you need structured JSON output, fast scripting workflows, or cross-AI validation.
+description: >-
+  Run Google Gemini CLI for web-grounded research, cross-AI review, or validation.
+  Use when asked for 'ask gemini', 'gemini review', 'gemini search', 'use gemini',
+  or when you need Google Search grounding or a different AI perspective.
+  NOT for interactive conversations (gemini is one-shot only).
 allowed-tools:
   - Bash
   - Read
-  - Write
-  - Grep
-  - Glob
 ---
 
 # Gemini CLI Integration Skill
 
-This skill enables Claude Code to orchestrate Google's **Gemini CLI** reliably using **one-shot prompts** (positional prompt) for scripting and automation.
+> **Announcement**: Begin with: "I'm using the **gemini-cli** skill for cross-AI validation with Gemini."
 
-## When to Use This Skill
+Invoke Google Gemini CLI for one-shot code review, web-grounded research, and cross-AI verification.
 
-### Ideal Use Cases
+## Self-Update: Official Documentation
 
-1. **Second Opinion / Cross-Validation**
-   - Code review after writing code (different AI perspective)
-   - Security audit with alternative analysis
-   - Finding bugs Claude might have missed
+When the skill feels outdated (wrong flags, unknown model, new features), consult these
+official sources to update commands and reference files:
 
-2. **Google Search Grounding**
-   - Questions requiring current internet information
-   - Latest library versions, API changes, documentation updates
-   - Current events or recent releases
+| Resource | URL |
+|---|---|
+| CLI cheatsheet (flags & options) | https://geminicli.com/docs/cli/cli-reference |
+| Gemini 3 model page | https://geminicli.com/docs/get-started/gemini-3/ |
+| Official docs home | https://geminicli.com/docs |
+| Headless mode reference | https://geminicli.com/docs/cli/headless |
+| GitHub repo (issues, releases) | https://github.com/google-gemini/gemini-cli |
+| Available models & deprecations | https://ai.google.dev/gemini-api/docs/models |
 
-3. **Automation (One-Shot)**
-   - One-shot prompts in CI/scripts with `gemini "..."` (positional prompt)
-   - Structured output via `--output-format json`
-   - Streaming JSON events via `--output-format stream-json` (only when you explicitly need detailed event traces)
+Use `WebFetch` or `mcp__exa__web_search_exa` to check for updates when:
+- A gemini command fails with an unknown flag error
+- The user mentions a gemini feature not covered here
+- It has been a while since the skill was last updated
 
-4. **Parallel Processing**
-   - Offload tasks while continuing other work
-   - Run multiple code generations simultaneously
-   - Background documentation generation
+> **Last verified**: 2026-03-16 (Gemini CLI v0.33.1, Auto (Gemini 3) routing, thinking level HIGH)
 
-5. **Specialized Generation**
-   - Test suite generation
-   - JSDoc/documentation generation
-   - Code translation between languages
+## Prerequisite Check
+
+Before running any gemini command, verify installation:
+
+```bash
+command -v gemini >/dev/null || { echo "ERROR: gemini CLI not installed. Run: npm i -g @google/gemini-cli"; exit 1; }
+```
+
+## Core Patterns
+
+### 1. Custom Prompt (most common)
+
+The canonical pattern: run gemini, capture JSON, extract clean final answer with jq.
+
+```bash
+gemini \
+  -p "Output ONLY the final answer.Task: [your prompt] @file/paths" \
+  --approval-mode=yolo -o json \
+  > /tmp/gemini.json 2> /dev/null \
+  && jq -r '.response' /tmp/gemini.json > /tmp/gemini-result.txt \
+  && echo "Gemini completed"
+```
+Then read with **Read tool**: `/tmp/gemini-result.txt`
+
+**Why this works**: `-o json` captures structured output. `jq -r '.response'` extracts ONLY the final answer — no thinking tokens, no tool traces, no reasoning chain. `2> /dev/null` suppresses extension loading noise. This is functionally equivalent to codex-cli's `-o FILE` flag.
+
+### 2. Code Review
+
+```bash
+gemini \
+  -p "Output ONLY the final answer. No chain of thought. No reasoning.
+Review these files for bugs, security issues, and improvements:
+- @path/to/file.ts
+- @path/to/other-file.ts
+Check against requirements in: @tasks/task-doc/tech-decomposition.md
+Focus on: correctness, edge cases, error handling" \
+  --approval-mode=yolo -o json \
+  > /tmp/gemini.json 2> /dev/null \
+  && jq -r '.response' /tmp/gemini.json > /tmp/gemini-review.txt \
+  && echo "Review completed"
+```
+Then read with **Read tool**: `/tmp/gemini-review.txt`
+
+### 3. Web Research (Google Search Grounding)
+
+Gemini's unique differentiator over other CLI tools: native Google Search grounding.
+
+```bash
+gemini \
+  -p "Output ONLY the final answer. No chain of thought. No reasoning.
+Use Google Search to find: [topic]. Cite sources with URLs.
+Format: markdown with bullet points." \
+  --approval-mode=yolo -o json \
+  > /tmp/gemini.json 2> /dev/null \
+  && jq -r '.response' /tmp/gemini.json > /tmp/gemini-research.txt \
+  && echo "Research completed"
+```
+Then read with **Read tool**: `/tmp/gemini-research.txt`
+
+### 4. Background Execution (for long tasks)
+
+For complex tasks that take 2-10 minutes:
+
+```bash
+# Use Bash tool with run_in_background=true
+gemini \
+  -p "[complex prompt with @file references]" \
+  --approval-mode=yolo -o json \
+  > /tmp/gemini.json 2> /dev/null \
+  && jq -r '.response' /tmp/gemini.json > /tmp/gemini-result.txt \
+  && echo "Gemini completed"
+```
+
+**Workflow**:
+1. Run with `run_in_background: true` on the Bash tool
+2. Continue working on other tasks while gemini runs
+3. You will be notified automatically when it completes
+4. Read `/tmp/gemini-result.txt` with the Read tool
+5. Summarize findings to the user
+
+### 5. Capacity & Timeout Notes
+
+Auto routing handles capacity via a fallback chain: Gemini 3.1 Pro → Gemini 2.5 Pro → Gemini 2.5 Flash. The CLI auto-retries with exponential backoff on 429 errors.
+
+**Timeout protection**: Always set a `timeout` on the Bash tool call (default 120s is too short for complex reviews). Recommended values:
+
+| Task Type | Bash timeout |
+|---|---|
+| Simple query | `60000` (60s) |
+| Code review (small) | `180000` (3min) |
+| Code review (large) / directory analysis | `300000` (5min) |
+| Web research | `120000` (2min) |
+
+### 6. @path Safety
+
+**CRITICAL**: Verify that `@path` references point to files/directories that actually exist. Gemini CLI can hang indefinitely on nonexistent `@path` references (see [#6440](https://github.com/google-gemini/gemini-cli/issues/6440)). Before running, mentally verify the paths or use `ls` to check.
+
+## Critical Rules
+
+### Auto Routing (Default — Do Not Pass `-m`)
+
+Do NOT pass `-m` flag — rely on **Auto** routing (requires `previewFeatures: true` in `~/.gemini/settings.json` for Gemini 3 access).
+
+**How Auto routing actually works** (verified via test output and official docs):
+1. A lightweight **classifier** (`gemini-2.5-flash-lite`) analyzes the prompt complexity
+2. **Simple tasks** → `gemini-3-flash-preview` (or `gemini-2.5-flash` — routing is inconsistent, see [#22381](https://github.com/google-gemini/gemini-cli/issues/22381))
+3. **Complex tasks** → `gemini-3.1-pro-preview` (if available) or `gemini-2.5-pro`
+
+**Fallback chain** (when limits/capacity are hit): Gemini 3 Pro → Gemini 2.5 Pro → Gemini 2.5 Flash. The CLI auto-retries with exponential backoff on 429 errors.
+
+> **Note**: The 2.5-flash-lite classifier is internal and expected — it doesn't affect answer quality. Only the **main** model response matters.
+
+### Always Use `-p` Flag
+
+The `-p` flag forces non-interactive mode. Without it, commands may default to interactive REPL in a TTY, which breaks one-shot execution from Claude Code.
+
+### Final Answer Only
+
+Use `-o json` + `jq -r '.response'` to extract only the final answer.
+
+### Token Optimization (mandatory)
+
+Without redirection, Bash returns thousands of tokens of verbose output. With the redirect pattern, you get ~30 tokens.
+
+**Pattern**: `> /tmp/gemini.json 2> /dev/null && jq -r '.response' /tmp/gemini.json > /tmp/gemini-result.txt && echo "Gemini completed"`
+
+Always read the result with the **Read tool**, never `cat`.
+
+### Gemini Has No Context From This Conversation
+
+Gemini starts with zero context. Always include in your prompt:
+- **Task/requirement file paths** using `@path` syntax
+- **Implementation file paths** for review targets
+- **Directory paths** for broader context (`@src/`)
+
+### One-Shot Only
+
+Gemini runs non-interactively via `-p`. No follow-up questions, no conversation. Craft your prompt to be complete and self-contained.
 
 ### When NOT to Use
 
-- Simple, quick tasks (overhead not worth it)
-- Tasks requiring immediate response (rate limits cause delays)
-- When context is already loaded and understood
-- Interactive refinement requiring conversation
-
-## Core Instructions
-
-### Model policy (pinned for consistency)
-
-In this workspace, run Gemini CLI **with an explicit pinned model** for consistency and deeper reviews:
-
-```bash
-gemini --model gemini-3-pro-preview "..."
-```
-
-This is intentional: our tests show the pinned `gemini-3-pro-preview` run produces more careful, slower, code-grounded reviews.
-
-### 1. Verify Installation & Auth (Gemini CLI itself)
-
-```bash
-command -v gemini && gemini --version
-```
-
-If missing, install:
-
-```bash
-npm install -g @google/gemini-cli
-```
-
-Authenticate (one of):
-- **API key**: export `GEMINI_API_KEY=...`
-- **OAuth (interactive)**: run `gemini` once and follow the prompts
-
-### 2. Critical Concept: Gemini CLI Has NO Claude Context
-
-Gemini CLI is a separate process. It **does not see this chat**.
-
-Gemini one-shot calls are **not interactive** by default: you get one request and one answer.
-
-To make Gemini effective in one-shot mode, always include:
-- **Goal**: what you want and why
-- **Inputs**: explicit file paths (or inject files/dirs via `@path`), plus any relevant snippets
-- **Constraints**: languages, frameworks, versions, coding style, do/don't rules
-- **Deliverable**: exact output shape (e.g. “return JSON”, “output diff”, “output a markdown table”)
-- **Scope**: what to touch vs not touch (files/dirs, no network, no deps, etc.)
-- **Working directory**: run from the project root so relative paths resolve
-
-### 3. Basic One-Shot Pattern (Recommended)
-
-Use one-shot prompts for predictable, scriptable behavior:
-
-```bash
-gemini --model gemini-3-pro-preview "Your prompt here" --output-format text
-```
-
-Key flags:
-- `--output-format`: `text` (default), `json`, `stream-json`
-- `--yolo`, `-y`: Auto-approve all actions
-- `--approval-mode`: e.g. `auto_edit`
-- `--include-directories`: add extra workspace dirs (comma-separated)
-- `--debug`, `-d`: debug output
-
-### 3.1 One-shot prompt checklist (must be exhaustive)
-
-Use this checklist when writing the prompt you pass to `gemini "..."`:
-
-- **Context injection**: include `@path/to/file` / `@src/` where needed (Gemini does not see your repo unless you provide it).
-- **Exact task**: “Do X” + acceptance criteria (what counts as “done”).
-- **Output contract**:
-  - If you want a clean final answer only: say “Output ONLY the final answer. No reasoning.”
-  - If you want machine parsing: request `--output-format json` and rely on `.response`.
-- **Safety / approvals**:
-  - If you want it to act without prompts: use `--yolo` or `--approval-mode auto_edit`.
-  - If you want zero traces: avoid `--output-format stream-json` and avoid `--debug`.
-
-### 3.2 Multi-line prompts (practical pattern)
-
-For long instructions, build a multi-line prompt and pass it as one argument:
-
-```bash
-PROMPT=$(cat <<'EOF'
-Output ONLY the final answer. No reasoning.
-
-Task:
-- ...
-
-Inputs:
-- @path/to/file
-- @src/
-
-Constraints:
-- ...
-
-Deliverable:
-- ...
-EOF
-)
-
-gemini --model gemini-3-pro-preview "$PROMPT" --output-format json > /tmp/gemini.json 2> /tmp/gemini.err \
-  && jq -r '.response' /tmp/gemini.json > /tmp/gemini.out
-```
-
-### 4. Output Handling Best Practice (Low-Token, Reliable)
-
-**Do not stream Gemini output directly into the tool output** for large responses. Instead, redirect to a file and read the file.
-
-```bash
-gemini --model gemini-3-pro-preview "Review @backend/src/app.module.ts for security issues" \
-  --output-format text \
-  --yolo \
-  > /tmp/gemini.txt 2> /tmp/gemini.err && echo "Gemini completed"
-
-# Then read with Read tool:
-# - /tmp/gemini.txt
-# - /tmp/gemini.err (only if needed)
-```
-
-### Output only the final answer (no logs / no event stream)
-
-If you want **only the final output** (and to avoid extra CLI chatter), prefer JSON output and extract `.response` into a clean file.
-
-```bash
-gemini --model gemini-3-pro-preview "Answer with ONLY the final result. No reasoning. Task: ..." \
-  --output-format json \
-  --yolo \
-  > /tmp/gemini.json 2> /tmp/gemini.err \
-  && jq -r '.response' /tmp/gemini.json > /tmp/gemini.out \
-  && echo "Gemini completed"
-
-# Then read with Read tool:
-# - /tmp/gemini.out   (clean final answer only)
-# - /tmp/gemini.err   (only if something went wrong)
-```
-
-Avoid these when you want “final output only”:
-- `--output-format stream-json` (it emits tool/event traces by design)
-- `--debug` (adds verbose debug logs)
-
-For structured automation:
-
-```bash
-gemini --model gemini-3-pro-preview "Summarize @README.md in 5 bullets" \
-  --output-format json \
-  > /tmp/gemini.json 2> /tmp/gemini.err && echo "Gemini completed"
-
-# Extract just the response:
-jq -r '.response' /tmp/gemini.json
-```
-
-### 5. Critical Behavioral Notes
-
-**Approval behavior**:
-- `--yolo` auto-approves all actions.
-- `--approval-mode auto_edit` can be a safer middle ground (auto-edit without fully "yolo"-ing everything).
-
-**Rate limits** (documented): CLI auto-retries with backoff; you may see messages like "quota will reset after Xs".
-
-### 6. Injecting Files & Directories into Prompts (`@` commands)
-
-Use `@<path>` in the prompt to inject file/directory contents (git-aware filtering by default):
-
-```bash
-gemini --model gemini-3-pro-preview "@src/ Summarize the code in this directory. Focus on architecture." --output-format text
-gemini --model gemini-3-pro-preview "What does this file do? @README.md" --output-format text
-```
-
-Notes:
-- For paths with spaces, escape spaces: `@My\ Documents/file.txt`
-- By default, git-ignored paths (e.g. `node_modules/`, `.env`) are excluded (configurable in settings)
-
-### 7. Output Processing (JSON)
-
-For JSON output (`--output-format json`), parse:
-```json
-{
-  "response": "actual content",
-  "stats": {
-    "models": { "tokens": {...} },
-    "tools": { "byName": {...} }
-  }
-}
-```
-
-## Quick Reference Commands
-
-### Code Generation
-```bash
-gemini --model gemini-3-pro-preview "Create [description] with [features]. Output complete file content." --yolo --output-format text
-```
-
-### Code Review
-```bash
-gemini --model gemini-3-pro-preview "Review @path/to/file for: 1) features, 2) bugs/security issues, 3) improvements" --output-format text
-```
-
-### Bug Fixing
-```bash
-gemini --model gemini-3-pro-preview "Fix these bugs in @path/to/file: [list]. Apply fixes now." --yolo --output-format text
-```
-
-### Test Generation
-```bash
-gemini --model gemini-3-pro-preview "Generate [Jest/pytest] tests for @path/to/file. Focus on [areas]." --yolo --output-format text
-```
-
-### Documentation
-```bash
-gemini --model gemini-3-pro-preview "Generate JSDoc for all functions in @path/to/file. Output as markdown." --yolo --output-format text
-```
-
-### Web Research
-```bash
-gemini --model gemini-3-pro-preview "What are the latest [topic]? Use Google Search." --output-format text
-```
-
-## Error Handling
-
-### Rate Limit Exceeded
-- CLI auto-retries with backoff
-- Run in background for long operations
-
-### Command Failures
-- Prefer `--output-format json` and inspect `.error` (if present)
-- Verify Gemini is authenticated and available: `gemini --version`
-- Check settings: `~/.gemini/settings.json` and `.gemini/settings.json`
-
-### Validation After Generation
-Always verify Gemini's output:
-- Check for security vulnerabilities (XSS, injection)
-- Test functionality matches requirements
-- Review code style consistency
-- Verify dependencies are appropriate
-
-## Integration Workflow
-
-### Standard Generate-Review-Fix Cycle
-
-```bash
-# 1. Generate
-gemini --model gemini-3-pro-preview "Create [code]" --yolo --output-format text
-
-# 2. Review (Gemini reviews its own work)
-gemini --model gemini-3-pro-preview "Review @path/to/file for bugs and security issues" --output-format text
-
-# 3. Fix identified issues
-gemini --model gemini-3-pro-preview "Fix [issues] in @path/to/file. Apply now." --yolo --output-format text
-```
-
-### Background Execution
-
-For long tasks, run in background and monitor:
-```bash
-gemini --model gemini-3-pro-preview "[long task]" --yolo --output-format text > /tmp/gemini-long.txt 2>&1 &
-# Monitor by reading /tmp/gemini-long.txt
-```
-
-## Gemini CLI Capabilities Worth Using
-
-Notable built-in tools:
-- **`google_web_search`**: real-time web search grounding
-- **`web_fetch`**: fetch & summarize specific URLs
-- **`run_shell_command`**: execute shell commands (be careful)
-
-## Configuration
-
-### Project Context (Optional)
-
-Create `.gemini/GEMINI.md` in project root for persistent context that Gemini will automatically read.
-
-## See Also
-
-- `reference.md` - Complete command and flag reference
-- `templates.md` - Prompt templates for common operations
-- `patterns.md` - Advanced integration patterns
-- `tools.md` - Gemini's built-in tools documentation
-- `image-generation.md` - Practical notes for image generation (nanobanana)
+- Simple, quick tasks (overhead not worth the 1-10 min wait)
+- Tasks requiring interactive conversation/refinement
+- Trivial changes (typos, formatting)
+- Simple web search (use Exa tools or /deep-research instead)
+
+## Reference Files
+
+Read these as needed — they are NOT loaded into context automatically:
+
+| File | When to Read |
+|---|---|
+| `reference.md` | Need exact flag syntax, model list, config options, or error handling |
+| `templates.md` | Need a structured prompt template for a specific review or research type |

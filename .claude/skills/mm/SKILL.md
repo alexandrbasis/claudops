@@ -1,11 +1,16 @@
 ---
 name: mm
-description: Create and deploy Prisma database migrations. Use when schema.prisma changes, migration guard fires, or you need to run prisma migrate. NOT for schema design — only for generating and deploying migrations.
+description: >-
+  Run Prisma migrations after schema changes. Use when schema.prisma was modified,
+  migration guard fires, or asked to 'run migrations', 'create migration',
+  'deploy migration', 'migrate the database'. NOT for schema design decisions.
 argument-hint: [migration-name]
 disable-model-invocation: true
 ---
 
 # Command: Make Migrations (`/mm`)
+
+> **Announcement**: Begin with: "I'm using the **mm** skill for Prisma migration management."
 
 Purpose: Create and deploy Prisma migrations for the backend when the schema changes.
 

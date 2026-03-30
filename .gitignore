@@ -67,3 +67,11 @@ Thumbs.db
 *.temp
 .cache/
 .claude/mcp/supabase.json
+# Worktrees (local only)
+.claude/worktrees/
+
+# Hook runtime state
+.claude/hooks/logs/.once-fired.json
+.claude/hooks/logs/.read-streak.json
+.claude/hooks/logs/.tsc-cache.json
+.claude/hooks/logs/.stop-guard-fired
