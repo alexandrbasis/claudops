@@ -1,4 +1,4 @@
-# Contributing to Wythm Claude Code Workflows
+# Contributing to Claude Code Workflows
 
 Thank you for your interest in contributing to this project! This repository showcases Claude Code workflows used in production, and we welcome improvements, bug fixes, and new workflow patterns.
 
@@ -8,7 +8,7 @@ Thank you for your interest in contributing to this project! This repository sho
 
 If you find a bug, have a question, or want to suggest an improvement:
 
-1. Check [existing issues](https://github.com/alexandrbasis/wythm-claude-workflows/issues) to avoid duplicates
+1. Check [existing issues](https://github.com/alexandrbasis/claudops/issues) to avoid duplicates
 2. Create a new issue with:
    - Clear, descriptive title
    - Detailed description of the problem or suggestion
@@ -39,8 +39,8 @@ We love new ideas! To suggest an enhancement:
 
 1. **Fork the repository**
    ```bash
-   gh repo fork alexandrbasis/wythm-claude-workflows --clone
-   cd wythm-claude-workflows
+   gh repo fork alexandrbasis/claudops --clone
+   cd claudops
    ```
 
 2. **Create a feature branch**
@@ -220,9 +220,9 @@ Before submitting:
 
 ## Questions?
 
-- **General questions**: Open a [Discussion](https://github.com/alexandrbasis/wythm-claude-workflows/discussions)
-- **Bug reports**: Open an [Issue](https://github.com/alexandrbasis/wythm-claude-workflows/issues)
-- **Feature ideas**: Open an [Issue](https://github.com/alexandrbasis/wythm-claude-workflows/issues) with `enhancement` label
+- **General questions**: Open a [Discussion](https://github.com/alexandrbasis/claudops/discussions)
+- **Bug reports**: Open an [Issue](https://github.com/alexandrbasis/claudops/issues)
+- **Feature ideas**: Open an [Issue](https://github.com/alexandrbasis/claudops/issues) with `enhancement` label
 
 ## License
 
@@ -230,4 +230,4 @@ By contributing, you agree that your contributions will be licensed under the MI
 
 ---
 
-Thank you for contributing to Wythm Claude Code Workflows!
+Thank you for contributing to these Claude Code workflows!
