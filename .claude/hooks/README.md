@@ -1,64 +1,41 @@
-# Claude Code Hooks
+# Claude Code hooks
 
-This directory contains hooks for Claude Code that automate validation, linting, and synchronization tasks.
+Scripts invoked by Claude Code for validation, linting, sync, and guardrails.
 
-## Directory Structure
+## Layout
 
 ```
 .claude/hooks/
-├── hookify/       # Rule-based hook engine (declarative policies)
-│   ├── engine/    # Python modules for rule evaluation
-│   ├── hooks/     # Hook scripts called by Claude Code
-│   ├── rules/     # Policy definitions (*.local.md)
-│   └── docs/      # Hookify documentation
-├── validation/    # Pre-action validation hooks
-├── sync/          # File synchronization hooks
-├── lint/          # Linting and formatting hooks
-├── logs/          # Runtime logs (gitignored)
-└── docs/          # Documentation (you are here)
+├── guards/          # Bash/file/stop guards
+├── lint/            # Format/lint on write (e.g. Python)
+├── metrics/         # Cost tracking
+├── paralysis/       # Session helpers
+├── sync/            # CLAUDE.md ↔ agents sync, public repo sync
+├── typecheck/       # Typecheck on write (e.g. TS)
+├── validation/      # Pre-commit and pre-tool checks
+└── README.md
 ```
 
-## Active Hooks
+## Active hooks (representative)
 
-| Hook | Trigger | Purpose |
-|------|---------|---------|
-| `validation/pre-commit-validation.py` | PreToolUse (Bash) | Quick checks before git commit (syntax, conflicts, debug code) |
-| `hookify/hooks/pretooluse.py` | PreToolUse | Rule-based validation from `rules/*.local.md` |
-| `hookify/hooks/userpromptsubmit.py` | UserPromptSubmit | User input validation |
-| `hookify/hooks/stop.py` | Stop | Cleanup on session stop |
-| `lint/lint-on-write.py` | PostToolUse (Write/Edit) | Auto-format Python files (black, isort, flake8, mypy) |
-| `sync/claude-agents-sync.py` | PostToolUse (Write/Edit) | Sync CLAUDE.md <-> AGENTS.md |
-| `sync/auto-sync-public-repo.py` | PostToolUse (Bash) | Sync to public repo on git commit |
+| Area | Script | Role |
+|------|--------|------|
+| Validation | `validation/pre-commit-validation.py` | Checks before git commit |
+| Lint | `lint/lint-on-write.py` | Format/lint after Write/Edit |
+| Sync | `sync/claude-agents-sync.py` | Keep CLAUDE.md / AGENTS.md in sync |
+| Sync | `sync/auto-sync-public-repo.py` | Optional public-repo sync on commit |
+| Typecheck | `typecheck/ts-typecheck-on-write.py` | TS checks on write |
+| Guards | `guards/*.sh` | Bash/file/stop guardrails |
 
-## Hookify Rules
+Wire hooks in `.claude/settings.json` (and `settings.local.json` for machine-specific paths). Logs under `hooks/logs/` are typically gitignored.
 
-Hookify provides declarative policy enforcement via Markdown files in `hookify/rules/`:
+## Adding hooks
 
-| Rule | Action | Description |
-|------|--------|-------------|
-| `dangerous-rm.local.md` | BLOCK | Prevents dangerous `rm -rf` commands |
-| `schema-change.local.md` | BLOCK | Requires migration workflow for schema.prisma |
-| `arch-violation.local.md` | BLOCK | Prevents infrastructure imports in core layer |
-| `no-console.local.md` | BLOCK | Prevents console.log in backend code |
-| `test-silent.local.md` | BLOCK | Requires `:silent` test variants |
-| `pre-commit.local.md` | WARN | Reminds about quality checks before commit |
-| `db-danger.local.md` | BLOCK | Prevents dangerous Prisma commands |
-| `interface-naming.local.md` | BLOCK | Enforces I- prefix for interfaces |
+1. Add a script under the appropriate subdirectory.
+2. Register the command and matcher in `settings.json` / `settings.local.json`.
+3. Test manually before relying on it in production.
 
-## Logs
-
-- Logs are stored in `logs/` directory
-- Log rotation is handled automatically (1MB max size)
-- Logs are gitignored
-
-## Adding New Hooks
-
-1. Create script in appropriate directory (`validation/`, `sync/`, `lint/`)
-2. Update `settings.local.json` with hook configuration
-3. Test hook manually before committing
-
-## Naming Convention
+## Naming
 
 - Scripts: **kebab-case** (`pre-commit-validation.py`)
 - Directories: **lowercase** (`validation/`, `sync/`)
-- Rules: **kebab-case.local.md** (`no-console.local.md`)

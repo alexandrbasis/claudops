@@ -427,10 +427,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.015;
           <div class="name"><span class="cmd">/</span>blueprint</div>
           <div class="desc">Multi-session plan with DAG</div>
         </div>
-        <div class="node primary" data-id="search-first" style="opacity:.7">
-          <div class="name"><span class="cmd">/</span>search-first</div>
-          <div class="desc">Check existing solutions first</div>
-        </div>
       </div>
     </div>
 
@@ -459,13 +455,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.015;
           <div class="name">automated-quality-gate</div>
           <div class="desc">Tests, lint, types, coverage</div>
         </div>
-        <div class="node subagent" data-id="goal-verifier">
-          <div class="name">goal-verifier</div>
-          <div class="desc">Verify Must Haves are met</div>
-        </div>
-        <div class="node primary" data-id="quick" style="opacity:.7">
-          <div class="name"><span class="cmd">/</span>quick</div>
-          <div class="desc">Fast-path for small tasks &lt;5 files</div>
+        <div class="node primary" data-id="si-quick" style="opacity:.7">
+          <div class="name"><span class="cmd">/</span>si-quick</div>
+          <div class="desc">Small scope / bugfix without full task dir</div>
         </div>
         <div class="node primary" data-id="ph" data-path="handoff" style="opacity:.7">
           <div class="name"><span class="cmd">/</span>ph<span style="font-weight:400;opacity:.5;margin-left:4px">Handoff</span></div>
@@ -474,10 +466,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.015;
         <div class="node primary" data-id="dbg" style="opacity:.7">
           <div class="name"><span class="cmd">/</span>dbg</div>
           <div class="desc">Evidence-based runtime debugging</div>
-        </div>
-        <div class="node primary" data-id="simplify" style="opacity:.7">
-          <div class="name"><span class="cmd">/</span>simplify</div>
-          <div class="desc">De-sloppify pass after coding</div>
         </div>
       </div>
     </div>
@@ -530,17 +518,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.015;
         <div class="stage-line"></div>
       </div>
       <div class="nodes">
-        <div class="node primary" data-id="udoc">
-          <div class="name"><span class="cmd">/</span>udoc</div>
+        <div class="node primary" data-id="update-docs">
+          <div class="name"><span class="cmd">/</span>update-docs</div>
           <div class="desc">Update docs + generate changelog</div>
         </div>
         <div class="node primary" data-id="fci" style="opacity:.7">
           <div class="name"><span class="cmd">/</span>fci</div>
           <div class="desc">Fix CI pipeline failures</div>
-        </div>
-        <div class="node primary" data-id="sync" style="opacity:.7">
-          <div class="name"><span class="cmd">/</span>sync</div>
-          <div class="desc">Sync CLAUDE.md / AGENTS.md</div>
         </div>
         <div class="node primary" data-id="cc-linear" style="opacity:.7">
           <div class="name"><span class="cmd">/</span>cc-linear</div>
@@ -599,61 +583,11 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.015;
   </div>
 </div>
 
-<!-- ═══════════════ REFERENCE SHELF ═══════════════ -->
-<div class="reference-shelf">
-  <h3>Reference &amp; Knowledge Skills</h3>
-  <div class="ref-grid">
-    <div class="ref-item" data-id="design-tokens">
-      <div class="ref-name">/design-tokens</div>
-      <div class="ref-desc">Color token naming &amp; consumption rules</div>
-      <div class="ref-used">Used by: /ct, /vp, /si</div>
-    </div>
-    <div class="ref-item" data-id="component-library">
-      <div class="ref-name">/component-library</div>
-      <div class="ref-desc">Button, Input, BottomSheet, Toast, StyledText</div>
-      <div class="ref-used">Used by: /ct (GATE 0.7), /si</div>
-    </div>
-    <div class="ref-item" data-id="rn-expo">
-      <div class="ref-name">/react-native-expo</div>
-      <div class="ref-desc">35+ rules for RN/Expo development</div>
-      <div class="ref-used">Used by: /ct, /si (if mobile)</div>
-    </div>
-    <div class="ref-item" data-id="screen-flow">
-      <div class="ref-name">/screen-flow</div>
-      <div class="ref-desc">Screen decomposition &amp; flow analysis</div>
-      <div class="ref-used">Used by: /ct (GATE 0.7)</div>
-    </div>
-    <div class="ref-item" data-id="i18n-lingui">
-      <div class="ref-name">/i18n-lingui</div>
-      <div class="ref-desc">Lingui v5 &bull; 9 locales</div>
-      <div class="ref-used">Used by: /si (mobile)</div>
-    </div>
-    <div class="ref-item" data-id="api-reference">
-      <div class="ref-name">/api-reference</div>
-      <div class="ref-desc">Endpoint contracts, auth flows, error codes</div>
-      <div class="ref-used">Used by: /si (repo calls)</div>
-    </div>
-    <div class="ref-item" data-id="docs-index">
-      <div class="ref-name">/docs-index</div>
-      <div class="ref-desc">Maps all project documentation locations</div>
-      <div class="ref-used">Used by: any skill on demand</div>
-    </div>
-    <div class="ref-item" data-id="analytics">
-      <div class="ref-name">/analytics</div>
-      <div class="ref-desc">Event coverage for new screens/flows</div>
-      <div class="ref-used">Used by: /ct (if UI-heavy)</div>
-    </div>
-  </div>
-</div>
-
 <!-- ═══════════════ META FOOTER ═══════════════ -->
 <div class="meta-footer">
   <h3>Meta &amp; Utility</h3>
-  <div class="meta-node" data-id="so">/so &mdash; Skill Optimizer</div>
-  <div class="meta-node" data-id="skill-stocktake">/skill-stocktake &mdash; Audit All Skills</div>
   <div class="meta-node" data-id="sbs">/sbs &mdash; Interactive Teaching</div>
   <div class="meta-node" data-id="code-analysis">/code-analysis &mdash; Deep Analysis</div>
-  <div class="meta-node" data-id="feature-image">/feature-image &mdash; Social Image Gen</div>
 </div>
 
 <!-- ═══════════════ DETAIL PANEL OVERLAY ═══════════════ -->
@@ -737,7 +671,7 @@ const skills = {
     title: '/vp — Visual Prototype',
     type: 'Primary Skill · Documentation',
     desc: 'Creates an interactive HTML playground so the user can approve the design before technical decomposition begins. The GATEKEEPER between discovery and planning.',
-    calls: ['playground skill', '/design-tokens'],
+    calls: ['self-contained HTML playground'],
     calledBy: ['/nf completion'],
     handsOff: ['/ct'],
     output: 'tasks/.../playground-[name].html + vp-approval.md'
@@ -745,20 +679,18 @@ const skills = {
   ct: {
     title: '/ct — Create Task',
     type: 'Primary Skill · Planning',
-    desc: 'The most complex skill in the system — creates implementation-ready technical documentation through 9 sequential quality gates. TDD-first: test plan before implementation plan.',
-    calls: ['design-exploration', 'mobile-ui-planning-agent', 'plan-reviewer', 'senior-architecture-reviewer', '/codex-cli', '/gemini-cli', '/cursor-cli', 'task-splitter', 'task-decomposer', '/cc-linear', '/analyze', '/analytics'],
+    desc: 'Creates implementation-ready technical documentation through sequential quality gates. TDD-first: test plan before implementation plan.',
+    calls: ['design-exploration', 'plan-reviewer', 'senior-architecture-reviewer', '/codex-cli', '/gemini-cli', '/cursor-cli', 'task-splitter', 'task-decomposer', '/cc-linear', '/analyze'],
     calledBy: ['/nf', '/brainstorm', '/vp'],
     handsOff: ['/si', '/rip'],
     output: 'tasks/task-YYYY-MM-DD-[name]/tech-decomposition-[name].md',
     gates: [
       { id: 'GATE 0', desc: 'design-exploration subagent — codebase context' },
-      { id: 'GATE 0.7', desc: 'UI tasks: mobile-ui-planning-agent loads design-tokens, component-library, screen-flow, RN/Expo rules' },
       { id: 'GATE 5', desc: 'plan-reviewer + senior-architecture-reviewer subagents; /codex-cli + /gemini-cli + /cursor-cli in parallel' },
       { id: 'GATE 6', desc: 'task-splitter subagent — evaluate if split needed' },
       { id: 'GATE 6.5', desc: 'task-decomposer subagent (if split approved by user)' },
       { id: 'OPTIONAL', desc: '/cc-linear — create or update linked tracking issue' },
-      { id: 'OPTIONAL', desc: '/analyze — cross-artifact consistency check + traceability matrix' },
-      { id: 'GATE +', desc: 'Conditionally: /analytics if UI-heavy feature' }
+      { id: 'OPTIONAL', desc: '/analyze — cross-artifact consistency check + traceability matrix' }
     ]
   },
   'task-splitter': {
@@ -802,29 +734,29 @@ const skills = {
     handsOff: ['/ct per step'],
     output: 'docs/superpowers/plans/YYYY-MM-DD-[feature].md'
   },
-  'search-first': {
-    title: '/search-first',
-    type: 'Primary Skill · Planning',
-    desc: 'Before building anything new, search for existing solutions at 4 levels: codebase, npm, MCP tools, GitHub. Returns Adopt/Extend/Compose/Build verdict.',
-    calls: [],
-    calledBy: ['/si (suggested)'],
-    output: 'Adopt/Extend/Compose/Build verdict'
-  },
   si: {
     title: '/si — Start Implementation',
     type: 'Primary Skill · Implementation',
     desc: 'Structured TDD implementation following task documents. Has Start (fresh) and Continue (resume from /ph) modes, plus a Bug Fix path. Enforces test-first development.',
-    calls: ['/cc-linear', '/parallelization', '/simplify', 'automated-quality-gate', 'goal-verifier', 'task-pm-validator', 'create-pr-agent', 'react-native-expo-mobile', 'design-tokens', 'component-library'],
+    calls: ['/cc-linear', '/parallelization', 'automated-quality-gate', 'create-pr-agent'],
     calledBy: ['/ct'],
     handsOff: ['/sr', '/ph'],
     output: 'Working code + tests + PR',
     gates: [
       { id: 'STEP 1', desc: 'Read task docs, identify acceptance criteria' },
       { id: 'STEP 2', desc: '/cc-linear update status to "In Progress"' },
-      { id: 'STEP 3', desc: 'TDD loop: write test → implement → pass. Load mobile skills if needed. Optional /parallelization for wave-annotated steps' },
-      { id: 'STEP 4', desc: '/simplify de-sloppify pass, automated-quality-gate subagent, goal-verifier subagent' },
-      { id: 'STEP 5', desc: '/cc-linear "In Review", task-pm-validator, create-pr-agent' }
+      { id: 'STEP 3', desc: 'TDD loop: write test → implement → pass. Optional /parallelization for wave-annotated steps' },
+      { id: 'STEP 4', desc: 'automated-quality-gate subagent' },
+      { id: 'STEP 5', desc: '/cc-linear "In Review", create-pr-agent' }
     ]
+  },
+  'si-quick': {
+    title: '/si-quick — Quick Task',
+    type: 'Primary Skill · Implementation',
+    desc: 'Small scope or bugfix with clear root cause — no full task directory or heavy review flow.',
+    calls: [],
+    calledBy: ['User (small tasks)'],
+    output: 'Direct code changes'
   },
   parallelization: {
     title: '/parallelization',
@@ -841,22 +773,6 @@ const skills = {
     calls: [],
     calledBy: ['/si STEP 4', '/sr GATE 3'],
     output: 'Pass/fail with details'
-  },
-  'goal-verifier': {
-    title: 'goal-verifier',
-    type: 'Subagent · Implementation',
-    desc: 'Receives task Must Haves list, verifies each is actually met in code with evidence. Returns VERIFIED or NOT_MET per item.',
-    calls: [],
-    calledBy: ['/si STEP 4'],
-    output: 'VERIFIED / NOT_MET per must-have'
-  },
-  quick: {
-    title: '/quick',
-    type: 'Primary Skill · Implementation',
-    desc: 'Fast-path for small tasks (<5 files, clear scope). No task docs, no Linear issues, no review agents. Runs /simplify after logic changes.',
-    calls: ['/simplify'],
-    calledBy: ['User (small tasks)'],
-    output: 'Direct code changes'
   },
   ph: {
     title: '/ph — Prepare Handoff',
@@ -875,21 +791,13 @@ const skills = {
     handsOff: ['/sr (post-fix)'],
     output: 'tasks/.../bug-report-[name].md'
   },
-  simplify: {
-    title: '/simplify',
-    type: 'Primary Skill · Implementation',
-    desc: 'Reviews recently changed code for reuse, quality, and efficiency. De-sloppify pass that runs after implementation.',
-    calls: [],
-    calledBy: ['/si STEP 4', '/quick'],
-    output: 'Simplified code in-place'
-  },
   sr: {
     title: '/sr — Start Review',
     type: 'Primary Skill · Code Review',
     desc: 'Comprehensive pre-merge code review using 7 specialized subagents writing to sections of a shared review document. Has incremental re-review mode.',
     calls: ['automated-quality-gate', 'spec-compliance-reviewer', 'senior-architecture-reviewer', 'security-code-reviewer', 'code-quality-reviewer', 'test-coverage-reviewer', 'documentation-accuracy-reviewer', 'performance-reviewer', '/codex-cli', '/gemini-cli', '/cursor-cli', '/cc-linear'],
     calledBy: ['/si'],
-    handsOff: ['/prc (if NEEDS FIXES)', '/udoc (if APPROVED)'],
+    handsOff: ['/prc (if NEEDS FIXES)', '/update-docs (if APPROVED)'],
     output: '[task-dir]/Code Review - [Task].md',
     gates: [
       { id: 'GATE 3', desc: 'automated-quality-gate subagent' },
@@ -933,8 +841,8 @@ const skills = {
     handsOff: ['/sr (re-review)'],
     output: 'Fixed code + GitHub comment replies'
   },
-  udoc: {
-    title: '/udoc — Update Docs',
+  'update-docs': {
+    title: '/update-docs — Update Docs',
     type: 'Primary Skill · Post-Merge',
     desc: 'Generate documentation updates and changelog from a completed task implementation.',
     calls: ['docs-updater subagent', 'changelog-generator subagent'],
@@ -949,13 +857,21 @@ const skills = {
     calledBy: ['CI failure'],
     output: 'Fixed pipeline'
   },
-  sync: {
-    title: '/sync',
-    type: 'Primary Skill · Post-Merge',
-    desc: 'Keep CLAUDE.md and AGENTS.md (root and backend/) in lockstep with each other.',
+  sbs: {
+    title: '/sbs — Teaching',
+    type: 'Primary Skill · Meta',
+    desc: 'Interactive step-by-step teaching while you work.',
     calls: [],
-    calledBy: ['Editing CLAUDE.md or AGENTS.md'],
-    output: 'Synced files'
+    calledBy: ['User'],
+    output: 'Guided learning'
+  },
+  'code-analysis': {
+    title: '/code-analysis',
+    type: 'Primary Skill · Meta',
+    desc: 'Deep codebase exploration: structure, metrics, hotspots, and recommendations.',
+    calls: [],
+    calledBy: ['User'],
+    output: 'Analysis report'
   },
   'cc-linear': {
     title: '/cc-linear',
@@ -1083,9 +999,9 @@ document.querySelectorAll('.node, .ai-node, .ref-item, .meta-node').forEach(el =
 // WORKFLOW PATH HIGHLIGHTING
 // ══════════════════════════════════════════════
 const pathDefs = {
-  full: ['brainstorm', 'nf', 'vp', 'ct', 'si', 'sr', 'udoc'],
-  standard: ['ct', 'si', 'sr', 'udoc'],
-  handoff: ['ct', 'si', 'ph', 'si', 'sr', 'udoc']
+  full: ['brainstorm', 'nf', 'vp', 'ct', 'si', 'sr', 'update-docs'],
+  standard: ['ct', 'si', 'sr', 'update-docs'],
+  handoff: ['ct', 'si', 'ph', 'si', 'sr', 'update-docs']
 };
 
 let activePath = 'full';

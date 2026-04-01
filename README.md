@@ -6,21 +6,21 @@
 
 ---
 
-A curated collection of production-tested Claude Code configurations. Agents, skills, hooks, and rules that turn Claude Code into a full development pipeline — from feature discovery to code review and deployment.
+A curated collection of production-tested Claude Code configurations: agents, skills, and hooks for a full development pipeline — from feature discovery to code review.
 
 ## Highlights
 
-- **20 specialized agents** — TDD, code review, task validation, research
-- **33+ skills** — full dev lifecycle, cross-AI integrations (Gemini CLI, Codex CLI)
-- **Cross-AI Plan Review** — automatic Gemini verification of Claude's plans
-- **Hookify rules system** — declarative behavior control
-- **Linear integration** — project management from your terminal
+- **17 specialized agents** — TDD, code review, task validation, research
+- **26 skills** — full dev lifecycle and cross-AI helpers (Gemini CLI, Codex CLI, Cursor CLI)
+- **Cross-AI plan review** — optional Gemini verification of plans (see `review-plan-gemini.sh`)
+- **Hooks** — lint on write, sync, validation, guards, metrics
+- **Linear integration** — project management from your terminal (`cc-linear` skill)
 
 ---
 
 ## What's Inside
 
-### Agents (20 total)
+### Agents (17)
 
 **Automation** (`.claude/agents/automation-agents/`)
 | Agent | Purpose |
@@ -30,230 +30,124 @@ A curated collection of production-tested Claude Code configurations. Agents, sk
 | `integration-test-runner` | E2E and integration test execution |
 | `senior-architecture-reviewer` | Reviews approach, architecture, TDD compliance |
 
-**Code Review** (`.claude/agents/code-review-agents/`)
+**Code review** (`.claude/agents/code-review-agents/`)
 | Agent | Focus |
 |-------|-------|
 | `code-quality-reviewer` | SOLID, maintainability, code smells |
-| `code-simplifier` | Reduces complexity, simplifies code |
-| `security-code-reviewer` | OWASP Top 10, injection, auth issues |
-| `performance-reviewer` | N+1 queries, caching, optimization |
-| `test-coverage-reviewer` | Coverage gaps, test quality |
 | `documentation-accuracy-reviewer` | Docs completeness and accuracy |
+| `performance-reviewer` | N+1 queries, caching, optimization |
+| `security-code-reviewer` | OWASP Top 10, injection, auth issues |
+| `spec-compliance-reviewer` | Spec and requirements alignment |
+| `test-coverage-reviewer` | Coverage gaps, test quality |
 
-**Task Validators** (`.claude/agents/tasks-validators-agents/`)
+**Task validators** (`.claude/agents/tasks-validators-agents/`)
 | Agent | Purpose |
 |-------|---------|
 | `plan-reviewer` | Technical plan validation |
-| `task-pm-validator` | PM validation before code review |
-| `task-splitter` | Evaluates if task needs breakdown |
-| `task-decomposer` | Creates phase structure for split tasks |
-| `task-validator` | Pre-flight validation before implementation |
+| `task-splitter` | Evaluates if a task needs breakdown |
+| `task-decomposer` | Phase structure for split tasks |
 
 **Workflow** (`.claude/agents/wf-agents/`)
 | Agent | Purpose |
 |-------|---------|
-| `changelog-generator` | Creates changelog from task docs |
+| `changelog-generator` | Changelog from task docs |
 | `create-pr-agent` | PR automation with Linear integration |
 | `docs-updater` | Documentation synchronization |
 
-**Other**
+**Helpers** (`.claude/agents/helpful-agents/`)
 | Agent | Purpose |
 |-------|---------|
 | `comprehensive-researcher` | In-depth research tasks |
-| `conversation-analyzer` | Analyzes conversations for hookify rules |
 
 ---
 
-### Skills (33+)
+### Skills (26)
 
-**Core Development Workflow**
-| Skill | Command | Description |
-|-------|---------|-------------|
-| `ct` | `/ct` | Create task documentation (JTBD-based) |
-| `si` | `/si` | Structured TDD implementation |
-| `sr` | `/sr` | Comprehensive code review before PR |
-| `prc` | `/prc` | Review and address PR comments |
-| `ph` | `/ph` | Prepare handover documentation |
+See [`.claude/skills/README.md`](.claude/skills/README.md) for the full index. Summary:
 
-**Feature Discovery & Design**
-| Skill | Command | Description |
-|-------|---------|-------------|
-| `nf` | `/nf` | New feature discovery interview |
-| `brainstorm` | `/brainstorm` | Collaborative brainstorming on any topic |
-| `product` | `/product` | Create product documentation (JTBD or PRD) |
-| `vp` | `/vp` | Visual prototype playground |
-| `design-exploration` | — | Pre-implementation design exploration |
-
-**Cross-AI Integrations**
-| Skill | Command | Description |
-|-------|---------|-------------|
-| `gemini-cli` | — | Google Gemini CLI for web-grounded research & image generation |
-| `codex-cli` | — | OpenAI Codex CLI for second-opinion code review |
-| `cc-linear` | — | Linear operations via Claude Code sessions |
-
-**Code Quality & Analysis**
-| Skill | Command | Description |
-|-------|---------|-------------|
-| `code-analysis` | `/code-analysis` | Deep code analysis with metrics and patterns |
-| `dbg` | `/dbg` | Debug mode with runtime evidence |
-| `so` | `/so` | Analyze and improve existing skills |
-
-**Research & Learning**
-| Skill | Command | Description |
-|-------|---------|-------------|
-| `deep-research` | `/deep-research` | In-depth technical research with multiple sources |
-| `sbs` | `/sbs` | Interactive step-by-step teaching |
-
-**Workflow Automation**
-| Skill | Command | Description |
-|-------|---------|-------------|
-| `parallelization` | — | Parallel implementation with scoped workers |
-| `rip` | `/rip` | Review implementation plan for business alignment |
-| `hookify` | `/hookify` | Create hookify rules to prevent unwanted behaviors |
-| `sync` | — | CLAUDE.md and agents.md synchronization |
+| Area | Examples |
+|------|----------|
+| Core workflow | `ct`, `si`, `si-quick`, `sr`, `prc`, `ph`, `nf`, `product`, `vp`, `blueprint` |
+| Discovery & design | `brainstorm`, `design-exploration`, `analyze`, `grill-me`, `rip` |
+| Quality & debugging | `code-analysis`, `dbg`, `fci` |
+| Cross-AI | `gemini-cli`, `codex-cli`, `cursor-cli` |
+| Integrations & meta | `cc-linear`, `deep-research`, `parallelization`, `sbs`, `update-docs` |
 
 ---
 
-### Cross-AI Plan Review
+### Cross-AI plan review
 
-Automatic Gemini CLI verification when Claude exits Plan Mode:
+Optional flow when Gemini CLI is configured — see `.claude/scripts/review-plan-gemini.sh` and hook wiring in `.claude/settings.json`.
 
-```
-Claude creates plan → ExitPlanMode → PostToolUse hook →
-Gemini CLI reviews (~30 sec) → Review appended to plan file
-```
-
-**What Gemini checks:**
-- Security issues (auth, validation, injection)
-- Architecture violations
-- Performance problems (N+1, missing indexes)
-- Missing edge cases and error handling
-- Testability concerns
-
-**Configuration** (`.claude/settings.json`):
-```json
-{
-  "plansDirectory": "./tasks/plans",
-  "hooks": {
-    "PostToolUse": [{
-      "matcher": "ExitPlanMode",
-      "hooks": [{
-        "type": "command",
-        "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/review-plan-gemini.sh",
-        "timeout": 300
-      }]
-    }]
-  }
-}
-```
+**What Gemini can check:** security, architecture, performance, edge cases, testability.
 
 ---
 
-### Hookify Rules System
+### Hooks
 
-Declarative behavior control in `.claude/hooks/hookify/rules/`:
-
-| Rule | Purpose |
-|------|---------|
-| `dangerous-rm` | Block dangerous rm commands |
-| `pre-commit` | Pre-commit validation |
-| `schema-change` | Alert on database schema changes |
-| `db-danger` | Block dangerous database operations |
-| `arch-violation` | Detect architecture violations |
-| `test-silent` | Prefer silent test execution |
-| `no-console` | Prevent console.log in production |
-| `interface-naming` | Enforce interface naming conventions |
-| `first-commit-reminder` | First commit guidelines |
-
-Additional hooks: auto-lint on file write, file synchronization, pre-commit validation.
+Python/shell hooks under `.claude/hooks/` — lint on write, agent sync, pre-commit checks, bash/file guards, cost tracking, etc. Details: [`.claude/hooks/README.md`](.claude/hooks/README.md).
 
 ---
 
-## Repository Structure
+## Repository structure
 
 ```
 .claude/
-├── agents/                       # 20 specialized agents
-│   ├── automation-agents/        # Quality gates, orchestration
-│   ├── code-review-agents/       # Quality, security, performance
-│   ├── tasks-validators-agents/  # Task validation & splitting
-│   ├── wf-agents/                # Workflow automation
-│   ├── helpful-agents/           # Research helpers
-│   └── hookify-agents/           # Rule creation helpers
-├── hooks/
-│   ├── hookify/                  # Declarative behavior rules + engine
-│   ├── lint/                     # Auto-lint on write
-│   ├── sync/                     # File synchronization
-│   └── validation/               # Pre-commit validation
-├── skills/                       # 33+ specialized capabilities
-├── rules/                        # Project-wide rules
-├── scripts/                      # Automation scripts
-│   └── review-plan-gemini.sh     # Cross-AI plan review
-├── mcp/                          # MCP server configs
-└── settings.json                 # Hooks & plansDirectory config
+├── agents/           # Specialized subagents
+├── docs/
+│   ├── templates/    # PRD, JTBD, decomposition, review templates
+│   └── references/
+├── hooks/            # Claude Code hooks (see hooks/README.md)
+├── scripts/          # e.g. review-plan-gemini.sh, linear-api.sh
+├── skills/           # Slash-command skills (see skills/README.md)
+└── settings.json     # Hook and project settings (copy & customize)
 
-docs/
-├── setup-guide.md                # Detailed setup instructions
-└── dev-workflow/
-    └── gemini-plan-review-hook.md
+workflow-visualization.html   # Interactive workflow map (open in browser)
 ```
 
 ---
 
-## How to Use
+## How to use
 
-### Full Setup
+### Full setup
 ```bash
 git clone https://github.com/alexandrbasis/claudops.git
 cp -r claudops/.claude your-project/
-# Review and customize for your needs
+# Add workflow-visualization.html or templates if you want them at repo root
+# Review settings.json and hooks for your environment
 ```
 
-### Cherry-Pick Components
+### Cherry-pick
 ```bash
-# Copy specific agent
-cp claudops/.claude/agents/automation-agents/developer-agent.md \
-   your-project/.claude/agents/
-
-# Copy a skill (e.g., TDD implementation)
-cp -r claudops/.claude/skills/si \
-   your-project/.claude/skills/
-
-# Copy Gemini plan review
-cp claudops/.claude/scripts/review-plan-gemini.sh \
-   your-project/.claude/scripts/
-
-# Copy hookify rules
-cp -r claudops/.claude/hooks/hookify \
-   your-project/.claude/hooks/
+cp -r claudops/.claude/skills/si your-project/.claude/skills/
+cp claudops/.claude/scripts/review-plan-gemini.sh your-project/.claude/scripts/
 ```
 
-### Use as Reference
-Study the patterns and create your own workflows.
+### As reference
+Study the patterns and adapt them to your own workflows.
 
 ---
 
-## Key Workflows
+## Key workflows
 
-### TDD Pipeline
+### TDD pipeline
 ```
-/ct (create task) → /si (implement with TDD) → automated-quality-gate → senior-architecture-reviewer
-```
-
-### Multi-Agent Code Review
-```
-code-quality + security + performance + test-coverage + code-simplifier
+/ct → /si → automated-quality-gate → senior-architecture-reviewer
 ```
 
-### Task-Driven Development (JTBD)
+### Multi-agent code review
+```
+code-quality + security + performance + test-coverage + documentation
+```
+
+### Task-driven flow
 ```
 /ct → /si → /sr → /prc → merge
 ```
 
-### Cross-AI Orchestration
-- Gemini CLI for plan review, web-grounded research, and image generation
-- Codex CLI for second-opinion code review
-- Multiple AI perspectives on critical decisions
+### Cross-AI
+- Gemini CLI — plan review, web-grounded research
+- Codex / Cursor CLI — second-opinion review (see `cross-ai-protocol` template)
 
 ---
 
@@ -266,11 +160,11 @@ code-quality + security + performance + test-coverage + code-simplifier
 
 ---
 
-## Security & Privacy
+## Security & privacy
 
 **Not included (sensitive):** `settings.local.json`, API keys, MCP credentials, log files
 
-**Safe to share:** All agents, skills, rules, hook scripts, configuration templates
+**Safe to share:** Agents, skills, hook scripts, and templates in this repo (exclude local overrides)
 
 ---
 
@@ -286,7 +180,3 @@ Found a better pattern? Have suggestions?
 ## License
 
 MIT — See [LICENSE](LICENSE)
-
----
-
-Built with [Claude Code](https://claude.ai/code) by Anthropic

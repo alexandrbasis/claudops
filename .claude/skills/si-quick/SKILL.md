@@ -91,7 +91,7 @@ cd mobile-app && npx tsc --noEmit
 
 If the touched package uses different scripts or stronger verification is warranted, run those instead. If any check fails, fix it before proceeding.
 
-**Evidence requirement**: Do not claim the task is done without running these checks and confirming they pass. The `stop-verification-evidence` hookify rule enforces this.
+**Evidence requirement**: Do not claim the task is done without running these checks and confirming they pass. Project hooks (for example `stop-guard.sh`) may enforce similar checks.
 
 ### STEP 4.5: De-Sloppify (if logic changes were made)
 If STEP 3 included logic changes (not just config/docs), run a quick de-sloppify pass:
