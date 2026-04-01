@@ -1,0 +1,9 @@
+{
+  "name": "claudops",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "npx serve public -l ${PORT:-3000}",
+    "dev": "npx serve public -l 3000"
+  }
+}

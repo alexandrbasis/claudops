@@ -4,6 +4,12 @@
 
 **Author:** [@alexandrbasis](https://x.com/alexandrbasis) | [@MishkaKey](https://x.com/MishkaKey)
 
+[![Live Site](https://img.shields.io/badge/Live_Site-claudops-0d9488?style=flat-square)](https://claudops-production.up.railway.app)
+
+<a href="https://claudops-production.up.railway.app">
+  <img src="docs/workflow-overview.jpg" alt="Claudops: AI Development Workflow — 7-stage pipeline from Ideation to Post-Merge" width="100%">
+</a>
+
 ---
 
 A curated collection of production-tested Claude Code configurations: agents, skills, and hooks for a full development pipeline — from feature discovery to code review.
