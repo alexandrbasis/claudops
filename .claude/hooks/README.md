@@ -10,7 +10,6 @@ Scripts invoked by Claude Code for validation, linting, sync, and guardrails.
 ├── lint/            # Format/lint on write (e.g. Python)
 ├── metrics/         # Cost tracking
 ├── paralysis/       # Session helpers
-├── sync/            # CLAUDE.md ↔ agents sync, public repo sync
 ├── typecheck/       # Typecheck on write (e.g. TS)
 ├── validation/      # Pre-commit and pre-tool checks
 └── README.md
@@ -22,8 +21,6 @@ Scripts invoked by Claude Code for validation, linting, sync, and guardrails.
 |------|--------|------|
 | Validation | `validation/pre-commit-validation.py` | Checks before git commit |
 | Lint | `lint/lint-on-write.py` | Format/lint after Write/Edit |
-| Sync | `sync/claude-agents-sync.py` | Keep CLAUDE.md / AGENTS.md in sync |
-| Sync | `sync/auto-sync-public-repo.py` | Optional public-repo sync on commit |
 | Typecheck | `typecheck/ts-typecheck-on-write.py` | TS checks on write |
 | Guards | `guards/*.sh` | Bash/file/stop guardrails |
 
@@ -38,4 +35,4 @@ Wire hooks in `.claude/settings.json` (and `settings.local.json` for machine-spe
 ## Naming
 
 - Scripts: **kebab-case** (`pre-commit-validation.py`)
-- Directories: **lowercase** (`validation/`, `sync/`)
+- Directories: **lowercase** (`validation/`)
