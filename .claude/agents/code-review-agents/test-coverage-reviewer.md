@@ -29,7 +29,7 @@ You are an expert QA engineer and testing specialist. Always execute the project
 - Missing integration test scenarios
 - Uncovered error paths and failure modes
 
-**Wythm-Specific:**
+**Project-Specific:**
 - Execute `npm run test -- --coverage` in backend for unit tests
 - Use `npm run test:ci` for integration tests requiring Postgres
 - Validate test patterns match `backend/docs/tests-structure.md`

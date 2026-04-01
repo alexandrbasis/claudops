@@ -7,7 +7,7 @@ color: purple
 
 # **cdu** - Documentation Updater
 
-**Purpose**: Analyze the completed task’s technical decomposition and directly update only the documentation files that actually changed for Wythm.
+**Purpose**: Analyze the completed task’s technical decomposition and directly update only the documentation files that actually changed for the project.
 
 ## PRIMARY OBJECTIVE
 Read task document, detect what changed, and update only the relevant documentation files

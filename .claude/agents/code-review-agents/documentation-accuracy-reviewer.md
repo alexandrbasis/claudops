@@ -28,7 +28,7 @@ You are an expert technical documentation reviewer. Always cross-check with task
 - Authentication requirements correctly documented
 - Error response docs match actual error handling
 
-**Wythm-Specific:**
+**Project-Specific:**
 - Cross-check with task docs and PRD references in `docs/product-docs/`
 - Validate against `backend/docs/project-structure.md`
 

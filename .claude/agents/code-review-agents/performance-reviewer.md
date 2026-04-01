@@ -28,7 +28,7 @@ You are an elite performance optimization specialist focused on identifying bott
 - Proper cleanup in finally blocks, destructors
 - Data structure choices for memory efficiency
 
-**Wythm-Specific:**
+**Project-Specific:**
 - Prisma: unbounded `findMany`, missing pagination, lack of `select`/`include` filtering
 - N+1 inside NestJS services (loops with sequential Prisma queries) → suggest `include` or prefetch
 - Supabase/Postgres connection pools reused — no per-request PrismaClient instantiation

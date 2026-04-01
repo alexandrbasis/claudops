@@ -50,7 +50,7 @@ completed_steps=$(grep -E "^\s*- \[x\] ✅.*Completed" "$task_file")
 ```bash
 # Extract comprehensive task info from document analysis
 task_title=$(grep -m 1 -E "^(# Task:|# Technical Decomposition:)" "$task_file" | sed -E 's/^# (Task:|Technical Decomposition:)\s*//')
-linear_id=$(grep -m 1 -E "WYT-[0-9]+" "$task_file" || true)
+linear_id=$(grep -m 1 -E "[A-Z]+-[0-9]+" "$task_file" || true)
 description=$(awk '/^## (Primary Objective|Description)/,/^## [^#]/' "$task_file" | tail -n +2 | head -n -1)
 quality_gate_report=$(grep -m 1 -E "Quality Gate Report|Quality Gate Report -" "$task_file" || true)
 
@@ -83,10 +83,10 @@ EOF
 **Format**: `type(LINEAR-ID): Brief description`
 
 **Examples**:
-- `feat(WYT-110): Phase 2 - ExercisePlanningService Core`
-- `fix(WYT-115): Resolve authentication token expiry bug`
-- `refactor(WYT-120): Simplify session lifecycle management`
-- `docs(WYT-125): Update API documentation for training endpoints`
+- `feat(TEAM-110): Phase 2 - ExercisePlanningService Core`
+- `fix(TEAM-115): Resolve authentication token expiry bug`
+- `refactor(TEAM-120): Simplify session lifecycle management`
+- `docs(TEAM-125): Update API documentation for training endpoints`
 
 **Title Types**: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
 
@@ -97,7 +97,7 @@ EOF
 
 ```bash
 # Extract Linear ID and validate
-linear_id=$(grep -oE "WYT-[0-9]+" "$task_file" | head -1)
+linear_id=$(grep -oE "[A-Z]+-[0-9]+" "$task_file" | head -1)
 [[ -z "$linear_id" ]] && echo "❌ No Linear ID found in task document" && exit 1
 
 # Create PR with proper naming

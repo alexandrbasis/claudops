@@ -169,7 +169,7 @@ Return findings inline in the structured format above so the orchestrator can in
 - Refactor commits without corresponding test update
 - Test and implementation in same commit (for trivial changes)
 
-## Wythm-Specific Architecture Checks
+## Project-Specific Architecture Checks
 
 **YOUR ownership (check these):**
 - Validate NestJS module boundaries per `backend/docs/project-structure.md`
