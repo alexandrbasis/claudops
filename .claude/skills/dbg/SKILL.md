@@ -108,7 +108,7 @@ Ask user to reproduce again. Compare pre-fix vs post-fix logs:
 
 ### Step 8: Bug Report (if warranted)
 For non-trivial bugs (logic errors, race conditions, architectural issues), create a bug report:
-- Template: `docs/product-docs/templates/bug-report-template.md`
+- Template: `.claude/docs/templates/bug-report-template.md`
 - Output: `tasks/task-YYYY-MM-DD-[bug-name]/bug-report-[bug-name].md`
 
 Skip for trivial fixes (typos, missing imports, config errors) — a good commit message suffices.

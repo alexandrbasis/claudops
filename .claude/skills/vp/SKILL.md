@@ -41,7 +41,7 @@ Works for both UI-facing tasks (mobile/web screen mockups) and backend tasks (ar
 
 2. **Check for discovery document:**
    - Look for `discovery-[feature-name].md` in task directory
-   - **If found:** read it, extract feature overview, requirements, UI/UX specs, technical considerations. Proceed to GATE 1.
+  - **If found:** read it, extract feature overview, how it works, scope boundaries, key requirements, and constraints. If the discovery doc uses an older format, map equivalent sections such as requirements, UI/UX specs, and technical considerations. Proceed to GATE 1.
    - **If NOT found:** offer the user a choice via AskUserQuestion:
      - **Run /nf first** (recommended) — full discovery interview for complex features
      - **Quick prototype** — describe the feature briefly, create an exploratory mockup
@@ -63,7 +63,7 @@ Read the discovery document holistically. The question is not "which keywords ap
 
 **UI_FACING** — the user needs to see how the feature *looks and feels*:
 - Screens, layouts, interactions, navigation flows
-- The discovery doc has a substantive "UI/UX Specifications" section
+- The discovery doc has a substantive "How It Works" section or equivalent UI/UX flow description
 - The value of the prototype is seeing the visual design
 
 **BACKEND** — the user needs to see how the feature *is structured*:
@@ -85,16 +85,13 @@ Confirm the detected type with the user via AskUserQuestion before proceeding.
 - **UI-facing tasks:** read `references/ui-playground-template.md` for the full prompt template
 - **Backend tasks:** read `references/backend-playground-template.md` for the full prompt template
 
-**Wythm design token quick reference** (pass to playground for UI tasks):
-- Brand: `color.background.brand` / `color.text.on-brand`
-- Backgrounds: `color.background.base`, `color.background.secondary` (cards/surfaces)
-- Text: `color.text.base` (primary), `color.text.secondary` (muted), `color.text.tertiary`
-- Borders: `color.border.base`, `color.border.secondary`
-- Fields: `color.field.background`, `color.field.border-danger` (errors)
-- Icons: `color.icon.base`, `color.icon.brand`, `color.icon.on-brand`
-- Overlay: `color.background.overlay` (modal backdrops)
+**For UI tasks, pass project-specific visual context to the playground when available:**
+- Design system or component library name
+- Theme tokens, CSS variables, Tailwind config, or style guide paths
+- Existing screens or components that the prototype should visually align with
+- Brand cues or visual tone
 
-For the full token palette, read `.claude/skills/design-tokens/SKILL.md`.
+If no project-specific design context exists, instruct the playground to use a neutral, accessible default style that is easy to adapt.
 
 **Fallback:** if the `playground` skill is not available, generate the HTML file directly:
 - Self-contained single file (inline CSS/JS, no external deps)

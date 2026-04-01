@@ -24,8 +24,8 @@ query($id: String!) {
     assignee { name }
   }
 }
-# Variables: { "id": "WYT-66" }
-# Note: Accepts both identifier ("WYT-66") and UUID
+# Variables: { "id": "TEAM-66" }
+# Note: Accepts both identifier ("TEAM-66") and UUID
 ```
 
 ### Search Issues
@@ -50,7 +50,7 @@ query($tid: String!, $limit: Int!) {
   }
 }
 # Variables: { "tid": "<team-uuid>", "limit": 10 }
-# Note: Requires team UUID (resolved from team key "WYT")
+# Note: Requires team UUID (resolved from team key from `LINEAR_TEAM_KEY`, default `TEAM`)
 ```
 
 ### My Issues (filtered by assignee)
@@ -78,8 +78,8 @@ query($key: String!) {
     nodes { id key name }
   }
 }
-# Variables: { "key": "WYT" }
-# Cached in /tmp/linear-WYT-team.json (24h TTL)
+# Variables: { "key": "TEAM" }
+# Cached in /tmp/linear-TEAM-team.json (24h TTL)
 ```
 
 ### List Workflow States
@@ -91,7 +91,7 @@ query($tid: ID!) {
   }
 }
 # Variables: { "tid": "<team-uuid>" }
-# Cached in /tmp/linear-WYT-states.json (24h TTL)
+# Cached in /tmp/linear-TEAM-states.json (24h TTL)
 ```
 
 ### Semantic Search (AI)
@@ -116,7 +116,7 @@ query($term: String!, $limit: Int) {
 ```graphql
 { issueLabels { nodes { id name } } }
 { users { nodes { id name active } } }
-# Cached in /tmp/linear-WYT-labels.json and -users.json (24h TTL)
+# Cached in /tmp/linear-TEAM-labels.json and -users.json (24h TTL)
 ```
 
 ### Get Current User (Viewer)
@@ -154,7 +154,7 @@ mutation($id: String!, $title: String, $desc: String, $priority: Int) {
     issue { id identifier title description priority state { name } url }
   }
 }
-# Variables: { "id": "WYT-66", "title": "New Title" }
+# Variables: { "id": "TEAM-66", "title": "New Title" }
 # Note: Only include fields being updated. Script builds input dynamically.
 ```
 
@@ -181,7 +181,7 @@ mutation($id: String!, $sid: String!) {
     issue { id identifier title state { name } url }
   }
 }
-# Variables: { "id": "WYT-66", "sid": "<state-uuid>" }
+# Variables: { "id": "TEAM-66", "sid": "<state-uuid>" }
 # Note: State UUID resolved from name via cached state mapping
 ```
 
@@ -208,7 +208,7 @@ mutation($id: String!, $lid: String!) {
   }
 }
 # issueRemoveLabel has identical signature
-# Variables: { "id": "WYT-66", "lid": "<label-uuid>" }
+# Variables: { "id": "TEAM-66", "lid": "<label-uuid>" }
 # Note: Label UUID resolved from name via cached label mapping
 ```
 
@@ -221,7 +221,7 @@ mutation($id: String!, $uid: String!) {
     issue { identifier title assignee { name } }
   }
 }
-# Variables: { "id": "WYT-66", "uid": "<user-uuid>" }
+# Variables: { "id": "TEAM-66", "uid": "<user-uuid>" }
 # Note: User UUID resolved from name via cached user mapping
 ```
 
@@ -248,19 +248,19 @@ mutation($id: String!, $url: String!) {
     attachment { id title url }
   }
 }
-# Variables: { "id": "WYT-66", "url": "https://github.com/org/repo/pull/123" }
+# Variables: { "id": "TEAM-66", "url": "https://github.com/org/repo/pull/123" }
 ```
 
 ## Caching
 
 | Cache File | Contents | TTL |
 |------------|----------|-----|
-| `/tmp/linear-WYT-team.json` | Team UUID for "WYT" | 24h |
-| `/tmp/linear-WYT-states.json` | State name → UUID mapping | 24h |
-| `/tmp/linear-WYT-labels.json` | Label name → UUID mapping | 24h |
-| `/tmp/linear-WYT-users.json` | User name → UUID mapping | 24h |
+| `/tmp/linear-TEAM-team.json` | Team UUID for `LINEAR_TEAM_KEY` | 24h |
+| `/tmp/linear-TEAM-states.json` | State name → UUID mapping | 24h |
+| `/tmp/linear-TEAM-labels.json` | Label name → UUID mapping | 24h |
+| `/tmp/linear-TEAM-users.json` | User name → UUID mapping | 24h |
 
-Clear cache: `rm /tmp/linear-WYT-*.json`
+Clear cache: `rm /tmp/linear-TEAM-*.json`
 
 ## Rate Limits
 

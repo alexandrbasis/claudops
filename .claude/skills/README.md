@@ -1,4 +1,4 @@
-# Wythm Skills
+# Project Skills
 
 ## Core Workflow
 
@@ -69,8 +69,8 @@ Feature lifecycle: discovery → implementation → review → merge.
 | [/react-native-expo-mobile](./react-native-expo-mobile) | React Native + Expo best practices |
 | [/vercel-react-best-practices](./vercel-react-best-practices) | React/Next.js optimization (Vercel) |
 | [/design-tokens](./design-tokens) | Design token naming rules |
-| [/component-library](./component-library) | Reusable UI component catalog (Wythm mobile) |
-| [/screen-flow](./screen-flow) | Screen decomposition and flow analysis (Wythm mobile) |
+| [/component-library](./component-library) | Reusable UI component catalog (mobile app) |
+| [/screen-flow](./screen-flow) | Screen decomposition and flow analysis (mobile app) |
 | [/web-design-guidelines](./web-design-guidelines) | UI/UX review patterns |
 
 ## Integrations
@@ -78,9 +78,9 @@ Feature lifecycle: discovery → implementation → review → merge.
 | Skill | Purpose |
 |-------|---------|
 | [/cc-linear](./cc-linear) | Linear GraphQL API operations |
-| [/codex-cli](./codex-cli) | OpenAI Codex — part of [cross-AI protocol](../docs/product-docs/templates/cross-ai-protocol.md) |
-| [/gemini-cli](./gemini-cli) | Google Gemini — part of [cross-AI protocol](../docs/product-docs/templates/cross-ai-protocol.md) |
-| [/cursor-cli](./cursor-cli) | Cursor Agent (Composer 2) — part of [cross-AI protocol](../docs/product-docs/templates/cross-ai-protocol.md) |
+| [/codex-cli](./codex-cli) | OpenAI Codex — part of [cross-AI protocol](../docs/templates/cross-ai-protocol.md) |
+| [/gemini-cli](./gemini-cli) | Google Gemini — part of [cross-AI protocol](../docs/templates/cross-ai-protocol.md) |
+| [/cursor-cli](./cursor-cli) | Cursor Agent (Composer 2) — part of [cross-AI protocol](../docs/templates/cross-ai-protocol.md) |
 
 ## Meta
 

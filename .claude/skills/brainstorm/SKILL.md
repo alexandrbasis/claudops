@@ -131,7 +131,7 @@ After exploration is complete, create the brainstorm artifact. The format adapts
 
 **For Exploration / Deep Dive depth:**
 1. Create brainstorm notes: `docs/brainstorming/brainstorm-YYYY-MM-DD-[topic-slug].md`
-2. Use template: `docs/product-docs/templates/brainstorm-template.md`
+2. Use template: `.claude/docs/templates/brainstorm-template.md`
 3. Include:
    - Topic overview and type (project/general)
    - Key questions explored

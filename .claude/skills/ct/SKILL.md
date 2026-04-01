@@ -1,15 +1,15 @@
 ---
 name: ct
 description: >-
-  Create technical task documentation for developer implementation.
-  Use when asked to 'create task', 'technical decomposition', 'plan implementation',
-  'task documentation', 'decompose feature', 'prepare for implementation',
-  'break down this feature', or when the user has a feature ready for technical
-  planning. Also trigger when the user has completed feature discovery (/nf) and
-  wants to move to the implementation planning phase, or when a JTBD/PRD exists
-  and the next step is a technical plan.
-argument-hint: [feature-name]
-allowed-tools: Agent, Skill, AskUserQuestion, Read, Glob, Grep, Edit, Write, Bash, TodoWrite
+  Use when a feature, enhancement, or scoped task is clear enough for technical
+  planning and the next step is an implementation-ready technical decomposition
+  before coding. Trigger on requests like 'create task', 'technical
+  decomposition', 'plan implementation', 'break this into implementation steps',
+  or after `/nf` or `/product` when the user is ready to plan the build. NOT
+  for feature discovery (use /nf), product docs (use /product), brainstorming
+  (use /brainstorm), or implementation itself (use /si).
+argument-hint: [feature-name | task-name]
+allowed-tools: Task, Skill, AskUserQuestion, Read, Glob, Grep, Edit, Write, Bash
 ---
 
 # Create Task Command
@@ -17,452 +17,286 @@ allowed-tools: Agent, Skill, AskUserQuestion, Read, Glob, Grep, Edit, Write, Bas
 > **Announcement**: Begin with: "I'm using the **ct** skill for technical task creation."
 
 ## PRIMARY OBJECTIVE
-Create implementation-ready technical documentation for developer implementation. Thoroughly understand the user's idea, review the codebase with Explore sub-agent and all necessary related documents. Adopt a TDD-first workflow where the test plan is authored first and guides the technical decomposition. Exclude any time estimates. Ask clarifying questions when requirements are ambiguous.
+Create implementation-ready technical documentation that a developer can execute with confidence. Work backward from expected behavior: clarify scope, inspect existing patterns, write the test plan first, then derive implementation steps. Keep the plan concrete, traceable, and free of time estimates.
 
-**Routing — wrong skill?**
-- Feature discovery/interview → `/nf`
-- Product documentation (JTBD/PRD) → `/product`
-- Implementation/coding → `/si`
-- Brainstorming → `/brainstorm`
-- PR review comments → `/prc`
+## CORE PRINCIPLES
+- **Test plan first** — define what proves the work is done before describing how to build it
+- **Clarify ambiguity before decomposition** — unresolved gray areas become bad plans
+- **Follow existing patterns** — extend proven structures before inventing new ones
+- **Protect scope** — new ideas become follow-ups, not stealth additions
+- **Discover repo conventions** — prefer searching the actual workspace over assuming fixed paths
+- **Stay executable** — name files, commands, dependencies, and completion signals explicitly
+
 
 ## Control Gates
 
-### GATE 0: Context Gathering & Requirements Understanding
-**Complete BEFORE technical decomposition:**
+### GATE 0: Confirm the Task Is Ready for Technical Planning
+**Complete BEFORE writing the plan:**
 
-**STEP 1: Check for pre-work documentation**
+- If no argument is provided, ask what task or feature should be planned
+- Determine whether the request is actually ready for decomposition:
+  - **Still fuzzy / exploratory** → route to `/nf` or `/brainstorm`
+  - **Missing product framing** (goals, business rules, success metrics) → route to `/product`
+  - **Ready to build** → continue
+- Ask enough clarifying questions to name:
+  - objective
+  - primary actor or system touchpoint
+  - success criteria
+  - boundaries / out-of-scope items
+  - dependencies, constraints, or non-negotiables
+- Exclude time estimates from the plan
 
-Look for existing documentation:
-- `tasks/task-YYYY-MM-DD-[feature-name]/JTBD-[feature-name].md` (User needs analysis)
-- `tasks/task-YYYY-MM-DD-[feature-name]/discovery-[feature-name].md` (Feature discovery from /nf)
-- `product-docs/PRD/PRD-[feature-name].md` (Product requirements)
-- `docs/ADR/` for relevant Architecture Decision Records
-
-**STEP 2: Check for visual prototype approval (if discovery exists)**
-
-If `discovery-[feature-name].md` exists, check for `vp-approval.md` in the same task directory:
-
-**IF `vp-approval.md` exists with "Status: APPROVED":**
-- Read playground file for additional context
-- Note any "Key Decisions Confirmed" and "Notes for Technical Decomposition"
-- Proceed to STEP 3
-
-**IF `vp-approval.md` exists with "Status: REJECTED":**
-- **STOP**: "Visual prototype was rejected. Run `/nf` to refine discovery, then `/vp` to get visual approval before technical decomposition."
-
-**IF discovery exists BUT no `vp-approval.md`:**
-- Ask user via AskUserQuestion: "Discovery document found but no visual prototype. Options:"
-  - **Skip visual approval** - Proceed directly to technical decomposition (for backend-only or urgent tasks)
-  - **Create visual prototype** - Run `/vp` first to visualize and approve the design
-
-**STEP 3: Gather context**
-
-**IF pre-work documentation exists:**
-- Read all available documents (JTBD, PRD, ADR)
-- **Scan for unresolved `[NEEDS CLARIFICATION: ...]` markers** — if found, present each to user via `AskUserQuestion` and resolve before proceeding. Unresolved markers block tech decomposition.
-- Use Explore sub-agent to understand affected codebase (see guidance below)
-- Confirm readiness with user
-
-**IF NO pre-work documentation:**
-- Ask user to describe the task/feature
-- Ask clarifying questions about objective, users, acceptance criteria
-- Use Explore sub-agent to understand affected codebase (see guidance below)
-- Summarize understanding and confirm with user
-
-**Explore sub-agent guidance** — direct it to investigate:
-- Existing patterns in affected directories (how are similar features built?)
-- Database schema relevant to the feature (Prisma models in `backend/prisma/`)
-- API contracts and DTOs near the change area
-- Test patterns used in the affected module
-- For mobile: existing components in `mobile-app/src/shared/ui/` and `mobile-app/src/features/`
-
-**STEP 3.5: Reference prior art**
-
-Scan `tasks/completed/` for similar tasks. Read their tech-decomposition to:
-- Match the level of detail the team expects
-- Identify patterns that worked well (e.g., test plan structure, step granularity)
-- Avoid repeating past mistakes noted in review docs
-
-### Analytics Coverage Check (CONDITIONAL)
-**Trigger:** If the task touches user-facing screens or flows.
-- Invoke `/analytics` skill to review event coverage
-- Ensure new screens have corresponding analytics events planned
-- Reference `mobile-app/src/shared/analytics/AnalyticsEvents.ts` for existing event catalog
+**Exit criteria:** The task can be stated as a single clear implementation objective with known boundaries.
 
 ---
 
-### GATE 0.3: Requirements Quality Check ("Unit Tests for English")
-**Complete AFTER context gathering (GATE 0), BEFORE ambiguity resolution.**
+### GATE 1: Discover Source Material and Prior Art
+**Complete BEFORE codebase exploration:**
 
-**Skip if**: No pre-work documentation exists (user described task directly — quality check not applicable).
+Search for inputs instead of assuming one repository layout. Prefer the project's existing document conventions if they already exist.
 
-**Purpose**: Validate the QUALITY of requirements themselves — not technical feasibility, but document completeness, clarity, and consistency. Inspired by spec-driven development "unit tests for English" methodology.
+**Look for:**
+- Discovery docs: `**/discovery-*.md`
+- Product docs: `**/JTBD-*.md`, `**/PRD*.md`, `**/*requirements*.md`
+- Architecture notes: `**/ADR*.md`, `**/*architecture*.md`, `**/*decision*.md`
+- Existing plans: `**/tech-decomposition-*.md`, `**/*implementation-plan*.md`
+- Optional supporting artifacts: prototypes, flow diagrams, issue links, design notes
 
-**STEP 1: Analyze spec documents**
+**Read the closest relevant artifacts and extract:**
+- Canonical task / feature name
+- Requirements and success criteria
+- Constraints, blockers, and non-negotiables
+- Open questions or unresolved markers such as `[NEEDS CLARIFICATION: ...]`
+- Prior plan patterns worth reusing for structure or level of detail
 
-Read all gathered spec documents (discovery, JTBD, PRD) and evaluate against quality dimensions:
+**Output location rule:**
+- Prefer the repo's current convention for task docs
+- If no convention exists, default to:
+  `tasks/task-YYYY-MM-DD-[feature-name]/tech-decomposition-[feature-name].md`
+
+**Exit criteria:** You know which inputs are authoritative and where the output doc should live.
+
+---
+
+### GATE 1.5: Requirements Quality and Scope Check
+**Complete AFTER reading source material, BEFORE decomposition:**
+
+Review the inputs like "unit tests for English." Validate the quality of the requirements themselves, not just their technical feasibility.
 
 | Dimension | What to check |
-|-----------|--------------|
-| `[Completeness]` | Are all user scenarios covered? Are edge cases addressed? |
-| `[Clarity]` | Are requirements unambiguous? Can they be interpreted only one way? |
-| `[Consistency]` | Do requirements contradict each other? |
-| `[Measurability]` | Can success criteria be objectively verified? |
-| `[Coverage]` | Are error states, permissions, and boundaries defined? |
-| `[Gap]` | What's obviously missing that should be specified? |
+|-----------|---------------|
+| `[Completeness]` | Are major user/system scenarios covered? |
+| `[Clarity]` | Can the requirement be interpreted more than one way? |
+| `[Consistency]` | Do docs or constraints contradict each other? |
+| `[Measurability]` | Can success be objectively verified? |
+| `[Coverage]` | Are error states, boundaries, permissions, and edge cases defined? |
+| `[Gap]` | What important behavior is still missing from the inputs? |
 
-**STEP 2: Generate quality checklist**
+If important gaps exist:
+- Summarize them as 3-7 concrete checklist items tagged with the dimensions above
+- Present them to the user with `AskUserQuestion`
+- Options:
+  - **Fix requirements first** — return to the source docs before planning
+  - **Proceed with explicit decisions or blockers** — resolve what can be resolved and capture anything still stopping implementation
 
-Produce 5-10 checklist items tagged with quality dimensions:
+Do not hide requirement gaps inside implementation steps.
 
-```markdown
-## Requirements Quality Check
-- [ ] Are authentication requirements defined for all protected endpoints? [Coverage]
-- [ ] Is the error handling behavior specified for network failures? [Gap]
-- [ ] Do the sorting requirements conflict with the pagination spec? [Consistency]
-- [ ] Can "fast response time" be measured? Define a threshold. [Measurability]
-```
-
-**STEP 3: Present to user**
-
-Present unchecked items via `AskUserQuestion`:
-- **Acknowledge gaps and proceed** — gaps are noted but don't block planning
-- **Fix requirements first** — go back to update discovery/JTBD docs before tech decomposition
-
-**Exit criteria**: User has reviewed quality findings and decided how to proceed.
+**Exit criteria:** Requirement gaps are either resolved or explicitly captured as implementation decisions or blockers.
 
 ---
 
-### GATE 0.5: Ambiguity Resolution (Gray Areas)
-**Complete AFTER context gathering (GATE 0), BEFORE UI planning or tech decomposition.**
+### GATE 2: Explore the Codebase
+**Complete BEFORE writing implementation steps:**
 
-**STEP 1: Identify gray areas**
-Review all gathered context (discovery docs, PRD, JTBD, codebase exploration) and identify:
+Use the `explore` agent to inspect the actual change area. Direct it to investigate:
+- The closest similar feature, module, or workflow
+- Relevant data models or persisted state
+- API surfaces, contracts, background jobs, events, or integrations near the change
+- Shared abstractions, utilities, or base patterns worth reusing
+- Test patterns already used in the affected module
+- Likely failure modes, configuration touchpoints, and integration boundaries
+
+**If the task is UI-heavy, also inspect:**
+- Existing component composition patterns
+- State management and navigation conventions
+- Loading, empty, error, success, and accessibility states
+- Visual/system constraints already used in the codebase
+
+**Optional adjuncts:**
+- If visual uncertainty blocks planning, use `/vp` or another design helper
+- If the task changes a user-facing flow and the product tracks analytics, include analytics coverage in the plan
+
+Return a short findings summary:
+- existing patterns
+- likely files / directories
+- integration points
+- constraints discovered
+
+**Exit criteria:** The plan can be grounded in real codebase evidence instead of guesses.
+
+---
+
+### GATE 3: Resolve Ambiguity Before Decomposition
+**Complete AFTER exploration, BEFORE writing the plan:**
+
+Identify gray areas across the inputs and codebase findings:
 - Requirements that could be interpreted multiple ways
-- Missing acceptance criteria or edge cases not covered
-- Technical decisions with multiple valid approaches (e.g., sync vs async, REST vs GraphQL)
-- Unclear scope boundaries (what's in v1 vs deferred)
+- Missing acceptance criteria or edge cases
+- Technical choices with multiple valid approaches
+- Unclear boundaries between current scope and future work
 
-**STEP 2: Resolve or escalate**
 For each gray area:
-1. **If resolvable from existing docs/code** — resolve it, state the decision and evidence
-2. **If requires user judgment** — present 2-3 options via `AskUserQuestion` with trade-offs for each
-3. **If requires external input** — flag as a prerequisite/blocker
+1. **Resolve from docs or code** if the answer already exists
+2. **Ask the user** when product or implementation judgment is required
+3. **Mark as blocker/prerequisite** when external input is still missing
 
-**STEP 3: Document decisions**
-Add an `## Implementation Decisions` section to the tech-decomposition document:
+Document non-trivial choices in the tech-decomposition file:
 
 | # | Question | Decision | Rationale |
 |---|----------|----------|-----------|
-| 1 | [gray area] | [chosen approach] | [why — reference to doc, constraint, or user choice] |
+| 1 | [gray area] | [chosen approach] | [why this is the right choice] |
 
-**Scope guardrail:** This gate clarifies HOW to implement what's already scoped — it does NOT expand scope. If the user suggests new capabilities during discussion: "That sounds like a separate task. I'll note it but keep this task focused on [original scope]."
+**Scope guardrail:** This gate clarifies HOW to implement what is already in scope. It does not expand the task. If a new capability emerges, note it as a follow-up instead of folding it into the current plan.
 
-**Exit criteria:** All identified gray areas are resolved or explicitly deferred with rationale. Proceed to GATE 0.7 (if UI task) or GATE 1 (if backend task).
-
----
-
-### GATE 0.7: UI Planning Agent (CONDITIONAL)
-**Complete AFTER /vp approval (if used), BEFORE technical decomposition:**
-
-**Trigger:** IF task is UI-heavy (Figma design, screen components, styling, animations)
-
-**Step 1: Determine if agent is needed**
-
-| Signal | Use agent? |
-|--------|-----------|
-| Implement screen from Figma design | ✅ YES |
-| Create UI components with styling/animations | ✅ YES |
-| Design tokens mapping tasks | ✅ YES |
-| HTTP provider / interceptor setup | ❌ NO |
-| Zustand store implementation | ❌ NO |
-| Navigation structure setup | ❌ NO |
-| Backend / API changes only | ❌ NO |
-
-**Step 2A: IF UI-heavy task**
-
-Invoke `mobile-ui-planning-agent`:
-
-```
-Analyze UI requirements for [feature-name].
-
-Feature name: [feature-name]
-Task directory: [absolute path to task folder]
-
-Available pre-work (check and use if exists):
-- discovery-[feature-name].md (feature discovery)
-- playground-[feature-name].html (visual prototype)
-- vp-approval.md (visual prototype approval status)
-
-Load skills: design-tokens, component-library, screen-flow, react-native-expo-mobile
-Check existing components in mobile-app/src/shared/ui/ and mobile-app/src/features/
-
-Output: ui-planning-analysis-[feature-name].md (consultative reference for tech-decomposition)
-```
-
-The agent creates `ui-planning-analysis-[feature-name].md` in the task directory.
-
-**Task directory structure after GATE 0.7:**
-```
-tasks/task-YYYY-MM-DD-[feature-name]/
-├── JTBD-[feature-name].md              (optional)
-├── discovery-[feature-name].md         (optional, from /nf)
-├── playground-[feature-name].html      (optional, from /vp)
-├── vp-approval.md                     (optional, from /vp)
-└── ui-planning-analysis-[feature-name].md  ← agent output
-```
-
-Tech-decomposition (GATE 1) will reference `ui-planning-analysis-[feature-name].md` as a consultative resource.
-
-**Step 2B: IF NOT UI-heavy (architectural/infrastructure)**
-
-- Skip agent
-- Load skills manually if mobile-app files are touched:
-  - `react-native-expo-mobile` — always for mobile-app
-  - `design-tokens` — if UI styling involved
+**Exit criteria:** All meaningful ambiguities are resolved or marked as blockers. If an unresolved ambiguity would materially change implementation, the task is not ready for decomposition.
 
 ---
 
-### GATE 1: Technical Decomposition & Test Plan Creation
-**Complete AFTER context gathering:**
+### GATE 4: Write the Technical Decomposition
+**Complete AFTER context, exploration, and ambiguity resolution:**
 
-**FILE**: Create `tasks/task-YYYY-MM-DD-[kebab-case]/tech-decomposition-[feature-name].md`
+**Step 0: Load the Output Shape**
+- Before drafting, read `.claude/docs/templates/technical-decomposition-template.md`
+- Treat the template as the **output contract**:
+  - it defines the expected structure and level of detail
+  - the decomposition should contain exactly what is needed to fill it clearly
+  - do not restate the template inside the document; use it as the source of truth for the final shape
 
-**TEMPLATE**: Verify template exists at `docs/product-docs/templates/technical-decomposition-template.md`. If missing, search `docs/` recursively for `*decomposition*template*`.
+**Required sections:**
+- Linked Inputs / Context
+- Primary Objective
+- Must Haves
+- Test Plan
+- Technical Requirements
+- Implementation Decisions (if any)
+- Implementation Steps
+- Dependencies / Risks / Blockers
+- Tracking / Notes (optional)
 
-Create technical implementation plan with **TEST PLAN FIRST** (TDD approach):
-- **Check Project Constitution**: Read `docs/architecture/constitution.md` — reference relevant articles if the task involves architectural decisions (layer boundaries, database changes, mobile patterns). Include constitution gate checks in the tech decomposition where applicable.
-- Fill in Primary Objective based on JTBD/PRD or user input
-- **Add `## Must Haves` section** (after Primary Objective):
+**Planning rules:**
+- Add `## Must Haves` immediately after the objective:
   ```markdown
   ## Must Haves
   Non-negotiable truths when this task is complete:
   - [ ] [Observable behavior 1]
-  - [ ] [File X exists and exports Y]
-  - [ ] [API endpoint Z returns correct response]
+  - [ ] [Interface, file, endpoint, or workflow truth 2]
+  - [ ] [Constraint or invariant 3]
   ```
-  These are verified backwards by the `goal-verifier` agent at the end of `/si` implementation.
-- Define comprehensive Test Plan using Given/When/Then format (see below)
-- Include explicit test commands (e.g., backend `npm run test`)
-- Detail Implementation Steps with specific files, directories, and changes
-- **Tag each step with `[REQ-XXX]`** linking to the requirement it fulfills from the discovery/JTBD/PRD doc (see template convention). Steps without a requirement tag may indicate scope creep. The `/analyze` skill (GATE 4) uses these tags for traceability verification.
-- **Add optional wave annotations** to steps for parallel execution:
-  ```markdown
-  ### Step 1: Create domain entities — **Wave 1**
-  ### Step 2: Create repository interfaces — **Wave 1**
-  ### Step 3: Implement use case (depends on 1, 2) — **Wave 2**
-  ```
-  Same-wave steps execute in parallel. All must complete before next wave starts. If no waves, `/si` executes sequentially. Only annotate waves when steps are genuinely independent (different modules, no shared files).
-- Reference relevant ADRs if architectural decisions were made
+  These become the source of truth for goal-backward verification during implementation if that workflow exists.
+- Define the **Test Plan before implementation steps**
+- If discovery or product docs exist, do **not** restate `Feature Overview`, `Why This Exists`, `How It Works`, or scope sections in full. Translate them into `Must Haves`, `Technical Requirements`, `Implementation Decisions`, and `Implementation Steps`.
+- Include explicit verification commands
+- Treat `Technical Requirements` as the implementation-facing version of the source requirements
+- Use `Implementation Decisions` only for real technical choices, resolved gray areas, or explicit trade-offs. If none were needed, write `No additional implementation decisions required.`
+- Break work into clear steps and sub-steps with concrete files, directories, or modules
+- State what each step changes and what it proves
+- If source requirements exist, assign `REQ-XXX` IDs and tag the relevant steps
+- If no formal requirements doc exists, still write explicit requirement statements in plain language
+- Add optional wave annotations only when steps are genuinely independent
+- Reference constraints or architecture decisions that shaped the plan
+- Do not invent `Issue ID`, `Branch / PR`, `Split status`, or `Completion Summary` values during `/ct` unless they already exist from prior workflow steps
+- Exclude time estimates
 
 #### Test Case Format (Given/When/Then)
-- **Given** (past tense): preconditions that are already set up
-- **When** (present tense): the action being tested
-- **Then** (future tense): the expected outcome
-- Prefer **declarative behavior** descriptions over imperative UI steps
+- **Given**: preconditions already in place
+- **When**: the action being exercised
+- **Then**: the observable outcome that proves the behavior
+- Prefer declarative behavior descriptions over click-by-click UI scripts
 
-**If the plan touches `mobile-app/`:**
-- Add a short "**Skill Compliance: react-native-expo-mobile**" section in the doc that lists which skill rule sections were applied (e.g., Core Rendering 1.x, Animation 3.x, React Compiler 8.x, UI 9.x).
-
-**AUTOMATIC PLAN REVIEW:** Scale review intensity based on task complexity — this avoids unnecessary overhead for simple tasks while ensuring thorough review for complex ones.
-
-| Complexity | Implementation Steps | Reviews Required |
-|------------|---------------------|-----------------|
-| Simple     | 1-2                 | plan-reviewer only |
-| Medium     | 3-5                 | plan-reviewer + senior-architecture-reviewer |
-| Complex    | 6+                  | plan-reviewer + senior-architecture-reviewer |
-
-**ITERATIVE FEEDBACK LOOP:** When reviewers require revisions:
-1. Address feedback by updating technical decomposition OR ask user for clarification if needed
-2. Re-submit with updated document + previous review for context + summary of changes
-3. Repeat until all required reviewers approve
-
-**CROSS-AI VALIDATION:**
-
-Invoke `/codex-cli`, `/gemini-cli`, and `/cursor-cli` skills in parallel.
-Format output per `docs/product-docs/templates/cross-ai-protocol.md` (comparison table, validation, verdict).
-
-- **FOCUS**: Tech decomposition review as senior technical lead — test plan quality, implementation completeness, technical accuracy, dependencies, risk assessment
-- **FILE_REFS**: `tech-decomposition-[feature].md` + relevant codebase paths
-- **OUTPUT**: Append consolidated verdict to tech decomposition document
-
-If no CLI available: note "Cross-AI Validation: SKIPPED — approved by required reviewers" and proceed.
+**Exit criteria:** A fresh developer could implement the task from the document without needing a separate planning meeting.
 
 ---
 
-### GATE 2: Task Splitting Evaluation
-**Complete AFTER plan review and BEFORE Linear creation:**
+### GATE 5: Review and Strengthen the Plan
+**Complete AFTER the first draft exists:**
 
-**STEP 2.1: Analyze task scope**
+**Minimum self-check:**
+- Does every must-have map to tests and steps?
+- Are any steps scope creep?
+- Are blockers and constraints explicit?
+- Does the plan follow existing repo patterns?
+- Is the test strategy sufficient for the change risk?
 
-Invoke task-splitter agent:
+**Required review policy:**
 
-```
-Evaluate if this task should be split into smaller sub-tasks.
+| Complexity | Typical signal | Required review |
+|------------|----------------|-----------------|
+| Simple | 1-2 focused steps | `plan-reviewer` agent |
+| Medium | 3-5 steps, multiple touchpoints | `plan-reviewer` agent + `senior-architecture-reviewer` agent |
+| Complex | 6+ steps, architecture or cross-system risk | `plan-reviewer` agent + `senior-architecture-reviewer` agent + cross-AI validation |
 
-Task directory: [absolute path to task folder, e.g., /Users/.../tasks/task-2025-10-16-feature-name/]
+Do not skip the required review path for the selected complexity level.
+For **Complex** plans, cross-AI validation is part of the required review path. Follow `.claude/docs/templates/cross-ai-protocol.md` if present.
 
-Please analyze tech-decomposition-[feature-name].md and provide your decision and reasoning.
-```
+**Additional validation branches and follow-ups:**
+- Run `/analyze` when source specs exist and traceability matters
+- If the project uses Linear or another tracker and the user wants synced tracking, create or update the issue with the appropriate integration skill/tool
 
-**STEP 2.2: Check splitting decision**
+**Feedback loop:** If review finds gaps, revise the decomposition, preserve the known risks and blockers, and re-run the relevant review path until the plan is ready.
 
-After task-splitter completes:
-
-- **IF `splitting-decision.md` created with SPLIT RECOMMENDED:**
-  1. Present the splitting decision summary to user
-  2. Ask user: "Task splitter recommends splitting into N phases. Review splitting-decision.md and confirm: Proceed with decomposition?"
-  3. **IF user approves:** Proceed to GATE 2.5
-  4. **IF user rejects:** Proceed to GATE 3 (single Linear issue)
-
-- **IF NO SPLIT RECOMMENDED:**
-  - Proceed to GATE 3 (single Linear issue)
-
----
-
-### GATE 2.5: Task Decomposition (if split approved)
-**Complete ONLY IF task-splitter recommended split AND user approved:**
-
-**ACTION:** Invoke task-decomposer agent:
-
-```
-Execute the approved splitting decision.
-
-Task directory: [absolute path to task folder]
-
-Create phase folders, generate phase tech-decompositions, and create Linear sub-issues.
-```
-
-**task-decomposer will:**
-1. Create `phase-N-[name]/` folders for each phase
-2. Generate full tech-decomposition document for each phase (extracted from parent)
-3. Archive parent document as `initial-tech-decomposition-[feature]-ARCHIVED.md`
-4. Create Linear sub-issues for each phase via cc-linear
-5. Update phase docs with Linear IDs
-6. Update splitting-decision.md with completion summary
-
-**After GATE 2.5:** SKIP GATE 3 (Linear issues already created by decomposer)
+**Exit criteria:** The plan is specific, scoped, and reviewable enough to proceed to task splitting evaluation.
 
 ---
 
-### GATE 3: Linear Issue Creation
-**Complete AFTER task splitting evaluation (ONLY if NOT split or user rejected split):**
+### GATE 6: Task Splitting Evaluation
+**Complete AFTER the required review path and iterative feedback loop are finished:**
 
-**ACTION:** Use `linear-api.sh` (see `.claude/skills/cc-linear/SKILL.md`):
+Always invoke the `task-splitter` agent on the finalized parent plan. Provide:
+- task directory path
+- finalized `tech-decomposition-[feature-name].md` path
 
-```bash
-# For short descriptions:
-.claude/scripts/linear-api.sh create-issue "[Task Name]" "[Summary: objective, requirements, acceptance criteria]" 3
+The `task-splitter` agent either:
+- recommends **NO SPLIT** — keep the parent doc active and proceed to handoff
+- creates `splitting-decision.md` — present the recommendation with `AskUserQuestion`
 
-# For long descriptions (stdin):
-.claude/scripts/linear-api.sh create-issue "[Task Name]" "-" 3 <<'EOF'
-## Context
-[objective]
+If the user approves splitting:
+- invoke the `task-decomposer` agent with the task directory
+- let it create phase folders and phase tech-decomposition docs aligned to the canonical template, retain the parent doc as reference, and update `splitting-decision.md`
+- hand off using the phase documents
 
-## Requirements
-- [requirement 1]
-- [requirement 2]
+If the user declines splitting:
+- keep the parent doc active
+- proceed to handoff
 
-## Acceptance Criteria
-- [ ] [criterion 1]
-- [ ] [criterion 2]
-EOF
-```
-
-**After creation:** Parse JSON response for `identifier` and `url`, update task document's Tracking & Progress section.
+**Exit criteria:** The task is confirmed as a single implementation unit or decomposed into approved phases.
 
 ---
 
-### GATE 4: Cross-Artifact Consistency Check
-**Complete AFTER Linear issue creation (GATE 3) or task decomposition (GATE 2.5), BEFORE handoff.**
+## Output
+Create `tech-decomposition-[feature-name].md` in the repo's existing task-doc convention, or in the fallback task directory if no convention exists.
 
-**Purpose**: Verify that the tech decomposition fully covers all requirements from spec documents. Catches drift between what was specified and what was planned — before implementation begins.
+After `GATE 6`, the active output is one of:
+- the parent `tech-decomposition-[feature-name].md`, or
+- phase-specific tech-decomposition documents created by the `task-decomposer` agent
 
-**ACTION**: Invoke the `/analyze` skill with the task directory:
+## Handoff to Implementation
 
-The analyze skill will:
-1. Read spec documents (discovery/JTBD/PRD) and tech decomposition
-2. Build a traceability matrix: requirement → test case → implementation step
-3. Flag gaps: `[UNCOVERED]`, `[UNTESTED]`, `[SCOPE CREEP]`, `[CONFLICT]`
-4. Report verdict: ALIGNED or GAPS FOUND
+After the gates complete, present a concise summary:
 
-**Handle verdict:**
-- **ALIGNED** → Proceed to handoff
-- **GAPS FOUND** → Present gaps to user via `AskUserQuestion`:
-  - **Fix gaps** — update tech decomposition to cover missing requirements
-  - **Acknowledge and proceed** — gaps are intentional, proceed to handoff
-  - **Re-run /nf** — spec docs need revision
-
-**Skip conditions**: No spec documents exist (task was created without `/nf` or `/product` docs).
-
----
-
-## FINAL TASK DOCUMENT STRUCTURE
-
-After all gates complete, task directory contains:
-
-### Single Task (no split)
-```
-tasks/task-YYYY-MM-DD-[feature-name]/
-├── JTBD-[feature-name].md              (optional)
-└── tech-decomposition-[feature-name].md (required, with Linear issue)
-```
-
-### Split Task (after GATE 2.5)
-```
-tasks/task-YYYY-MM-DD-[feature-name]/
-├── JTBD-[feature-name].md                        (optional)
-├── SPEC-[feature-name].md                        (optional)
-├── initial-tech-decomposition-[feature]-ARCHIVED.md  (archived parent)
-├── splitting-decision.md                          (with completion summary)
-├── phase-1-[name]/
-│   └── tech-decomposition-phase-1-[name].md      (with Linear issue WYT-XXX)
-├── phase-2-[name]/
-│   └── tech-decomposition-phase-2-[name].md      (with Linear issue WYT-XXX)
-└── phase-N-[name]/
-    └── tech-decomposition-phase-N-[name].md      (with Linear issue WYT-XXX)
-```
-
-**Document Structure**: See `docs/product-docs/templates/technical-decomposition-template.md` for the complete format.
-
-**Key Sections**:
-- **Primary Objective**: Clear statement of what we're building
-- **Test Plan**: TDD approach with Given/When/Then test cases
-- **Implementation Steps**: Detailed steps with files, directories, and changelogs
-- **Tracking & Progress**: Linear issue and PR details (updated during workflow)
-- **Dependencies**: (for split tasks) Phase dependencies and blocking relationships
-
----
-
-## HANDOFF TO IMPLEMENTATION
-
-After all gates complete (0 → 0.3 → 0.5 → 0.7 → 1 → 2 → 2.5 → 3 → 4 → HANDOFF), present a summary to the user:
-
-```
+```text
 Task ready for implementation:
 - Task: [task name]
-- Linear: WYT-XXX
-- Consistency: [ALIGNED | GAPS ACKNOWLEDGED]
-- Doc: tasks/task-YYYY-MM-DD-[name]/tech-decomposition-[name].md
+- Doc: [path to active tech-decomposition or phase docs]
+- Key decisions: [resolved / open]
+- Traceability: [used / not applicable]
+- Split status: [no split | split recommended but declined | phases created]
+- Tracking: [optional issue link]
 
 Next steps:
-→ Start implementation: /si [task-directory]
-→ Review plan alignment: /rip [task-directory]
-→ Review plan visually: /plan-review
+-> Start implementation: /si [task-directory or doc path]
 ```
 
----
-
-## FLEXIBILITY NOTES
-
-**For Complex Features** (with full workflow):
-- Expect JTBD, PRD, ADR documents to exist
-- Technical decomposition builds on top of this foundation
-- Reviews scaled by complexity table in GATE 1
-
-**For Simple Tasks** (quick workflow):
-- Gather requirements directly from user
-- Create technical decomposition based on conversation
-- Still follow TDD approach with test plan first
-- Reviews scaled by complexity table in GATE 1 (typically plan-reviewer only)
+## Flexibility Notes
+- For small changes, keep the doc lean but still include `Must Haves`, `Test Plan`, and concrete implementation steps
+- For large features, keep one parent objective and split only when execution would otherwise be unsafe or vague
+- This skill keeps the decomposition core lightweight, but the required review path and the `task-splitter` / `task-decomposer` agent workflow are part of the standard completion path

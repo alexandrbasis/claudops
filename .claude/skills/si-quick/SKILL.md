@@ -1,10 +1,10 @@
 ---
 name: quick
 description: >-
-  Quick implementation for small tasks without ceremony. Use when asked to 'quick fix',
-  'just do it', 'small change', 'quick task', or when the change touches fewer than 5
-  files and doesn't need formal planning.
-  NOT for new features (use /ct + /si), NOT for tasks needing Linear tracking.
+  Use when handling a small, untracked change with clear scope or a bugfix with a known root
+  cause, and there is no tech-decomposition or task directory to follow. Trigger on requests like
+  'quick fix', 'just do it', 'small change', or 'quick task'. NOT for new features, tracked task
+  work, or changes needing formal implementation/review flow (use /si).
 allowed-tools:
   - Read
   - Write
@@ -13,6 +13,7 @@ allowed-tools:
   - Glob
   - Grep
   - AskUserQuestion
+  - Skill
 ---
 
 # /quick — Lightweight Task Mode
@@ -26,9 +27,10 @@ Fast-path implementation with quality checks but no ceremony.
 - Config changes, env updates
 - Small refactors (rename, extract, inline)
 - Adding a validation rule, fixing a query
-- Anything that touches **<5 files** and has **clear scope**
+- Anything that touches **<5 files**, has **clear scope**, and is **not already tracked by a task doc**
 
 ## When NOT to Use (redirect)
+- A `tech-decomposition` or task directory already exists → `/si`
 - New feature or module → `/ct` + `/si`
 - Change needs Linear tracking → `/ct` + `/si`
 - Change touches >5 files → `/ct` + `/si`
@@ -40,8 +42,10 @@ Fast-path implementation with quality checks but no ceremony.
 
 ### STEP 1: Scope Gate
 Before starting, verify this is truly a quick task:
+- If a `tech-decomposition` or task directory already exists, use `/si` instead.
 - Count expected files to change. If >5, suggest `/ct` + `/si` instead.
 - If the change requires a new module/service/table, suggest `/ct` + `/si` instead.
+- If the user already wants a formal tracked implementation/review path, suggest `/si` instead.
 - If the user insists, proceed — but note the risk.
 
 ### STEP 2: Quick Plan
@@ -66,19 +70,26 @@ Get user confirmation before proceeding.
 - For non-logic changes (config, docs, formatting): just make the change
 
 ### STEP 4: Verify
-Run quality checks from the appropriate directory:
+Run the smallest repo-appropriate verification that proves the changed behavior for the touched package(s).
 
-**Backend changes:**
+Examples:
+
+**Backend logic change:**
 ```bash
-cd backend && npm run format:check && npm run lint:check && npx tsc --noEmit && npm run test:unit:silent
+cd backend && npm run lint:check && npx tsc --noEmit && npm run test:unit:silent
 ```
 
-**Mobile app changes:**
+**Backend config/docs change:**
+```bash
+cd backend && npm run lint:check
+```
+
+**Mobile app change:**
 ```bash
 cd mobile-app && npx tsc --noEmit
 ```
 
-If any check fails, fix it before proceeding.
+If the touched package uses different scripts or stronger verification is warranted, run those instead. If any check fails, fix it before proceeding.
 
 **Evidence requirement**: Do not claim the task is done without running these checks and confirming they pass. The `stop-verification-evidence` hookify rule enforces this.
 
@@ -96,13 +107,18 @@ Ask user permission, then create a single conventional commit:
 
 Types: `fix`, `refactor`, `chore`, `docs`, `test`
 
+### STEP 6: Optional Handoff
+- If the user only wants the quick fix applied, stop after STEP 5.
+- If the change now needs a formal tracked review path and a task doc already exists, hand off to `/sr`.
+- If the change needs formal review but no task doc exists, ask whether to promote the work into `/si` first.
+
 ---
 
 ## What /quick Does NOT Do
-- Create task documents
+- Create task documents by default
 - Create Linear issues
-- Run review agents
-- Create PRs (user can do this separately or ask)
+- Run review agents by default
+- Create PRs automatically
 - Update ROADMAP/STATE files
 
 ## Guardrails

@@ -1,6 +1,6 @@
-# Wythm-Specific Analysis Checks
+# Project-Specific Analysis Checks
 
-Detailed commands for project-specific code analysis. Read this when analyzing the Wythm codebase.
+Detailed commands for project-specific code analysis. Read this when analyzing the project codebase.
 
 ## DDD Layer Separation
 

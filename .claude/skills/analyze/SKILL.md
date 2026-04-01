@@ -48,7 +48,7 @@ Find the task directory and its documents:
 
 Read all spec documents and extract a numbered list of requirements:
 
-- From **discovery docs**: Functional Requirements, Non-Functional Requirements, acceptance scenarios
+- From **discovery docs**: `How It Works`, `In Scope`, `Out Of Scope`, `Key Requirements`, `Constraints`, and any equivalent older sections such as Functional Requirements, Non-Functional Requirements, UI/UX Specifications, and acceptance scenarios
 - From **JTBD docs**: Core Needs, Desired Outcomes
 - From **PRD docs**: Functional Requirements, User Stories, Acceptance Criteria
 

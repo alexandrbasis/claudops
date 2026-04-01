@@ -27,7 +27,7 @@ You are an experienced Product Manager. Create product documentation based on su
 ## Required Context
 
 **Read before starting:**
-1. **Product Vision**: @docs/product-docs/PRD/PRD_Wythm.md
+1. **Product Template**: @.claude/docs/templates/PRD-template.md
 2. **Project Structure**: @CLAUDE.md
 
 ---
@@ -38,7 +38,7 @@ Create Jobs-to-be-Done analysis for product features.
 
 **Task:**
 1. Create task directory: `tasks/task-YYYY-MM-DD-[feature-name]/`
-2. Use template: @docs/product-docs/templates/JTBD-template.md
+2. Use template: @.claude/docs/templates/JTBD-template.md
 3. Create JTBD document including:
    - Job statements: "When [situation], I want [motivation], so I can [expected outcome]"
    - User needs and pain points analysis
@@ -56,7 +56,7 @@ Create Product Requirements Document for new features.
 
 **Task:**
 1. Check existing PRDs in `product-docs/PRD/` for consistency
-2. Use template: @docs/product-docs/templates/PRD-template.md
+2. Use template: @.claude/docs/templates/PRD-template.md
 3. Create PRD document including:
    - Problem statement and user needs
    - Feature specifications and scope

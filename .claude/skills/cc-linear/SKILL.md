@@ -4,7 +4,7 @@ description: >
   Execute Linear operations via direct GraphQL API — create issues, update
   status/priority/title, add comments, search tasks, manage labels, assign work,
   and link PRs. Use this skill whenever the user mentions Linear, refers to
-  WYT-* issue identifiers, says "create a ticket/issue", "move to done/in
+  TEAM-* issue identifiers, says "create a ticket/issue", "move to done/in
   progress/review", "update the task status", "close the issue", "what's in our
   backlog", "assign this to", "my issues", or any project management operation
   targeting Linear. Also trigger when other skills (ct, si, sr) need to sync
@@ -21,29 +21,29 @@ Interact with Linear via `.claude/scripts/linear-api.sh` — a direct `curl` wra
 
 ### Issues
 ```bash
-.claude/scripts/linear-api.sh get-issue WYT-66
+.claude/scripts/linear-api.sh get-issue TEAM-66
 .claude/scripts/linear-api.sh search "authentication" 5
 .claude/scripts/linear-api.sh ai-search "error handling in mobile app" 5
 .claude/scripts/linear-api.sh create-issue "Title" "Description" 3
 .claude/scripts/linear-api.sh create-issue "Title" "-" 3 <<< "Multiline desc"
-.claude/scripts/linear-api.sh update-issue WYT-66 --title "New Title"
-.claude/scripts/linear-api.sh update-issue WYT-66 --description "New desc"
-.claude/scripts/linear-api.sh update-issue WYT-66 --priority 2
-.claude/scripts/linear-api.sh update-status WYT-66 "In Progress"
-.claude/scripts/linear-api.sh add-comment WYT-66 "Comment body"
-.claude/scripts/linear-api.sh add-comment WYT-66 "-" <<'EOF'
+.claude/scripts/linear-api.sh update-issue TEAM-66 --title "New Title"
+.claude/scripts/linear-api.sh update-issue TEAM-66 --description "New desc"
+.claude/scripts/linear-api.sh update-issue TEAM-66 --priority 2
+.claude/scripts/linear-api.sh update-status TEAM-66 "In Progress"
+.claude/scripts/linear-api.sh add-comment TEAM-66 "Comment body"
+.claude/scripts/linear-api.sh add-comment TEAM-66 "-" <<'EOF'
 Multiline comment here
 EOF
-.claude/scripts/linear-api.sh list-comments WYT-66
+.claude/scripts/linear-api.sh list-comments TEAM-66
 ```
 
 ### Labels, Assignment & Relations
 ```bash
-.claude/scripts/linear-api.sh add-label WYT-66 "Bug"
-.claude/scripts/linear-api.sh remove-label WYT-66 "Bug"
-.claude/scripts/linear-api.sh assign WYT-66 "Alexander Basis"
-.claude/scripts/linear-api.sh add-relation WYT-66 WYT-67 "blocks"
-.claude/scripts/linear-api.sh link-pr WYT-66 "https://github.com/org/repo/pull/123"
+.claude/scripts/linear-api.sh add-label TEAM-66 "Bug"
+.claude/scripts/linear-api.sh remove-label TEAM-66 "Bug"
+.claude/scripts/linear-api.sh assign TEAM-66 "Alexander Basis"
+.claude/scripts/linear-api.sh add-relation TEAM-66 TEAM-67 "blocks"
+.claude/scripts/linear-api.sh link-pr TEAM-66 "https://github.com/org/repo/pull/123"
 ```
 
 ### Listings & Queries
@@ -63,7 +63,7 @@ The script returns raw JSON. Present results to the user clearly:
 - **get-issue**: Show identifier, title, status, priority, assignee, labels, and URL
 - **search / ai-search**: Numbered list with identifier, title, and status
 - **create-issue**: Confirm with identifier and URL
-- **update-status / update-issue**: Confirm the change (e.g., "WYT-66: Todo → In Progress")
+- **update-status / update-issue**: Confirm the change (e.g., "TEAM-66: Todo → In Progress")
 - **list-comments**: Show author, date, and body for each comment
 - **my-issues**: Show as a compact table grouped by status
 - **list-***: Show as a compact table
@@ -74,7 +74,7 @@ Always include the Linear URL so the user can click through.
 
 | Setting | Value |
 |---------|-------|
-| Team Key | WYT |
+| Team Key | `LINEAR_TEAM_KEY` or default `TEAM` |
 | API Key | `LINEAR_API_KEY` env var |
 
 ### Task States (in order)
@@ -95,14 +95,14 @@ Common multi-step sequences. Each command is atomic — chain them together.
 
 ### Start Implementation
 ```bash
-.claude/scripts/linear-api.sh update-status WYT-66 "In Progress"
-.claude/scripts/linear-api.sh add-comment WYT-66 "Implementation started. Branch: feature/wyt-66-feature-name"
+.claude/scripts/linear-api.sh update-status TEAM-66 "In Progress"
+.claude/scripts/linear-api.sh add-comment TEAM-66 "Implementation started. Branch: feature/team-66-feature-name"
 ```
 
 ### Submit for Review
 ```bash
-.claude/scripts/linear-api.sh update-status WYT-66 "In Review"
-.claude/scripts/linear-api.sh add-comment WYT-66 "-" <<'EOF'
+.claude/scripts/linear-api.sh update-status TEAM-66 "In Review"
+.claude/scripts/linear-api.sh add-comment TEAM-66 "-" <<'EOF'
 Implementation completed.
 - Key changes: [list]
 - Test coverage: [X]%
@@ -112,8 +112,8 @@ EOF
 
 ### Task Done
 ```bash
-.claude/scripts/linear-api.sh update-status WYT-66 "Done"
-.claude/scripts/linear-api.sh add-comment WYT-66 "Task completed and PR merged. SHA: abc123"
+.claude/scripts/linear-api.sh update-status TEAM-66 "Done"
+.claude/scripts/linear-api.sh add-comment TEAM-66 "Task completed and PR merged. SHA: abc123"
 ```
 
 ## Cross-Skill Integration
@@ -127,14 +127,14 @@ When working with other skills, proactively suggest or perform Linear operations
 | `/sr` | After code review passes | `update-status` → "In Review" or "Done" |
 | PR creation | After `gh pr create` | `link-pr` + `update-status` → "In Review" |
 
-Don't force these — suggest them when the context is clear (e.g., a WYT-* ID is visible in the task doc or branch name).
+Don't force these — suggest them when the context is clear (e.g., a TEAM-* ID is visible in the task doc or branch name).
 
 ## Error Recovery
 
 - If a command fails mid-sequence, retry the failed command — completed steps are idempotent.
 - If "State not found", run `list-states` to refresh the cache, then retry.
 - If "Label/User not found", run `list-labels` or `list-users` to check exact names.
-- Clear all caches: `rm /tmp/linear-WYT-*.json`
+- Clear all caches: `rm /tmp/linear-TEAM-*.json`
 - Never silently swallow errors — always report failures to the user.
 
 ## References

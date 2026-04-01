@@ -6,7 +6,6 @@ description: >-
   or when a task is complete and docs need updating.
   NOT for creating new product docs (use /product).
 argument-hint: [task-path]
-disable-model-invocation: true
 ---
 
 # Update Documentation (UDOC)

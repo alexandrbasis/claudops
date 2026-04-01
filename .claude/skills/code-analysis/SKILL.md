@@ -127,9 +127,9 @@ git rev-list --count --since="6 months ago" --until="3 months ago" HEAD
 # git log --format='%aN' -- [file] | sort | uniq -c | sort -rn | head -3
 ```
 
-## 7. Wythm-Specific Checks
+## 7. Project-Specific Checks
 
-For this project, run targeted checks. Read `references/wythm-checks.md` for detailed commands.
+For this project, run targeted checks. Read `references/project-checks.md` for detailed commands.
 
 Key areas:
 - **DDD layer separation**: domain files must NOT import from infrastructure
