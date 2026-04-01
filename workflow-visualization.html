@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wythm — Claude Workflows Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f8f7f4;--bg2:#ffffff;--bg3:#f0efe9;
+  --text:#1a1a2e;--text-dim:#5a5a78;--text-muted:#9090a8;
+  --border:#e0ddd6;
+  --ideation:#7c3aed;--ideation-glow:#7c3aed18;
+  --discovery:#2563eb;--discovery-glow:#2563eb18;
+  --documentation:#0d9488;--documentation-glow:#0d948818;
+  --planning:#16a34a;--planning-glow:#16a34a18;
+  --implementation:#d97706;--implementation-glow:#d9770618;
+  --review:#dc2626;--review-glow:#dc262618;
+  --postmerge:#ca8a04;--postmerge-glow:#ca8a0418;
+  --crossai:#7c3aed;--crossai-glow:#7c3aed18;
+  --linear:#4f46e5;
+  --reference:#64748b;
+}
+html{font-size:14px;scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-weight:400;overflow-x:auto;min-height:100vh}
+
+/* ─── Grain overlay (subtle for light theme) ─── */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.015;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  z-index:9999}
+
+/* ─── Header ─── */
+.header{padding:32px 40px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;
+  background:linear-gradient(180deg,var(--bg) 0%,rgba(248,247,244,.97) 100%);backdrop-filter:blur(20px)}
+.header h1{font-family:'Outfit',sans-serif;font-weight:800;font-size:1.8rem;letter-spacing:-.02em;
+  background:linear-gradient(135deg,#1a1a2e 0%,#4a4a68 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header .subtitle{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text-muted);margin-top:4px;letter-spacing:.08em;text-transform:uppercase}
+.header-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+
+/* ─── Workflow Paths ─── */
+.paths{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
+.path-pill{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;border:1px solid var(--border);
+  background:var(--bg2);font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--text-dim);cursor:pointer;transition:all .3s;user-select:none}
+.path-pill:hover,.path-pill.active{border-color:#1a1a2e30;background:#1a1a2e08}
+.path-pill .label{color:var(--text-muted);font-weight:500;margin-right:4px}
+.path-pill .step{color:var(--text);font-weight:600}
+.path-pill .arrow{color:var(--text-muted);margin:0 2px}
+
+/* ─── Legend ─── */
+.legend{display:flex;gap:20px;align-items:center;flex-wrap:wrap;padding:12px 40px;border-bottom:1px solid var(--border);background:var(--bg)}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:.65rem;font-family:'JetBrains Mono',monospace;color:var(--text-dim)}
+.legend-dot{width:10px;height:10px;border-radius:3px}
+.legend-dot.primary{background:#1a1a2e;box-shadow:0 0 8px #1a1a2e20}
+.legend-dot.subagent{background:transparent;border:2px dashed var(--text-muted)}
+.legend-dot.crossai{background:var(--crossai);border-radius:50%}
+.legend-dot.reference{background:var(--reference);border-radius:1px}
+.legend-dot.meta{background:#fff2;border:1px solid var(--text-muted);border-radius:50%}
+
+/* ─── Main Pipeline ─── */
+.pipeline-container{padding:32px 40px;overflow-x:auto}
+.pipeline{display:flex;gap:16px;min-width:max-content;position:relative}
+
+/* ─── Stage Column ─── */
+.stage{min-width:200px;max-width:240px;flex-shrink:0}
+.stage-header{text-align:center;margin-bottom:16px;position:relative}
+.stage-number{font-family:'Outfit',sans-serif;font-weight:300;font-size:.55rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted);margin-bottom:2px}
+.stage-title{font-family:'Outfit',sans-serif;font-weight:700;font-size:1rem;letter-spacing:-.01em}
+.stage-line{width:60px;height:2px;margin:8px auto 0;border-radius:1px;opacity:.6}
+
+/* Stage-specific colors */
+.stage[data-stage="ideation"] .stage-title{color:var(--ideation)}
+.stage[data-stage="ideation"] .stage-line{background:var(--ideation)}
+.stage[data-stage="discovery"] .stage-title{color:var(--discovery)}
+.stage[data-stage="discovery"] .stage-line{background:var(--discovery)}
+.stage[data-stage="documentation"] .stage-title{color:var(--documentation)}
+.stage[data-stage="documentation"] .stage-line{background:var(--documentation)}
+.stage[data-stage="planning"] .stage-title{color:var(--planning)}
+.stage[data-stage="planning"] .stage-line{background:var(--planning)}
+.stage[data-stage="implementation"] .stage-title{color:var(--implementation)}
+.stage[data-stage="implementation"] .stage-line{background:var(--implementation)}
+.stage[data-stage="review"] .stage-title{color:var(--review)}
+.stage[data-stage="review"] .stage-line{background:var(--review)}
+.stage[data-stage="postmerge"] .stage-title{color:var(--postmerge)}
+.stage[data-stage="postmerge"] .stage-line{background:var(--postmerge)}
+
+/* ─── Skill Nodes ─── */
+.nodes{display:flex;flex-direction:column;gap:8px}
+
+.node{position:relative;padding:12px 14px;border-radius:10px;border:1px solid var(--border);
+  background:var(--bg2);cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);overflow:hidden}
+.node::before{content:'';position:absolute;inset:0;border-radius:10px;opacity:0;transition:opacity .25s;pointer-events:none}
+.node:hover{transform:translateY(-2px);border-color:#1a1a2e20;box-shadow:0 4px 20px rgba(0,0,0,.06)}
+.node:hover::before{opacity:1}
+.node.active{border-color:#1a1a2e30;transform:translateY(-1px)}
+.node.active::before{opacity:1}
+
+.node .name{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:.75rem;display:flex;align-items:center;gap:6px}
+.node .name .cmd{opacity:.5;font-weight:400}
+.node .desc{font-size:.6rem;color:var(--text-dim);margin-top:4px;line-height:1.5}
+.node .badge{position:absolute;top:8px;right:8px;font-size:.5rem;padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+
+/* Node types */
+.node.primary .name{color:#1a1a2e}
+.node.primary{box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.node.subagent{border-style:dashed;background:transparent}
+.node.subagent .name{font-weight:500;font-size:.65rem}
+.node.crossai{border-color:var(--crossai);background:#7c3aed08}
+.node.crossai .name{color:var(--crossai)}
+.node.reference{border-color:var(--reference);background:#64748b08;padding:8px 12px}
+.node.reference .name{font-size:.6rem;font-weight:500;color:var(--reference)}
+.node.meta{border-color:var(--text-muted);background:transparent;border-radius:50px;text-align:center}
+
+/* Stage glow on nodes */
+.stage[data-stage="ideation"] .node.primary::before{background:radial-gradient(ellipse at top,var(--ideation-glow),transparent 70%)}
+.stage[data-stage="ideation"] .node.primary .badge{background:var(--ideation);color:#fff}
+.stage[data-stage="discovery"] .node.primary::before{background:radial-gradient(ellipse at top,var(--discovery-glow),transparent 70%)}
+.stage[data-stage="discovery"] .node.primary .badge{background:var(--discovery);color:#fff}
+.stage[data-stage="documentation"] .node.primary::before{background:radial-gradient(ellipse at top,var(--documentation-glow),transparent 70%)}
+.stage[data-stage="documentation"] .node.primary .badge{background:var(--documentation);color:#fff}
+.stage[data-stage="planning"] .node.primary::before{background:radial-gradient(ellipse at top,var(--planning-glow),transparent 70%)}
+.stage[data-stage="planning"] .node.primary .badge{background:var(--planning);color:#fff}
+.stage[data-stage="implementation"] .node.primary::before{background:radial-gradient(ellipse at top,var(--implementation-glow),transparent 70%)}
+.stage[data-stage="implementation"] .node.primary .badge{background:var(--implementation);color:#fff}
+.stage[data-stage="review"] .node.primary::before{background:radial-gradient(ellipse at top,var(--review-glow),transparent 70%)}
+.stage[data-stage="review"] .node.primary .badge{background:var(--review);color:#fff}
+.stage[data-stage="postmerge"] .node.primary::before{background:radial-gradient(ellipse at top,var(--postmerge-glow),transparent 70%)}
+.stage[data-stage="postmerge"] .node.primary .badge{background:var(--postmerge);color:#fff}
+
+/* ─── Flow Arrows between stages ─── */
+.stage-connector{display:flex;align-items:center;justify-content:center;min-width:28px;flex-shrink:0;position:relative}
+.stage-connector svg{width:28px;height:100%;position:absolute;top:0;left:0}
+
+/* ─── Detail Panel ─── */
+.detail-overlay{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.2);backdrop-filter:blur(8px)}
+.detail-overlay.open{display:flex}
+.detail-panel{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:560px;width:90%;
+  max-height:80vh;overflow-y:auto;position:relative;animation:panelIn .25s cubic-bezier(.4,0,.2,1);box-shadow:0 20px 60px rgba(0,0,0,.12)}
+@keyframes panelIn{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.detail-panel .close-btn{position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:6px;border:1px solid var(--border);
+  background:transparent;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all .2s}
+.detail-panel .close-btn:hover{background:#1a1a2e08;color:#1a1a2e}
+.detail-panel h2{font-family:'Outfit',sans-serif;font-weight:700;font-size:1.3rem;margin-bottom:4px}
+.detail-panel .detail-type{font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px}
+.detail-panel .detail-desc{font-size:.8rem;color:var(--text-dim);line-height:1.7;margin-bottom:20px}
+.detail-section{margin-bottom:16px}
+.detail-section h3{font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px}
+.detail-section .tags{display:flex;flex-wrap:wrap;gap:6px}
+.detail-section .tag{padding:4px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:.6rem;border:1px solid var(--border);background:var(--bg3);color:var(--text-dim);cursor:pointer;transition:all .2s}
+.detail-section .tag:hover{border-color:#1a1a2e30;color:#1a1a2e}
+.detail-section .tag.highlight{border-color:var(--crossai);color:var(--crossai)}
+.detail-section .output{padding:8px 12px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:.6rem;background:var(--bg);border:1px solid var(--border);color:var(--text-dim);word-break:break-all}
+.detail-section .gates{display:flex;flex-direction:column;gap:6px}
+.detail-section .gate{display:flex;align-items:flex-start;gap:8px;padding:6px 10px;border-radius:6px;background:var(--bg);border:1px solid var(--border);font-size:.6rem}
+.detail-section .gate .gate-id{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--text);min-width:48px;flex-shrink:0}
+.detail-section .gate .gate-desc{color:var(--text-dim);line-height:1.5}
+
+/* ─── Cross-AI Band ─── */
+.crossai-band{margin:0 40px;padding:20px 24px;border:1px solid #7c3aed25;border-radius:12px;
+  background:linear-gradient(135deg,#7c3aed08,transparent 60%);position:relative}
+.crossai-band h3{font-family:'Outfit',sans-serif;font-weight:600;font-size:.8rem;color:var(--crossai);margin-bottom:4px}
+.crossai-band .band-subtitle{font-family:'JetBrains Mono',monospace;font-size:.55rem;color:var(--text-muted);margin-bottom:12px}
+.crossai-band .band-content{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.crossai-band .ai-node{padding:8px 16px;border-radius:8px;border:1px solid var(--crossai);background:#7c3aed0c;
+  font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--crossai);display:flex;flex-direction:column;gap:2px}
+.crossai-band .ai-node .ai-model{font-size:.5rem;color:var(--text-muted);font-weight:400}
+.crossai-band .usage-points{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+.crossai-band .usage-point{padding:4px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:.55rem;border:1px dashed var(--border);color:var(--text-dim)}
+
+/* ─── Linear Band ─── */
+.linear-band{margin:12px 40px;padding:16px 24px;border:1px solid #4f46e520;border-radius:12px;
+  background:linear-gradient(135deg,#4f46e508,transparent 60%);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.linear-band h3{font-family:'Outfit',sans-serif;font-weight:600;font-size:.75rem;color:var(--linear)}
+.linear-band .linear-flow{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:.55rem;color:var(--text-dim)}
+.linear-band .linear-state{padding:3px 8px;border-radius:4px;background:#4f46e50c;border:1px solid #4f46e520;color:var(--linear);font-weight:600}
+.linear-band .linear-arrow{color:var(--text-muted)}
+
+/* ─── Reference Shelf ─── */
+.reference-shelf{margin:16px 40px 32px;padding:20px 24px;border:1px solid var(--border);border-radius:12px;background:var(--bg2)}
+.reference-shelf h3{font-family:'Outfit',sans-serif;font-weight:600;font-size:.8rem;color:var(--reference);margin-bottom:12px}
+.ref-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.ref-item{padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);cursor:pointer;transition:all .2s}
+.ref-item:hover{border-color:#1a1a2e20;transform:translateY(-1px);box-shadow:0 2px 12px rgba(0,0,0,.05)}
+.ref-item .ref-name{font-family:'JetBrains Mono',monospace;font-size:.65rem;font-weight:600;color:var(--text)}
+.ref-item .ref-desc{font-size:.55rem;color:var(--text-muted);margin-top:2px;line-height:1.4}
+.ref-item .ref-used{font-family:'JetBrains Mono',monospace;font-size:.5rem;color:var(--text-muted);margin-top:4px;opacity:.6}
+
+/* ─── Meta Footer ─── */
+.meta-footer{margin:0 40px 40px;padding:16px 24px;border:1px solid var(--border);border-radius:12px;background:var(--bg2);
+  display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.meta-footer h3{font-family:'Outfit',sans-serif;font-weight:600;font-size:.7rem;color:var(--text-muted);margin-right:8px}
+.meta-node{padding:6px 14px;border-radius:999px;border:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:.6rem;
+  color:var(--text-dim);cursor:pointer;transition:all .2s}
+.meta-node:hover{border-color:#1a1a2e30;color:#1a1a2e;background:#1a1a2e08}
+
+/* ─── Animated connection lines (SVG overlay) ─── */
+.connections-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.flow-line{fill:none;stroke-width:1.5;opacity:.3}
+.flow-line.animated{stroke-dasharray:8 4;animation:flowDash 1.5s linear infinite}
+@keyframes flowDash{to{stroke-dashoffset:-12}}
+
+/* ─── Stage flow arrows ─── */
+.flow-arrow-container{display:flex;align-items:center;min-width:32px;flex-shrink:0;justify-content:center}
+.flow-arrow{display:flex;flex-direction:column;align-items:center;gap:4px}
+.flow-arrow .arrow-line{width:24px;height:2px;border-radius:1px;position:relative;overflow:visible}
+.flow-arrow .arrow-line::after{content:'';position:absolute;right:-3px;top:-3px;width:0;height:0;
+  border-left:6px solid;border-top:4px solid transparent;border-bottom:4px solid transparent}
+.flow-arrow .arrow-line.pulse{animation:arrowPulse 2s ease-in-out infinite}
+@keyframes arrowPulse{0%,100%{opacity:.4}50%{opacity:.8}}
+
+/* Stage arrow colors */
+.flow-arrow[data-from="ideation"] .arrow-line{background:var(--ideation)}
+.flow-arrow[data-from="ideation"] .arrow-line::after{border-left-color:var(--ideation)}
+.flow-arrow[data-from="discovery"] .arrow-line{background:var(--discovery)}
+.flow-arrow[data-from="discovery"] .arrow-line::after{border-left-color:var(--discovery)}
+.flow-arrow[data-from="documentation"] .arrow-line{background:var(--documentation)}
+.flow-arrow[data-from="documentation"] .arrow-line::after{border-left-color:var(--documentation)}
+.flow-arrow[data-from="planning"] .arrow-line{background:var(--planning)}
+.flow-arrow[data-from="planning"] .arrow-line::after{border-left-color:var(--planning)}
+.flow-arrow[data-from="implementation"] .arrow-line{background:var(--implementation)}
+.flow-arrow[data-from="implementation"] .arrow-line::after{border-left-color:var(--implementation)}
+.flow-arrow[data-from="review"] .arrow-line{background:var(--review)}
+.flow-arrow[data-from="review"] .arrow-line::after{border-left-color:var(--review)}
+
+/* ─── Stat counters ─── */
+.stats{display:flex;gap:24px;margin-top:16px;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;align-items:center}
+.stat .stat-value{font-family:'Outfit',sans-serif;font-weight:800;font-size:1.4rem;
+  background:linear-gradient(135deg,#1a1a2e,#4a4a68);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat .stat-label{font-family:'JetBrains Mono',monospace;font-size:.5rem;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+
+/* ─── Responsive ─── */
+@media(max-width:900px){
+  .pipeline{flex-direction:column;min-width:unset}
+  .stage{max-width:100%;min-width:unset}
+  .flow-arrow-container{transform:rotate(90deg);min-height:32px;min-width:unset}
+  .header-row{flex-direction:column;align-items:flex-start}
+}
+
+/* ─── Gate sub-nodes inside /ct and /sr ─── */
+.gate-mini{display:flex;align-items:center;gap:4px;padding:3px 8px;margin-top:4px;border-radius:4px;
+  background:var(--bg);border:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:.5rem;color:var(--text-muted)}
+.gate-mini .gate-num{font-weight:700;color:var(--text-dim);min-width:20px}
+
+/* ─── Highlighting ─── */
+.node.dim{opacity:.2;transform:scale(.98)}
+.node.highlight{z-index:10;border-color:#1a1a2e30}
+.node.highlight.primary{box-shadow:0 0 20px var(--highlight-color,#1a1a2e10)}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#b0b0c0}
+
+/* ─── Tooltip ─── */
+.tooltip{position:fixed;z-index:1000;padding:6px 12px;border-radius:6px;background:#fff;border:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--text);pointer-events:none;opacity:0;transition:opacity .15s;
+  box-shadow:0 8px 32px rgba(0,0,0,.1);max-width:260px}
+.tooltip.visible{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header class="header">
+  <div class="header-row">
+    <div>
+      <h1>Wythm Claude Workflows</h1>
+      <div class="subtitle">Product Development Command Center &mdash; 49 Skills &bull; 7 Stages &bull; 3 AI Engines</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="stat-value">49</span><span class="stat-label">Skills</span></div>
+      <div class="stat"><span class="stat-value">7</span><span class="stat-label">Stages</span></div>
+      <div class="stat"><span class="stat-value">12</span><span class="stat-label">Subagents</span></div>
+      <div class="stat"><span class="stat-value">3</span><span class="stat-label">AI Engines</span></div>
+    </div>
+  </div>
+  <div class="paths" id="workflowPaths">
+    <div class="path-pill active" data-path="full">
+      <span class="label">Full Product</span>
+      <span class="step">/nf</span><span class="arrow">&rarr;</span>
+      <span class="step">/vp</span><span class="arrow">&rarr;</span>
+      <span class="step">/ct</span><span class="arrow">&rarr;</span>
+      <span class="step">/si</span><span class="arrow">&rarr;</span>
+      <span class="step">/sr</span>
+    </div>
+    <div class="path-pill" data-path="standard">
+      <span class="label">Standard</span>
+      <span class="step">/ct</span><span class="arrow">&rarr;</span>
+      <span class="step">/si</span><span class="arrow">&rarr;</span>
+      <span class="step">/sr</span>
+    </div>
+    <div class="path-pill" data-path="handoff">
+      <span class="label">With Handoff</span>
+      <span class="step">/ct</span><span class="arrow">&rarr;</span>
+      <span class="step">/si</span><span class="arrow">&rarr;</span>
+      <span class="step">/ph</span><span class="arrow">&rarr;</span>
+      <span class="step">/si</span><span class="arrow">&rarr;</span>
+      <span class="step">/sr</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════ LEGEND ═══════════════ -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot primary"></div>Primary Skill</div>
+  <div class="legend-item"><div class="legend-dot subagent"></div>Subagent</div>
+  <div class="legend-item"><div class="legend-dot crossai"></div>Cross-AI</div>
+  <div class="legend-item"><div class="legend-dot reference"></div>Reference</div>
+  <div class="legend-item"><div class="legend-dot meta"></div>Meta / Utility</div>
+  <div class="legend-item" style="margin-left:auto;opacity:.6">Click any node for details</div>
+</div>
+
+<!-- ═══════════════ MAIN PIPELINE ═══════════════ -->
+<div class="pipeline-container">
+  <div class="pipeline" id="pipeline">
+
+    <!-- ── STAGE 1: IDEATION ── -->
+    <div class="stage" data-stage="ideation">
+      <div class="stage-header">
+        <div class="stage-number">Stage 1</div>
+        <div class="stage-title">Ideation</div>
+        <div class="stage-line"></div>
+      </div>
+      <div class="nodes">
+        <div class="node primary" data-id="brainstorm" data-path="full">
+          <div class="name"><span class="cmd">/</span>brainstorm</div>
+          <div class="desc">Collaborative brainstorming on any topic</div>
+          <span class="badge">entry</span>
+        </div>
+        <div class="node subagent" data-id="deep-research">
+          <div class="name">deep-research</div>
+          <div class="desc">In-depth research via Exa MCP tools</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-arrow-container">
+      <div class="flow-arrow" data-from="ideation"><div class="arrow-line pulse"></div></div>
+    </div>
+
+    <!-- ── STAGE 2: FEATURE DISCOVERY ── -->
+    <div class="stage" data-stage="discovery">
+      <div class="stage-header">
+        <div class="stage-number">Stage 2</div>
+        <div class="stage-title">Discovery</div>
+        <div class="stage-line"></div>
+      </div>
+      <div class="nodes">
+        <div class="node primary" data-id="nf" data-path="full">
+          <div class="name"><span class="cmd">/</span>nf<span style="font-weight:400;opacity:.5;margin-left:4px">New Feature</span></div>
+          <div class="desc">Comprehensive feature discovery interview — primary entry point</div>
+          <span class="badge">core</span>
+        </div>
+        <div class="node subagent" data-id="design-exploration">
+          <div class="name">design-exploration</div>
+          <div class="desc">Codebase scanning &bull; 2-3 parallel agents</div>
+        </div>
+        <div class="node subagent" data-id="grill-me">
+          <div class="name"><span class="cmd">/</span>grill-me</div>
+          <div class="desc">Adversarial stress-test interview</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-arrow-container">
+      <div class="flow-arrow" data-from="discovery"><div class="arrow-line pulse"></div></div>
+    </div>
+
+    <!-- ── STAGE 3: PRODUCT DOCUMENTATION ── -->
+    <div class="stage" data-stage="documentation">
+      <div class="stage-header">
+        <div class="stage-number">Stage 3</div>
+        <div class="stage-title">Documentation</div>
+        <div class="stage-line"></div>
+      </div>
+      <div class="nodes">
+        <div class="node primary" data-id="product">
+          <div class="name"><span class="cmd">/</span>product</div>
+          <div class="desc">Create JTBD or PRD documents</div>
+        </div>
+        <div class="node primary" data-id="vp" data-path="full">
+          <div class="name"><span class="cmd">/</span>vp<span style="font-weight:400;opacity:.5;margin-left:4px">Prototype</span></div>
+          <div class="desc">Interactive HTML playground for design approval</div>
+          <span class="badge">gate</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-arrow-container">
+      <div class="flow-arrow" data-from="documentation"><div class="arrow-line pulse"></div></div>
+    </div>
+
+    <!-- ── STAGE 4: TECHNICAL PLANNING ── -->
+    <div class="stage" data-stage="planning">
+      <div class="stage-header">
+        <div class="stage-number">Stage 4</div>
+        <div class="stage-title">Planning</div>
+        <div class="stage-line"></div>
+      </div>
+      <div class="nodes">
+        <div class="node primary" data-id="ct" data-path="full standard handoff">
+          <div class="name"><span class="cmd">/</span>ct<span style="font-weight:400;opacity:.5;margin-left:4px">Create Task</span></div>
+          <div class="desc">9 sequential gates &bull; most complex skill</div>
+          <span class="badge">core</span>
+        </div>
+        <div class="node subagent" data-id="task-splitter">
+          <div class="name">task-splitter</div>
+          <div class="desc">GATE 6 &bull; Evaluate split needs</div>
+        </div>
+        <div class="node subagent" data-id="plan-reviewer">
+          <div class="name">plan-reviewer</div>
+          <div class="desc">GATE 5 &bull; Implementation readiness</div>
+        </div>
+        <div class="node primary" data-id="analyze">
+          <div class="name"><span class="cmd">/</span>analyze</div>
+          <div class="desc">Optional &bull; Consistency check</div>
+        </div>
+        <div class="node primary" data-id="rip" style="opacity:.7">
+          <div class="name"><span class="cmd">/</span>rip</div>
+          <div class="desc">Review plan for business alignment</div>
+        </div>
+        <div class="node primary" data-id="blueprint" style="opacity:.7">
+          <div class="name"><span class="cmd">/</span>blueprint</div>
+          <div class="desc">Multi-session plan with DAG</div>
+        </div>
+        <div class="node primary" data-id="search-first" style="opacity:.7">
+          <div class="name"><span class="cmd">/</span>search-first</div>
+          <div class="desc">Check existing solutions first</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-arrow-container">
+      <div class="flow-arrow" data-from="planning"><div class="arrow-line pulse"></div></div>
+    </div>
+
+    <!-- ── STAGE 5: IMPLEMENTATION ── -->
+    <div class="stage" data-stage="implementation">
+      <div class="stage-header">
+        <div class="stage-number">Stage 5</div>
+        <div class="stage-title">Implementation</div>
+        <div class="stage-line"></div>
+      </div>
+      <div class="nodes">
+        <div class="node primary" data-id="si" data-path="full standard handoff">
+          <div class="name"><span class="cmd">/</span>si<span style="font-weight:400;opacity:.5;margin-left:4px">Start Impl</span></div>
+          <div class="desc">Structured TDD implementation with quality gates</div>
+          <span class="badge">core</span>
+        </div>
+        <div class="node subagent" data-id="parallelization">
+          <div class="name"><span class="cmd">/</span>parallelization</div>
+          <div class="desc">Up to 4 developer-agents in worktrees</div>
+        </div>
+        <div class="node subagent" data-id="quality-gate">
+          <div class="name">automated-quality-gate</div>
+          <div class="desc">Tests, lint, types, coverage</div>
+        </div>
+        <div class="node subagent" data-id="goal-verifier">
+          <div class="name">goal-verifier</div>
+          <div class="desc">Verify Must Haves are met</div>
+        </div>
+        <div class="node primary" data-id="quick" style="opacity:.7">
+          <div class="name"><span class="cmd">/</span>quick</div>
+          <div class="desc">Fast-path for small tasks &lt;5 files</div>
+        </div>
+        <div class="node primary" data-id="ph" data-path="handoff" style="opacity:.7">
+          <div class="name"><span class="cmd">/</span>ph<span style="font-weight:400;opacity:.5;margin-left:4px">Handoff</span></div>
+          <div class="desc">Capture state for session resume</div>
+        </div>
+        <div class="node primary" data-id="dbg" style="opacity:.7">
+          <div class="name"><span class="cmd">/</span>dbg</div>
+          <div class="desc">Evidence-based runtime debugging</div>
+        </div>
+        <div class="node primary" data-id="simplify" style="opacity:.7">
+          <div class="name"><span class="cmd">/</span>simplify</div>
+          <div class="desc">De-sloppify pass after coding</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-arrow-container">
+      <div class="flow-arrow" data-from="implementation"><div class="arrow-line pulse"></div></div>
+    </div>
+
+    <!-- ── STAGE 6: CODE REVIEW ── -->
+    <div class="stage" data-stage="review">
+      <div class="stage-header">
+        <div class="stage-number">Stage 6</div>
+        <div class="stage-title">Code Review</div>
+        <div class="stage-line"></div>
+      </div>
+      <div class="nodes">
+        <div class="node primary" data-id="sr" data-path="full standard handoff">
+          <div class="name"><span class="cmd">/</span>sr<span style="font-weight:400;opacity:.5;margin-left:4px">Start Review</span></div>
+          <div class="desc">7 specialized review subagents across 8 gates</div>
+          <span class="badge">core</span>
+        </div>
+        <div class="node subagent" data-id="spec-compliance">
+          <div class="name">spec-compliance-reviewer</div>
+          <div class="desc">GATE 4a &bull; Sequential</div>
+        </div>
+        <div class="node subagent" data-id="arch-reviewer">
+          <div class="name">senior-architecture-reviewer</div>
+          <div class="desc">GATE 4b &bull; Sequential</div>
+        </div>
+        <div class="node subagent" data-id="parallel-reviewers">
+          <div class="name">5&times; parallel reviewers</div>
+          <div class="desc">GATE 5 &bull; Security, Quality, Tests, Docs, Perf</div>
+        </div>
+        <div class="node primary" data-id="prc">
+          <div class="name"><span class="cmd">/</span>prc</div>
+          <div class="desc">Address PR comments &rarr; re-review</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-arrow-container">
+      <div class="flow-arrow" data-from="review"><div class="arrow-line pulse"></div></div>
+    </div>
+
+    <!-- ── STAGE 7: POST-MERGE ── -->
+    <div class="stage" data-stage="postmerge">
+      <div class="stage-header">
+        <div class="stage-number">Stage 7</div>
+        <div class="stage-title">Post-Merge</div>
+        <div class="stage-line"></div>
+      </div>
+      <div class="nodes">
+        <div class="node primary" data-id="udoc">
+          <div class="name"><span class="cmd">/</span>udoc</div>
+          <div class="desc">Update docs + generate changelog</div>
+        </div>
+        <div class="node primary" data-id="fci" style="opacity:.7">
+          <div class="name"><span class="cmd">/</span>fci</div>
+          <div class="desc">Fix CI pipeline failures</div>
+        </div>
+        <div class="node primary" data-id="sync" style="opacity:.7">
+          <div class="name"><span class="cmd">/</span>sync</div>
+          <div class="desc">Sync CLAUDE.md / AGENTS.md</div>
+        </div>
+        <div class="node primary" data-id="cc-linear" style="opacity:.7">
+          <div class="name"><span class="cmd">/</span>cc-linear</div>
+          <div class="desc">Linear integration &bull; WYT-* issues</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════ CROSS-AI VALIDATION BAND ═══════════════ -->
+<div class="crossai-band">
+  <h3>Cross-AI Consensus Validation</h3>
+  <div class="band-subtitle">Always invoked in parallel &mdash; appears at 3 pipeline stages</div>
+  <div class="band-content">
+    <div class="ai-node" data-id="codex-cli">
+      <span><span class="cmd">/</span>codex-cli</span>
+      <span class="ai-model">OpenAI GPT-5.4</span>
+    </div>
+    <div class="ai-node" data-id="gemini-cli">
+      <span><span class="cmd">/</span>gemini-cli</span>
+      <span class="ai-model">Google Gemini 3</span>
+    </div>
+    <div class="ai-node" data-id="cursor-cli">
+      <span><span class="cmd">/</span>cursor-cli</span>
+      <span class="ai-model">Composer 2 / Kimi K2.5</span>
+    </div>
+    <div class="usage-points">
+      <div class="usage-point" style="border-color:var(--discovery)">/nf Step 6</div>
+      <div class="usage-point" style="border-color:var(--planning)">/ct GATE 5</div>
+      <div class="usage-point" style="border-color:var(--review)">/sr GATE 7</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ LINEAR INTEGRATION BAND ═══════════════ -->
+<div class="linear-band">
+  <h3>/cc-linear &mdash; Issue Lifecycle</h3>
+  <div class="linear-flow">
+    <span class="linear-state">Backlog</span>
+    <span class="linear-arrow">&rarr;</span>
+    <span class="linear-state">Todo</span>
+    <span class="linear-arrow">&rarr;</span>
+    <span class="linear-state">In Progress</span>
+    <span class="linear-arrow">&rarr;</span>
+    <span class="linear-state">In Review</span>
+    <span class="linear-arrow">&rarr;</span>
+    <span class="linear-state">Done</span>
+  </div>
+  <div class="linear-flow" style="margin-left:auto">
+    Called by:
+    <span class="usage-point" style="border-color:var(--planning)">/ct G3</span>
+    <span class="usage-point" style="border-color:var(--implementation)">/si start+finish</span>
+    <span class="usage-point" style="border-color:var(--review)">/sr G8</span>
+  </div>
+</div>
+
+<!-- ═══════════════ REFERENCE SHELF ═══════════════ -->
+<div class="reference-shelf">
+  <h3>Reference &amp; Knowledge Skills</h3>
+  <div class="ref-grid">
+    <div class="ref-item" data-id="design-tokens">
+      <div class="ref-name">/design-tokens</div>
+      <div class="ref-desc">Color token naming &amp; consumption rules</div>
+      <div class="ref-used">Used by: /ct, /vp, /si</div>
+    </div>
+    <div class="ref-item" data-id="component-library">
+      <div class="ref-name">/component-library</div>
+      <div class="ref-desc">Button, Input, BottomSheet, Toast, StyledText</div>
+      <div class="ref-used">Used by: /ct (GATE 0.7), /si</div>
+    </div>
+    <div class="ref-item" data-id="rn-expo">
+      <div class="ref-name">/react-native-expo</div>
+      <div class="ref-desc">35+ rules for RN/Expo development</div>
+      <div class="ref-used">Used by: /ct, /si (if mobile)</div>
+    </div>
+    <div class="ref-item" data-id="screen-flow">
+      <div class="ref-name">/screen-flow</div>
+      <div class="ref-desc">Screen decomposition &amp; flow analysis</div>
+      <div class="ref-used">Used by: /ct (GATE 0.7)</div>
+    </div>
+    <div class="ref-item" data-id="i18n-lingui">
+      <div class="ref-name">/i18n-lingui</div>
+      <div class="ref-desc">Lingui v5 &bull; 9 locales</div>
+      <div class="ref-used">Used by: /si (mobile)</div>
+    </div>
+    <div class="ref-item" data-id="api-reference">
+      <div class="ref-name">/api-reference</div>
+      <div class="ref-desc">Endpoint contracts, auth flows, error codes</div>
+      <div class="ref-used">Used by: /si (repo calls)</div>
+    </div>
+    <div class="ref-item" data-id="docs-index">
+      <div class="ref-name">/docs-index</div>
+      <div class="ref-desc">Maps all project documentation locations</div>
+      <div class="ref-used">Used by: any skill on demand</div>
+    </div>
+    <div class="ref-item" data-id="analytics">
+      <div class="ref-name">/analytics</div>
+      <div class="ref-desc">Event coverage for new screens/flows</div>
+      <div class="ref-used">Used by: /ct (if UI-heavy)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ META FOOTER ═══════════════ -->
+<div class="meta-footer">
+  <h3>Meta &amp; Utility</h3>
+  <div class="meta-node" data-id="so">/so &mdash; Skill Optimizer</div>
+  <div class="meta-node" data-id="skill-stocktake">/skill-stocktake &mdash; Audit All Skills</div>
+  <div class="meta-node" data-id="sbs">/sbs &mdash; Interactive Teaching</div>
+  <div class="meta-node" data-id="code-analysis">/code-analysis &mdash; Deep Analysis</div>
+  <div class="meta-node" data-id="feature-image">/feature-image &mdash; Social Image Gen</div>
+</div>
+
+<!-- ═══════════════ DETAIL PANEL OVERLAY ═══════════════ -->
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-panel" id="detailPanel">
+    <button class="close-btn" id="closeDetail">&times;</button>
+    <h2 id="detailTitle"></h2>
+    <div class="detail-type" id="detailType"></div>
+    <div class="detail-desc" id="detailDesc"></div>
+    <div id="detailSections"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ TOOLTIP ═══════════════ -->
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// SKILL DATA
+// ══════════════════════════════════════════════
+const skills = {
+  brainstorm: {
+    title: '/brainstorm',
+    type: 'Primary Skill · Ideation',
+    desc: 'Collaborative brainstorming session on any topic — project-related or general. Lightweight exploration before committing to formal discovery.',
+    calls: ['design-exploration', 'deep-research'],
+    calledBy: [],
+    handsOff: ['/nf', '/ct', '/product'],
+    output: 'docs/brainstorming/brainstorm-YYYY-MM-DD-[topic].md'
+  },
+  'deep-research': {
+    title: 'deep-research',
+    type: 'Subagent · Ideation',
+    desc: 'In-depth technical research using Exa MCP tools, documentation search, and codebase scanning. Produces a structured findings report with citations.',
+    calls: ['Exa MCP tools', 'ref MCP tools'],
+    calledBy: ['/brainstorm', '/nf'],
+    output: 'Structured research report'
+  },
+  nf: {
+    title: '/nf — New Feature',
+    type: 'Primary Skill · Discovery',
+    desc: 'Comprehensive feature discovery interview — the primary entry point for new features. Runs a 6-step process: codebase exploration, research, interview, adversarial challenge, spec writing, and cross-AI validation.',
+    calls: ['design-exploration', '/grill-me', '/codex-cli', '/gemini-cli', '/cursor-cli'],
+    calledBy: ['/brainstorm'],
+    handsOff: ['/vp', '/ct', '/product'],
+    output: 'tasks/task-YYYY-MM-DD-[name]/discovery-[feature].md',
+    gates: [
+      { id: 'Step 1', desc: 'design-exploration — codebase context with parallel Haiku agents' },
+      { id: 'Step 2', desc: 'Optional Exa MCP research / comprehensive-researcher subagent' },
+      { id: 'Step 3', desc: 'Interactive discovery interview with user' },
+      { id: 'Step 4', desc: '/grill-me — adversarial stress-test of all decisions' },
+      { id: 'Step 5', desc: 'Write discovery spec with architecture, edge cases, risks' },
+      { id: 'Step 6', desc: 'Cross-AI validation: /codex-cli + /gemini-cli + /cursor-cli in parallel' }
+    ]
+  },
+  'design-exploration': {
+    title: 'design-exploration',
+    type: 'Subagent · Discovery',
+    desc: 'Codebase scanning and design proposal. Spawns 2-3 parallel Explore agents (Haiku model) for evidence-based approach selection with trade-offs.',
+    calls: ['2-3 parallel Explore agents'],
+    calledBy: ['/nf', '/brainstorm', '/ct'],
+    output: 'Returns findings to calling skill (no file output)'
+  },
+  'grill-me': {
+    title: '/grill-me',
+    type: 'Subagent · Discovery',
+    desc: 'Adversarial interview that stress-tests a plan by walking every branch of the decision tree. Relentless questioning until shared understanding.',
+    calls: ['Codebase exploration'],
+    calledBy: ['/nf Step 4'],
+    output: 'Conversational only — no file output'
+  },
+  product: {
+    title: '/product',
+    type: 'Primary Skill · Documentation',
+    desc: 'Create formal JTBD (Jobs-to-be-Done) or PRD (Product Requirements Document). Captures user needs, outcomes, and success metrics.',
+    calls: [],
+    calledBy: ['/nf', '/brainstorm'],
+    output: 'JTBD-[name].md or product-docs/PRD/PRD-[name].md'
+  },
+  vp: {
+    title: '/vp — Visual Prototype',
+    type: 'Primary Skill · Documentation',
+    desc: 'Creates an interactive HTML playground so the user can approve the design before technical decomposition begins. The GATEKEEPER between discovery and planning.',
+    calls: ['playground skill', '/design-tokens'],
+    calledBy: ['/nf completion'],
+    handsOff: ['/ct'],
+    output: 'tasks/.../playground-[name].html + vp-approval.md'
+  },
+  ct: {
+    title: '/ct — Create Task',
+    type: 'Primary Skill · Planning',
+    desc: 'The most complex skill in the system — creates implementation-ready technical documentation through 9 sequential quality gates. TDD-first: test plan before implementation plan.',
+    calls: ['design-exploration', 'mobile-ui-planning-agent', 'plan-reviewer', 'senior-architecture-reviewer', '/codex-cli', '/gemini-cli', '/cursor-cli', 'task-splitter', 'task-decomposer', '/cc-linear', '/analyze', '/analytics'],
+    calledBy: ['/nf', '/brainstorm', '/vp'],
+    handsOff: ['/si', '/rip'],
+    output: 'tasks/task-YYYY-MM-DD-[name]/tech-decomposition-[name].md',
+    gates: [
+      { id: 'GATE 0', desc: 'design-exploration subagent — codebase context' },
+      { id: 'GATE 0.7', desc: 'UI tasks: mobile-ui-planning-agent loads design-tokens, component-library, screen-flow, RN/Expo rules' },
+      { id: 'GATE 5', desc: 'plan-reviewer + senior-architecture-reviewer subagents; /codex-cli + /gemini-cli + /cursor-cli in parallel' },
+      { id: 'GATE 6', desc: 'task-splitter subagent — evaluate if split needed' },
+      { id: 'GATE 6.5', desc: 'task-decomposer subagent (if split approved by user)' },
+      { id: 'OPTIONAL', desc: '/cc-linear — create or update linked tracking issue' },
+      { id: 'OPTIONAL', desc: '/analyze — cross-artifact consistency check + traceability matrix' },
+      { id: 'GATE +', desc: 'Conditionally: /analytics if UI-heavy feature' }
+    ]
+  },
+  'task-splitter': {
+    title: 'task-splitter',
+    type: 'Subagent · Planning',
+    desc: 'Evaluates whether a development task is too large for a single PR and should be broken into smaller sub-tasks.',
+    calls: [],
+    calledBy: ['/ct GATE 6'],
+    output: 'splitting-decision.md'
+  },
+  'plan-reviewer': {
+    title: 'plan-reviewer',
+    type: 'Subagent · Planning',
+    desc: 'Technical readiness review of a tech decomposition. Validates functional depth, sequencing, testing strategy, and codebase fit.',
+    calls: [],
+    calledBy: ['/ct GATE 5'],
+    output: '[task-dir]/Plan Review - [Task].md + summary to /ct'
+  },
+  analyze: {
+    title: '/analyze',
+    type: 'Primary Skill · Planning',
+    desc: 'Cross-artifact consistency check — verifies tech decomposition covers all requirements from spec docs. Builds a traceability matrix: REQ → TEST → STEP.',
+    calls: [],
+    calledBy: ['/ct optional validation'],
+    output: 'Traceability report (no files written)'
+  },
+  rip: {
+    title: '/rip — Review Implementation Plan',
+    type: 'Primary Skill · Planning',
+    desc: 'Step-by-step walkthrough of an implementation plan checking for business value alignment. Optional step between /ct and /si.',
+    calls: [],
+    calledBy: ['/ct completion'],
+    output: 'Conversational review'
+  },
+  blueprint: {
+    title: '/blueprint',
+    type: 'Primary Skill · Planning',
+    desc: 'For very large features spanning multiple sessions — decomposes into a sequenced DAG of steps where each has a cold-start brief.',
+    calls: [],
+    calledBy: ['User'],
+    handsOff: ['/ct per step'],
+    output: 'docs/superpowers/plans/YYYY-MM-DD-[feature].md'
+  },
+  'search-first': {
+    title: '/search-first',
+    type: 'Primary Skill · Planning',
+    desc: 'Before building anything new, search for existing solutions at 4 levels: codebase, npm, MCP tools, GitHub. Returns Adopt/Extend/Compose/Build verdict.',
+    calls: [],
+    calledBy: ['/si (suggested)'],
+    output: 'Adopt/Extend/Compose/Build verdict'
+  },
+  si: {
+    title: '/si — Start Implementation',
+    type: 'Primary Skill · Implementation',
+    desc: 'Structured TDD implementation following task documents. Has Start (fresh) and Continue (resume from /ph) modes, plus a Bug Fix path. Enforces test-first development.',
+    calls: ['/cc-linear', '/parallelization', '/simplify', 'automated-quality-gate', 'goal-verifier', 'task-pm-validator', 'create-pr-agent', 'react-native-expo-mobile', 'design-tokens', 'component-library'],
+    calledBy: ['/ct'],
+    handsOff: ['/sr', '/ph'],
+    output: 'Working code + tests + PR',
+    gates: [
+      { id: 'STEP 1', desc: 'Read task docs, identify acceptance criteria' },
+      { id: 'STEP 2', desc: '/cc-linear update status to "In Progress"' },
+      { id: 'STEP 3', desc: 'TDD loop: write test → implement → pass. Load mobile skills if needed. Optional /parallelization for wave-annotated steps' },
+      { id: 'STEP 4', desc: '/simplify de-sloppify pass, automated-quality-gate subagent, goal-verifier subagent' },
+      { id: 'STEP 5', desc: '/cc-linear "In Review", task-pm-validator, create-pr-agent' }
+    ]
+  },
+  parallelization: {
+    title: '/parallelization',
+    type: 'Subagent · Implementation',
+    desc: 'Spawn multiple developer-agent workers in isolated git worktrees to implement independent steps simultaneously. Max 4 workers.',
+    calls: ['developer-agent (×4 max)'],
+    calledBy: ['/si'],
+    output: 'Merged worktree branches'
+  },
+  'quality-gate': {
+    title: 'automated-quality-gate',
+    type: 'Subagent · Implementation + Review',
+    desc: 'Runs automated quality checks: tests, lint, types, coverage. Acts as a gate before human-like code review.',
+    calls: [],
+    calledBy: ['/si STEP 4', '/sr GATE 3'],
+    output: 'Pass/fail with details'
+  },
+  'goal-verifier': {
+    title: 'goal-verifier',
+    type: 'Subagent · Implementation',
+    desc: 'Receives task Must Haves list, verifies each is actually met in code with evidence. Returns VERIFIED or NOT_MET per item.',
+    calls: [],
+    calledBy: ['/si STEP 4'],
+    output: 'VERIFIED / NOT_MET per must-have'
+  },
+  quick: {
+    title: '/quick',
+    type: 'Primary Skill · Implementation',
+    desc: 'Fast-path for small tasks (<5 files, clear scope). No task docs, no Linear issues, no review agents. Runs /simplify after logic changes.',
+    calls: ['/simplify'],
+    calledBy: ['User (small tasks)'],
+    output: 'Direct code changes'
+  },
+  ph: {
+    title: '/ph — Prepare Handoff',
+    type: 'Primary Skill · Implementation',
+    desc: 'Capture implementation state into a HANDOFF.md cold-start brief for resuming in a new session. Captures git state, test state, key decisions, blockers.',
+    calls: [],
+    calledBy: ['/si (pause)'],
+    output: 'tasks/[task]/HANDOFF.md'
+  },
+  dbg: {
+    title: '/dbg — Debug',
+    type: 'Primary Skill · Implementation',
+    desc: 'Runtime debugging with evidence-based approach. Instruments code, collects NDJSON logs, confirms hypotheses before fixing. Never fixes without runtime evidence.',
+    calls: [],
+    calledBy: ['User (runtime bugs)'],
+    handsOff: ['/sr (post-fix)'],
+    output: 'tasks/.../bug-report-[name].md'
+  },
+  simplify: {
+    title: '/simplify',
+    type: 'Primary Skill · Implementation',
+    desc: 'Reviews recently changed code for reuse, quality, and efficiency. De-sloppify pass that runs after implementation.',
+    calls: [],
+    calledBy: ['/si STEP 4', '/quick'],
+    output: 'Simplified code in-place'
+  },
+  sr: {
+    title: '/sr — Start Review',
+    type: 'Primary Skill · Code Review',
+    desc: 'Comprehensive pre-merge code review using 7 specialized subagents writing to sections of a shared review document. Has incremental re-review mode.',
+    calls: ['automated-quality-gate', 'spec-compliance-reviewer', 'senior-architecture-reviewer', 'security-code-reviewer', 'code-quality-reviewer', 'test-coverage-reviewer', 'documentation-accuracy-reviewer', 'performance-reviewer', '/codex-cli', '/gemini-cli', '/cursor-cli', '/cc-linear'],
+    calledBy: ['/si'],
+    handsOff: ['/prc (if NEEDS FIXES)', '/udoc (if APPROVED)'],
+    output: '[task-dir]/Code Review - [Task].md',
+    gates: [
+      { id: 'GATE 3', desc: 'automated-quality-gate subagent' },
+      { id: 'GATE 4a', desc: 'spec-compliance-reviewer subagent (sequential)' },
+      { id: 'GATE 4b', desc: 'senior-architecture-reviewer subagent (sequential)' },
+      { id: 'GATE 5', desc: '5× parallel: security, quality, tests, docs, performance reviewers' },
+      { id: 'GATE 7', desc: 'If APPROVED: /codex-cli + /gemini-cli + /cursor-cli in parallel' },
+      { id: 'GATE 8', desc: '/cc-linear update status to Done or back to In Progress' }
+    ]
+  },
+  'spec-compliance': {
+    title: 'spec-compliance-reviewer',
+    type: 'Subagent · Code Review',
+    desc: 'Verifies implementation matches spec requirements by reading actual code. Does NOT trust implementer claims — reads the code directly.',
+    calls: [],
+    calledBy: ['/sr GATE 4a'],
+    output: 'Compliance report section'
+  },
+  'arch-reviewer': {
+    title: 'senior-architecture-reviewer',
+    type: 'Subagent · Code Review',
+    desc: 'Senior developer reviewing implementation approach, solution quality, architectural consistency, and TDD compliance.',
+    calls: [],
+    calledBy: ['/sr GATE 4b'],
+    output: 'Architecture review section'
+  },
+  'parallel-reviewers': {
+    title: '5× Parallel Reviewers',
+    type: 'Subagent Cluster · Code Review',
+    desc: 'Five specialized reviewers running in parallel at GATE 5: security-code-reviewer, code-quality-reviewer, test-coverage-reviewer, documentation-accuracy-reviewer, performance-reviewer.',
+    calls: [],
+    calledBy: ['/sr GATE 5'],
+    output: '5 review sections in shared document'
+  },
+  prc: {
+    title: '/prc — PR Review Comments',
+    type: 'Primary Skill · Code Review',
+    desc: 'Fetch, analyze, and address existing code review comments on a PR. Presents action plan before implementing. Replies via GitHub API.',
+    calls: ['gh CLI'],
+    calledBy: ['/sr (NEEDS FIXES)'],
+    handsOff: ['/sr (re-review)'],
+    output: 'Fixed code + GitHub comment replies'
+  },
+  udoc: {
+    title: '/udoc — Update Docs',
+    type: 'Primary Skill · Post-Merge',
+    desc: 'Generate documentation updates and changelog from a completed task implementation.',
+    calls: ['docs-updater subagent', 'changelog-generator subagent'],
+    calledBy: ['/sr (APPROVED)'],
+    output: 'Updated docs/ + docs/changelogs/YYYY-MM-DD/changelog.md'
+  },
+  fci: {
+    title: '/fci — Fix CI',
+    type: 'Primary Skill · Post-Merge',
+    desc: 'Fix CI pipeline failures blocking PR merge. Runs lint, tests, migrations, Docker build.',
+    calls: ['gh CLI'],
+    calledBy: ['CI failure'],
+    output: 'Fixed pipeline'
+  },
+  sync: {
+    title: '/sync',
+    type: 'Primary Skill · Post-Merge',
+    desc: 'Keep CLAUDE.md and AGENTS.md (root and backend/) in lockstep with each other.',
+    calls: [],
+    calledBy: ['Editing CLAUDE.md or AGENTS.md'],
+    output: 'Synced files'
+  },
+  'cc-linear': {
+    title: '/cc-linear',
+    type: 'Integration · Cross-cutting',
+    desc: 'Execute Linear operations via direct GraphQL API — create issues, update status/priority/title, add comments, search tasks, manage labels, assign work, and link PRs.',
+    calls: ['linear-api.sh (GraphQL)'],
+    calledBy: ['/ct optional tracking', '/si start+finish', '/sr GATE 8'],
+    output: 'Linear issue updates'
+  },
+  'codex-cli': {
+    title: '/codex-cli',
+    type: 'Cross-AI · Validation',
+    desc: 'OpenAI Codex CLI one-shot review using GPT-5.4. Cold-start review without prior context for unbiased perspective.',
+    calls: ['codex exec'],
+    calledBy: ['/nf Step 6', '/ct GATE 5', '/sr GATE 7'],
+    output: '/tmp/codex-result.md'
+  },
+  'gemini-cli': {
+    title: '/gemini-cli',
+    type: 'Cross-AI · Validation',
+    desc: 'Google Gemini CLI one-shot review using Gemini 3 with Auto routing. Unique for Google Search grounding capability.',
+    calls: ['gemini -p'],
+    calledBy: ['/nf Step 6', '/ct GATE 5', '/sr GATE 7'],
+    output: 'JSON response parsed via jq'
+  },
+  'cursor-cli': {
+    title: '/cursor-cli',
+    type: 'Cross-AI · Validation',
+    desc: 'Cursor Agent CLI using Composer 2 (fine-tuned Kimi K2.5). Non-OpenAI/non-Anthropic perspective for diverse review.',
+    calls: ['agent -p'],
+    calledBy: ['/nf Step 6', '/ct GATE 5', '/sr GATE 7'],
+    output: 'Text response'
+  }
+};
+
+// ══════════════════════════════════════════════
+// DETAIL PANEL
+// ══════════════════════════════════════════════
+const overlay = document.getElementById('detailOverlay');
+const panel = document.getElementById('detailPanel');
+const detailTitle = document.getElementById('detailTitle');
+const detailType = document.getElementById('detailType');
+const detailDesc = document.getElementById('detailDesc');
+const detailSections = document.getElementById('detailSections');
+
+function openDetail(id) {
+  const data = skills[id];
+  if (!data) return;
+
+  detailTitle.textContent = data.title;
+  detailType.textContent = data.type;
+  detailType.style.color = getTypeColor(data.type);
+  detailDesc.textContent = data.desc;
+
+  let html = '';
+
+  if (data.gates) {
+    html += '<div class="detail-section"><h3>Gates / Steps</h3><div class="gates">';
+    data.gates.forEach(g => {
+      html += `<div class="gate"><span class="gate-id">${g.id}</span><span class="gate-desc">${g.desc}</span></div>`;
+    });
+    html += '</div></div>';
+  }
+
+  if (data.calls && data.calls.length) {
+    html += '<div class="detail-section"><h3>Calls / Invokes</h3><div class="tags">';
+    data.calls.forEach(c => {
+      const isSkill = skills[c.replace('/', '')];
+      html += `<div class="tag${isSkill ? ' highlight' : ''}" onclick="${isSkill ? `openDetail('${c.replace('/', '')}')` : ''}">${c}</div>`;
+    });
+    html += '</div></div>';
+  }
+
+  if (data.calledBy && data.calledBy.length) {
+    html += '<div class="detail-section"><h3>Called By</h3><div class="tags">';
+    data.calledBy.forEach(c => html += `<div class="tag">${c}</div>`);
+    html += '</div></div>';
+  }
+
+  if (data.handsOff && data.handsOff.length) {
+    html += '<div class="detail-section"><h3>Hands Off To</h3><div class="tags">';
+    data.handsOff.forEach(c => {
+      const isSkill = skills[c.replace('/', '')];
+      html += `<div class="tag${isSkill ? ' highlight' : ''}" onclick="${isSkill ? `openDetail('${c.replace('/', '')}')` : ''}">${c}</div>`;
+    });
+    html += '</div></div>';
+  }
+
+  if (data.output) {
+    html += `<div class="detail-section"><h3>Output</h3><div class="output">${data.output}</div></div>`;
+  }
+
+  detailSections.innerHTML = html;
+  overlay.classList.add('open');
+}
+
+function getTypeColor(type) {
+  if (type.includes('Ideation')) return 'var(--ideation)';
+  if (type.includes('Discovery')) return 'var(--discovery)';
+  if (type.includes('Documentation')) return 'var(--documentation)';
+  if (type.includes('Planning')) return 'var(--planning)';
+  if (type.includes('Implementation')) return 'var(--implementation)';
+  if (type.includes('Review')) return 'var(--review)';
+  if (type.includes('Post-Merge')) return 'var(--postmerge)';
+  if (type.includes('Cross-AI') || type.includes('Validation')) return 'var(--crossai)';
+  if (type.includes('Integration')) return 'var(--linear)';
+  return 'var(--text-dim)';
+}
+
+document.getElementById('closeDetail').addEventListener('click', () => overlay.classList.remove('open'));
+overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') overlay.classList.remove('open'); });
+
+// ══════════════════════════════════════════════
+// NODE CLICK HANDLERS
+// ══════════════════════════════════════════════
+document.querySelectorAll('.node, .ai-node, .ref-item, .meta-node').forEach(el => {
+  el.addEventListener('click', () => {
+    const id = el.dataset.id;
+    if (id && skills[id]) openDetail(id);
+  });
+});
+
+// ══════════════════════════════════════════════
+// WORKFLOW PATH HIGHLIGHTING
+// ══════════════════════════════════════════════
+const pathDefs = {
+  full: ['brainstorm', 'nf', 'vp', 'ct', 'si', 'sr', 'udoc'],
+  standard: ['ct', 'si', 'sr', 'udoc'],
+  handoff: ['ct', 'si', 'ph', 'si', 'sr', 'udoc']
+};
+
+let activePath = 'full';
+
+document.querySelectorAll('.path-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.path-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    activePath = pill.dataset.path;
+    highlightPath(activePath);
+  });
+});
+
+function highlightPath(path) {
+  const ids = pathDefs[path] || [];
+  const allNodes = document.querySelectorAll('.node');
+
+  if (!ids.length) {
+    allNodes.forEach(n => { n.classList.remove('dim', 'highlight'); });
+    return;
+  }
+
+  allNodes.forEach(n => {
+    const nid = n.dataset.id;
+    if (ids.includes(nid)) {
+      n.classList.remove('dim');
+      n.classList.add('highlight');
+    } else {
+      n.classList.remove('highlight');
+      n.classList.add('dim');
+    }
+  });
+
+  // Clear dim after 3 seconds
+  clearTimeout(window._dimTimeout);
+  window._dimTimeout = setTimeout(() => {
+    allNodes.forEach(n => { n.classList.remove('dim', 'highlight'); });
+  }, 3000);
+}
+
+// ══════════════════════════════════════════════
+// HOVER CONNECTIONS
+// ══════════════════════════════════════════════
+const tooltip = document.getElementById('tooltip');
+
+document.querySelectorAll('.node').forEach(node => {
+  node.addEventListener('mouseenter', e => {
+    const id = node.dataset.id;
+    const data = skills[id];
+    if (data) {
+      tooltip.textContent = data.desc;
+      tooltip.classList.add('visible');
+    }
+    // Highlight connected nodes
+    if (data) {
+      const connected = new Set([id]);
+      (data.calls || []).forEach(c => connected.add(c.replace('/', '')));
+      (data.calledBy || []).forEach(c => {
+        const clean = c.replace(/\s.*/, '').replace('/', '');
+        connected.add(clean);
+      });
+      (data.handsOff || []).forEach(c => connected.add(c.replace('/', '')));
+
+      document.querySelectorAll('.node').forEach(n => {
+        if (connected.has(n.dataset.id)) {
+          n.style.opacity = '1';
+          n.style.borderColor = '#1a1a2e30';
+        } else {
+          n.style.opacity = '.25';
+        }
+      });
+    }
+  });
+
+  node.addEventListener('mousemove', e => {
+    tooltip.style.left = e.clientX + 12 + 'px';
+    tooltip.style.top = e.clientY + 12 + 'px';
+  });
+
+  node.addEventListener('mouseleave', () => {
+    tooltip.classList.remove('visible');
+    document.querySelectorAll('.node').forEach(n => {
+      n.style.opacity = '';
+      n.style.borderColor = '';
+    });
+  });
+});
+
+// ══════════════════════════════════════════════
+// ENTRANCE ANIMATIONS
+// ══════════════════════════════════════════════
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.opacity = '1';
+      entry.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.stage').forEach((stage, i) => {
+  stage.style.opacity = '0';
+  stage.style.transform = 'translateY(20px)';
+  stage.style.transition = `opacity .5s ${i * .1}s, transform .5s ${i * .1}s`;
+  observer.observe(stage);
+});
+
+// Initial path highlight
+setTimeout(() => highlightPath('full'), 800);
+</script>
+</body>
+</html>
