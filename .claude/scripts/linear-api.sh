@@ -2,11 +2,12 @@
 # linear-api.sh — Direct Linear GraphQL API wrapper
 # Replaces the MCP + cc process chain with simple curl calls.
 # Requires: LINEAR_API_KEY env var, curl, jq (both native macOS)
+# Optional: LINEAR_TEAM_KEY env var (defaults to TEAM)
 
 set -euo pipefail
 
 API_URL="https://api.linear.app/graphql"
-TEAM_KEY="WYT"
+TEAM_KEY="${LINEAR_TEAM_KEY:-TEAM}"
 CACHE_DIR="/tmp"
 CACHE_TTL=86400  # 24 hours
 
@@ -506,7 +507,7 @@ case "$cmd" in
 Usage: linear-api.sh <command> [args...]
 
 Issues:
-  get-issue <ID>                            Get issue details (e.g., WYT-66)
+  get-issue <ID>                            Get issue details (e.g., TEAM-66)
   search <term> [limit]                     Search issues by keyword (default: 10)
   ai-search <query> [limit]                 AI semantic search across all resources
   create-issue <title> <desc|-> [priority]  Create issue (priority 0-4, default 3)

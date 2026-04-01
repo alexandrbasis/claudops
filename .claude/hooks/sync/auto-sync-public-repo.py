@@ -61,7 +61,7 @@ def trigger_sync(project_dir: Path, log_file: Path):
     # Get public repo path from environment
     public_repo_path = os.getenv(
         "PUBLIC_REPO_PATH",
-        str(project_dir / "wythm-claude-workflows")
+        str(project_dir / "claudops")
     )
 
     log(f"Triggering sync to {public_repo_path}", log_file)
