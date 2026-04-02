@@ -50,7 +50,12 @@ When `changed_files` and `full_diff` are provided:
 
 ### Output: File Mode (when `cr_file_path` is provided)
 
-Write findings to `<!-- SECTION:spec-compliance -->` markers in the CR file.
+Write your findings directly to the Code Review file:
+
+1. **Read** the CR file at the provided `cr_file_path`
+2. **Locate** your section markers: `<!-- SECTION:spec-compliance -->` ... `<!-- /SECTION:spec-compliance -->`
+3. **Use the Edit tool** to replace the placeholder text between markers with your findings
+4. **Do NOT** edit anything outside your section markers
 
 **Format:**
 

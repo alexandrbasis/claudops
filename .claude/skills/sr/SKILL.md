@@ -140,14 +140,42 @@ Verification is evidence, not a prerequisite for starting review.
 
 If verification is skipped or partial, record it. Missing verification is not passing verification.
 
-## STEP 7: Write Verdict
+## STEP 7: Prepare CR File
 
-Use `.claude/docs/templates/code-review-template.md`.
+There is always exactly **one** Code Review file per review target. Compute `cr_file_path`:
 
-Output path:
-- `task` -> task directory
+- `task` -> `<task-directory>/Code Review.md`
 - `working-tree` -> `.claude/reviews/Code Review - working-tree-[current-branch].md` (or `working-tree` if detached)
 - all other non-task modes -> `.claude/reviews/Code Review - [target].md` (create `.claude/reviews/` if missing)
+
+**If `cr_file_path` already exists** (re-review): reuse it. Clear all `<!-- SECTION:xxx -->` contents back to placeholder text so agents write fresh findings. Do NOT create a second file.
+
+**If `cr_file_path` does not exist**: create it by writing the template from `.claude/docs/templates/code-review-template.md`.
+
+## STEP 8: Dispatch Agents
+
+Pass `cr_file_path` to every agent so they use **File Mode**.
+
+Dispatch agents and let each agent **Read → Edit** its own `<!-- SECTION:xxx -->` markers in `cr_file_path`. Each agent writes only within its own markers — no agent touches another agent's section.
+
+If an agent fails or times out, write a fallback note into its section:
+`*Review skipped — [agent-name] did not complete.*`
+
+After **all** agents finish, proceed to STEP 9.
+
+## STEP 9: Write Verdict
+
+The orchestrator writes the remaining sections that agents do not own:
+
+- `review-context` — fill from STEP 2 capabilities
+- `summary` — synthesize a 2-5 sentence note from agent findings
+- `verdict` — one of the verdicts below
+- `key-findings` — consolidate actionable findings from all agents, ordered by severity
+- `coverage` — record what was reviewed and what was skipped
+- `verification` — record commands run and results
+- `metadata` — changed files, diff source, reviewers invoked
+
+Use the **Edit tool** to write each orchestrator section into its markers in `cr_file_path`. Do NOT overwrite the entire file — agents already wrote their sections.
 
 Verdicts:
 - `DRAFT REVIEW`: working-tree review or no immutable snapshot
@@ -155,19 +183,12 @@ Verdicts:
 - `APPROVED WITH NOTES`: committed snapshot, `0 critical`, `0 major`, but verification or coverage is partial
 - `NEEDS FIXES`: any critical or major finding
 
-Required sections:
-- `Review Context`
-- `Reviewer Note`
-- `Verdict`
-- `Key Findings`
-- `Coverage`
-- domain sections for each invoked reviewer
-- `Verification`
-- `Metadata`
-
 Never return `APPROVED` for an uncommitted working-tree draft.
 
 ## Common Mistakes
+- Creating multiple CR files — there is always exactly ONE per review target
+- Dispatching agents without `cr_file_path` (causes inline-only results, no file written)
+- Overwriting `cr_file_path` with Write after agents already edited their sections
 - Forcing task workflow onto every review target
 - Blocking review because the branch is dirty
 - Using `main...HEAD` for working-tree review
