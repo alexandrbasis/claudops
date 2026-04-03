@@ -143,7 +143,7 @@ or
 
 ### Inline mode (when `cr_file_path` is NOT provided)
 
-Return findings inline in the structured format above so the orchestrator can integrate them.
+Return findings inline in the structured format above so the orchestrator can integrate them. Do NOT create any files — return everything as your response message.
 
 ## Decision Criteria
 
