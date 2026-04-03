@@ -144,13 +144,18 @@ If verification is skipped or partial, record it. Missing verification is not pa
 
 There is always exactly **one** Code Review file per review target. Compute `cr_file_path`:
 
-- `task` -> `<task-directory>/Code Review.md`
-- `working-tree` -> `.claude/reviews/Code Review - working-tree-[current-branch].md` (or `working-tree` if detached)
-- all other non-task modes -> `.claude/reviews/Code Review - [target].md` (create `.claude/reviews/` if missing)
+- `task` -> `<task-directory>/code-review-[feature-name].md`
+  - Extract `[feature-name]` from the task directory name by stripping the `task-YYYY-MM-DD-` prefix (e.g., `task-2026-04-02-operations-center` → `operations-center`). If the directory does not match this prefix pattern, use the full directory name as the feature name.
+- `working-tree` -> `.claude/reviews/code-review-working-tree-[current-branch].md` (or `code-review-working-tree.md` if detached)
+- all other non-task modes -> `.claude/reviews/code-review-[target].md` (create `.claude/reviews/` if missing)
+
+**Sanitization:** Replace any `/` or spaces in `[current-branch]` or `[target]` with hyphens before constructing the filename.
 
 **If `cr_file_path` already exists** (re-review): reuse it. Clear all `<!-- SECTION:xxx -->` contents back to placeholder text so agents write fresh findings. Do NOT create a second file.
 
-**If `cr_file_path` does not exist**: create it by writing the template from `.claude/docs/templates/code-review-template.md`.
+**Legacy migration:** If `cr_file_path` does not exist, also check for a legacy `Code Review.md` (task mode) or `Code Review - *.md` (other modes) in the same directory. If found, rename it to the new `cr_file_path` convention before reusing.
+
+**If no file exists at all**: create it by writing the template from `.claude/docs/templates/code-review-template.md`.
 
 ## STEP 8: Dispatch Agents
 
