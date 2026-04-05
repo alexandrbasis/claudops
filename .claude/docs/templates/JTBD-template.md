@@ -1,60 +1,93 @@
 # Jobs-to-be-Done: [Feature Name]
 
-**Created**: YYYY-MM-DD  
+**Created**: YYYY-MM-DD
 **Status**: Draft | Approved
+**Version**: v0.1
 
 ---
 
-## Primary Job Statement
+## Job Statement
 
-**When** [situation], **I want** [motivation], **so I can** [expected outcome].
+**When** [situation/context], **I want** [motivation/action], **so I can** [expected outcome].
 
----
-
-## Candidate Job Variants _(optional)_
+**Candidate Variants** _(lock the primary before moving forward)_
 
 1. **When** [...], **I want** [...], **so I can** [...]
 2. **When** [...], **I want** [...], **so I can** [...]
-3. **When** [...], **I want** [...], **so I can** [...]
 
-Use this section to explore alternate framings before locking the primary job.
-
----
-
-## User Snapshot
-
-- **Who is trying to do this?** [...]
-- **Context / trigger moments** [...]
-- **Relevant segments or constraints** [...]
+> A good job statement describes the progress the user wants to make — not a feature they want built. Context (when/where/why) matters more than demographics.
 
 ---
 
-## Core Needs
+## Success Criteria
 
-> **Convention: Inline Clarification Markers**
-> Use `[NEEDS CLARIFICATION: brief description]` inline next to any need, pain point, or outcome that is ambiguous or has multiple valid interpretations. Max 5 markers per document. All markers MUST be resolved before `/ct` proceeds.
+> **Convention:** Use `[NEEDS CLARIFICATION: brief description]` inline next to any criterion that is ambiguous. Max 5 markers per document. All markers MUST be resolved before `/ct` proceeds.
 
-- [Need 1]
-- [Need 2]
-- [Need 3]
+**Functional** — objective requirements for getting the job done
+- [Criterion]: [What "done" looks like — measurable where possible]
+- [Criterion]: [...]
+
+**Emotional Personal** — how the user wants to feel
+- [Feeling]: [Context — when and why this matters]
+- [Feeling]: [...]
+
+**Emotional Social** — how the user wants to be perceived
+- [Perception]: [By whom and in what context]
+- [Perception]: [...]
+
+---
+
+## Four Forces of Switching
+
+**Promoting Forces** (drive the switch)
+
+| Force | Description |
+|-------|-------------|
+| **Push** — frustration with current state | [What's broken, slow, or painful about how they do it today?] |
+| **Pull** — attraction of the new solution | [What better future does the new solution promise?] |
+
+**Blocking Forces** (prevent the switch)
+
+| Force | Description |
+|-------|-------------|
+| **Anxiety** — fears about the new | [What could go wrong? What's unknown or risky?] |
+| **Habit** — inertia of the present | [What's comfortable? What switching costs exist?] |
+
+**Current Alternatives** — what users "hire" today for this job
+- [Alternative 1]: [Why it's hired, where it fails]
+- [Alternative 2]: [...]
+- [Non-consumption / doing nothing]: [Why some users don't solve this at all]
+
+> For the switch to happen, Push + Pull must outweigh Anxiety + Habit.
 
 ---
 
-## Pain Points Today
+## User Context
 
-- [Pain point 1: What frustrates users now?]
-- [Pain point 2: Where are they blocked or wasting time?]
-- [Pain point 3: What alternatives fail them?]
+- **Who**: [Primary user/actor — defined by circumstances, not demographics]
+- **Trigger moments**: [What events cause them to seek a solution?]
+- **Where/When**: [Physical, temporal, or situational context]
+- **Constraints**: [Budget, time, skill, platform, compliance limitations]
+
+---
+
+## Research Findings
+
+> This section is **mandatory**. Product decisions without research are assumptions.
+
+**Competitive Alternatives**
+- [Competitor/alternative 1]: [How they approach this job, strengths/weaknesses]
+- [Competitor/alternative 2]: [...]
+
+**Industry Patterns & Best Practices**
+- [Pattern/insight]: [Source]
+- [Pattern/insight]: [Source]
+
+**Market Signals**
+- [Signal]: [Source — user research, data, support tickets, market trends]
 
 ---
 
-## Desired Outcomes
-
-- [Outcome 1: What users want to achieve]
-- [Outcome 2: How users want to feel]
-- [Outcome 3: What users want to avoid]
-
----
 ## Notes
 
-[Additional context, insights, or considerations]
+[Open questions, assumptions, additional context, or considerations that don't fit above]

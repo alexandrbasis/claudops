@@ -38,7 +38,7 @@ Conduct a discovery interview that turns a rough feature idea into a clear, easy
    - Include a free-text "Describe a new feature" option
 2. Derive the feature-name slug from the user's response
 
-### Step 0: Load the Output Shape
+### Step 0: Load the Output Shape and Upstream Context
 
 Before asking deep-dive questions, read `.claude/docs/templates/discovery-template.md` to understand the expected structure, level of clarity, and final shape of the discovery document.
 
@@ -47,6 +47,10 @@ Treat the template as the **output contract**:
 - The discovery interview should gather exactly the information needed to fill it clearly
 - Do not duplicate the template structure inside this skill; use the template itself as the source of truth for the final document shape
 
+**Load upstream product docs** (if they exist):
+- Check `product-docs/PRD/PRD-*[feature-name]*.md` for an existing PRD
+- Check `product-docs/JTBD/JTBD-*[feature-name]*.md` for an existing JTBD
+- If found, read them as input context — they define the product-level "what and why" that this discovery will explore in depth. Reference them in the discovery document.
 
 ### Step 1: Context Gathering & Design Exploration
 

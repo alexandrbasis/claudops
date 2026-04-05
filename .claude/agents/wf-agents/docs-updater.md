@@ -39,7 +39,7 @@ docs/
 ### Step 2: Detect Required Updates
 - Cross-reference mentions in the task document with actual doc paths:
   - **Architecture / ADRs** → `docs/adr/`, `docs/db-scheme-mvp/`
-  - **Product / PRDs / Research** → `docs/product-docs/PRD/`, `docs/product-docs/Research/`, `docs/product-docs/Features/`
+  - **Product / PRDs / Research** → `docs/product-docs/PRD/`, `docs/product-docs/JTBD/`, `docs/product-docs/Research/`, `docs/product-docs/Features/`
   - **Process / Workflow** → `docs/dev-workflow/`, `docs/development/`
   - **Onboarding / Training** → `docs/onboarding/`
 - Only touch files explicitly impacted by the implementation or by changes called out in the task notes.

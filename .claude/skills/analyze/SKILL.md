@@ -35,7 +35,7 @@ Find the task directory and its documents:
 
 | Type | Files to look for |
 |------|-------------------|
-| **Spec** (input) | `discovery-*.md`, `JTBD-*.md`, PRD in `docs/product-docs/PRD/PRD-*.md` |
+| **Spec** (input) | `discovery-*.md`, `JTBD-*.md` in task directory; `PRD-*.md` in `docs/product-docs/PRD/`; `JTBD-*.md` in `docs/product-docs/JTBD/` |
 | **Plan** (output) | `tech-decomposition-*.md` (or `phase-*/tech-decomposition-*.md` if split) |
 
 **If spec docs are missing**: Report "No spec documents found — cannot verify alignment. This task was created without /nf or /product documentation." Verdict: `SKIPPED`.
