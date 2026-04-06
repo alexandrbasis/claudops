@@ -108,13 +108,22 @@ Do not hide requirement gaps inside implementation steps.
 ### GATE 2: Explore the Codebase
 **Complete BEFORE writing implementation steps:**
 
-Use the `explore` agent to inspect the actual change area. Direct it to investigate:
-- The closest similar feature, module, or workflow
-- Relevant data models or persisted state
-- API surfaces, contracts, background jobs, events, or integrations near the change
-- Shared abstractions, utilities, or base patterns worth reusing
-- Test patterns already used in the affected module
-- Likely failure modes, configuration touchpoints, and integration boundaries
+Launch **2-3 Explore agents in parallel**, each with a specific mandate:
+
+1. **Architecture & Patterns** — understand the change area:
+   - Closest similar feature, module, or workflow
+   - Relevant data models or persisted state
+   - Shared abstractions, utilities, or base patterns worth reusing
+
+2. **Change Surface** — identify what needs to be touched:
+   - Files and directories that will need modification
+   - API surfaces, contracts, background jobs, events, or integrations near the change
+   - Test files and test patterns already used in the affected module
+
+3. **Risks & Constraints** — find what could go wrong:
+   - Likely failure modes and edge cases
+   - Configuration touchpoints and integration boundaries
+   - Dependencies that could break or require coordinated changes
 
 **If the task is UI-heavy, also inspect:**
 - Existing component composition patterns
