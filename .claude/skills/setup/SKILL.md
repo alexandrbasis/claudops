@@ -173,20 +173,7 @@ Also update hook-specific configuration variables based on the detected stack:
 
 If the codebase has a clear architecture pattern (DDD, MVC, etc.), generate `code-analysis/references/project-checks.md` with architecture-specific grep commands tailored to the detected source directory and patterns.
 
-**Step 5: RTK token optimization (optional)**
-
-Check if `rtk` is installed (`which rtk`). If installed:
-- Verify the RTK hook is present in `.claude/settings.json` PreToolUse hooks (it should already be wired as `rtk hook default`)
-- Inform the user: "RTK is installed and wired — Bash commands will be auto-compressed for 60-90% token savings."
-
-If NOT installed:
-- Ask: "RTK (Rust Token Killer) can reduce token usage by 60-90%. Install it?"
-  - "Yes, install via Homebrew" → run `brew install rtk`
-  - "Yes, install via curl" → run `curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh`
-  - "Skip for now"
-- If installed, the hook in `settings.json` will automatically activate on next session.
-
-**Step 6: Prune irrelevant skills**
+**Step 5: Prune irrelevant skills**
 
 Based on detected tech stack, identify skills that are not applicable to this project. For each irrelevant skill, ask the user whether to disable it.
 
@@ -224,7 +211,6 @@ Setup complete!
 Tech stack: [LANGUAGE] + [FRAMEWORK] + [ORM]
 Architecture: [ARCHITECTURE]
 Files configured: X skills, Y agents, Z hooks
-RTK: [installed and wired / not installed]
 Skills disabled: [list or "none"]
 
 Next steps:
