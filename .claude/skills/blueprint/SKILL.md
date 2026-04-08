@@ -77,7 +77,7 @@ For each step, produce:
 - [ ] [Criterion 1 — testable/verifiable]
 - [ ] [Criterion 2]
 - [ ] All tests pass: `[specific test command]`
-- [ ] TypeScript compiles: `npx tsc --noEmit`
+- [ ] Type check passes: `{{TYPECHECK_CMD}}`
 
 ### Estimated Complexity
 [S / M / L] — [Brief justification]

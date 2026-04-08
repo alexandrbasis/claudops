@@ -1,6 +1,6 @@
 # claudops
 
-> Claude Code best practices — skills, agents, hooks, and workflows
+> Universal Claude Code workflow template — clone, run `/setup`, start building
 
 **Author:** [@alexandrbasis](https://x.com/alexandrbasis) | [@MishkaKey](https://x.com/MishkaKey)
 
@@ -12,12 +12,16 @@
 
 ---
 
-A curated collection of production-tested Claude Code configurations: agents, skills, and hooks for a full development pipeline — from feature discovery to code review.
+A production-tested `.claude/` folder you drop into **any** codebase. Includes agents, skills, hooks, and a setup wizard that auto-configures everything to match your tech stack.
+
+Works with any language, framework, and architecture — TypeScript, Python, Go, Ruby, Java, and more.
 
 ## Highlights
 
+- **`/setup` wizard** — auto-detects your tech stack, project structure, and commands, then configures all skills, agents, and hooks in one pass
 - **17 specialized agents** — TDD, code review, task validation, research
-- **26 skills** — full dev lifecycle and cross-AI helpers (Gemini CLI, Codex CLI, Cursor CLI)
+- **28 skills** — full dev lifecycle and cross-AI helpers (Gemini CLI, Codex CLI, Cursor CLI)
+- **Skills ↔ Agents composability** — agents preload shared convention skills via `skills:` frontmatter
 - **Cross-AI plan review** — optional Gemini verification of plans (see `review-plan-gemini.sh`)
 - **Hooks** — lint on write, sync, validation, guards, metrics
 - **Linear integration** — project management from your terminal (`cc-linear` skill)
@@ -67,17 +71,33 @@ A curated collection of production-tested Claude Code configurations: agents, sk
 
 ---
 
-### Skills (26)
+### Skills (28)
 
 See [`.claude/skills/README.md`](.claude/skills/README.md) for the full index. Summary:
 
 | Area | Examples |
 |------|----------|
+| Setup & conventions | `setup`, `coding-conventions`, `review-conventions` |
 | Core workflow | `ct`, `si`, `si-quick`, `sr`, `prc`, `ph`, `nf`, `product`, `vp`, `blueprint` |
 | Discovery & design | `brainstorm`, `design-exploration`, `analyze`, `grill-me`, `rip` |
 | Quality & debugging | `code-analysis`, `dbg`, `fci` |
 | Cross-AI | `gemini-cli`, `codex-cli`, `cursor-cli` |
 | Integrations & meta | `cc-linear`, `deep-research`, `parallelization`, `sbs`, `update-docs` |
+
+---
+
+### Skills ↔ Agents Composability
+
+Review agents and the developer agent preload shared convention skills via `skills:` frontmatter — no per-agent duplication:
+
+```yaml
+# In agent frontmatter
+skills:
+  - review-conventions   # preloaded into all 7 review agents
+  - coding-conventions   # preloaded into developer-agent
+```
+
+The `/setup` wizard fills these convention skills with your project's tech stack, architecture rules, and commands. Every agent inherits them automatically.
 
 ---
 
@@ -113,17 +133,35 @@ workflow-visualization.html   # Interactive workflow map (open in browser)
 
 ---
 
-## How to use
+## Quick Start
 
-### Full setup
+### 1. Clone into your project
 ```bash
 git clone https://github.com/alexandrbasis/claudops.git
 cp -r claudops/.claude your-project/
-# Add workflow-visualization.html or templates if you want them at repo root
-# Review settings.json and hooks for your environment
+cd your-project
 ```
 
-### Cherry-pick
+### 2. Run the setup wizard
+```
+/setup
+```
+
+The wizard will:
+1. **Scan your codebase** with 3 parallel agents (tech stack, project structure, commands)
+2. **Confirm** detected values with you (framework, ORM, test/lint/build commands, architecture)
+3. **Fill in** all `{{PLACEHOLDER}}` variables directly in every skill, agent, and hook file
+
+After setup, every file has your real values baked in — no runtime resolution, no config indirection.
+
+### 3. Start using workflows
+```
+/ct    — create a technical decomposition
+/si    — start implementation from a task
+/sr    — run multi-agent code review
+```
+
+### Cherry-pick individual skills
 ```bash
 cp -r claudops/.claude/skills/si your-project/.claude/skills/
 cp claudops/.claude/scripts/review-plan-gemini.sh your-project/.claude/scripts/

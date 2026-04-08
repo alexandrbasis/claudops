@@ -70,8 +70,8 @@ Based on the task content, categorize as:
 - Maintain proper markdown formatting and structure
 
 ### Step 5: Generate and Insert Changelog Entry
-- Write clear, user-focused descriptions with code references from the task’s changelog (e.g., ``backend/src/modules/sessions/services/create-session.service.ts``)
-- Include folder references for broader changes (e.g., ``backend/src/modules/sessions/``, ``backend/tests/integration/``)
+- Write clear, user-focused descriptions with code references from the task’s changelog (e.g., ``{{SRC_DIR}}/modules/sessions/services/create-session.service.ts``)
+- Include folder references for broader changes (e.g., ``{{SRC_DIR}}/modules/sessions/``, ``{{TEST_DIR}}/integration/``)
 - Mention test coverage or migrations if the task highlighted them
 - Add entries to the appropriate section (Added, Changed, Fixed, Removed) in the date-specific file
 

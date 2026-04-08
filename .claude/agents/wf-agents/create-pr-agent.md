@@ -2,6 +2,7 @@
 name: create-pr-agent
 description: Creates GitHub Pull Requests for completed tasks with Linear integration and traceability. Validates task documents, creates PRs with proper formatting, updates Linear issues, and maintains audit trail.
 model: sonnet
+effort: low
 color: green
 ---
 

@@ -48,14 +48,28 @@ echo "Starting Gemini review..." >> "$LOG_FILE"
 PROMPT_FILE=$(mktemp)
 trap "rm -f $PROMPT_FILE" EXIT
 
+# Detect project context from coding-conventions skill (if configured)
+CONVENTIONS_FILE="$(dirname "$0")/../skills/coding-conventions/SKILL.md"
+if [ -f "$CONVENTIONS_FILE" ]; then
+  # Extract tech stack info from the conventions file
+  FRAMEWORK=$(grep "^\- \*\*Framework\*\*:" "$CONVENTIONS_FILE" | sed 's/.*: //')
+  ARCHITECTURE=$(grep "^\- \*\*Architecture\*\*:" "$CONVENTIONS_FILE" | sed 's/.*: //')
+  LANGUAGE=$(grep "^\- \*\*Language\*\*:" "$CONVENTIONS_FILE" | sed 's/.*: //')
+  ORM=$(grep "^\- \*\*ORM\*\*:" "$CONVENTIONS_FILE" | sed 's/.*: //')
+
+  PROJECT_CONTEXT="- Tech stack: ${FRAMEWORK:-Unknown framework}, ${LANGUAGE:-Unknown language}${ORM:+, $ORM}
+- Architecture: ${ARCHITECTURE:-Not specified}"
+else
+  PROJECT_CONTEXT="- Tech stack: See project documentation
+- Architecture: See project documentation"
+fi
+
 # Write prompt to temp file (avoids shell escaping issues)
-cat > "$PROMPT_FILE" << 'PROMPT_HEADER'
-You are reviewing an implementation plan for a NestJS backend using DDD and Clean Architecture patterns.
+cat > "$PROMPT_FILE" << PROMPT_HEADER
+You are reviewing an implementation plan for a software project.
 
 CONTEXT:
-- Backend uses: NestJS, TypeScript, Prisma, PostgreSQL (Supabase)
-- Architecture: Domain-Driven Design with Clean Architecture layers
-- Testing: Jest with use-case focused tests
+${PROJECT_CONTEXT}
 
 PLAN TO REVIEW:
 PROMPT_HEADER
@@ -70,7 +84,7 @@ REVIEW CRITERIA:
 - Missing edge cases or error handling
 - Security concerns (auth, validation, injection)
 - Performance issues (N+1 queries, missing indexes)
-- DDD/Clean Architecture violations
+- Architecture violations
 - Testability concerns
 
 OUTPUT FORMAT (markdown):

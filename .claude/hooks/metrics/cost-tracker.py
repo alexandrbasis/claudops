@@ -1,10 +1,24 @@
 #!/usr/bin/env python3
-"""Stop event hook — estimates and logs session token costs.
+"""
+Cost Tracker — Estimate and log session token costs.
 
-Reads input_tokens_used and output_tokens_used from stdin JSON (Claude Code Stop hook),
-estimates cost using blended model rates, and appends a JSONL row to ~/.claude/metrics/costs.jsonl.
+Event:     Stop
+Matcher:   (none)
+Blocking:  No (always exit 0)
+Wired:     Yes (default in settings.json)
 
-Non-blocking, always exits 0.
+Reads input_tokens_used and output_tokens_used from the Stop event,
+estimates cost using blended model rates, and appends a JSONL row
+to ~/.claude/metrics/costs.jsonl.
+
+Configuration:
+  RATES       — per-model token pricing (edit to match your contract)
+  METRICS_DIR — where to write cost logs (default: ~/.claude/metrics)
+
+To enable, add to .claude/settings.json hooks.Stop:
+  {
+    "hooks": [{"type": "command", "command": "python3 $CLAUDE_PROJECT_DIR/.claude/hooks/metrics/cost-tracker.py"}]
+  }
 """
 
 import json

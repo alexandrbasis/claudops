@@ -1,12 +1,27 @@
 #!/usr/bin/env python3
 """
-PostToolUse hook for automatic formatting of TypeScript files.
+Lint on Write — Auto-format files after Write/Edit operations.
 
-Runs after Write/Edit operations on TypeScript files in backend/ or mobile-app/.
-Auto-formats with Prettier (non-blocking).
+Event:     PostToolUse
+Matcher:   Write|Edit
+Blocking:  No (always exit 0)
+Wired:     No (project-specific — configure LINT_TARGETS and FORMAT_CMD first)
 
-Exit codes:
-- 0: Success or not applicable (always non-blocking)
+Runs a formatter (default: Prettier) on source files within configured
+subdirectories. Each subdirectory should have its own package.json with
+the formatter installed.
+
+Configuration:
+  LINT_TARGETS      — subdirectories containing their own package.json + formatter
+  LINT_EXTENSIONS   — file extensions to format
+  SKIP_PATTERNS     — substrings in path to skip
+  FORMAT_CMD        — formatter command as list (run from target subdir root)
+
+To enable, add to .claude/settings.json hooks.PostToolUse:
+  {
+    "matcher": "Write|Edit",
+    "hooks": [{"type": "command", "command": "python3 $CLAUDE_PROJECT_DIR/.claude/hooks/lint/lint-on-write.py"}]
+  }
 """
 
 import json
@@ -16,17 +31,24 @@ import sys
 from pathlib import Path
 from typing import Optional, Tuple
 
+# === CONFIGURE FOR YOUR PROJECT ===
+LINT_TARGETS = ["backend", "mobile-app"]  # subdirs with package.json + formatter
+LINT_EXTENSIONS = (".ts", ".tsx")
+SKIP_PATTERNS = ("node_modules", ".generated.", "prisma/migrations", "dist/")
+FORMAT_CMD = ["npx", "prettier", "--write"]
+FORMAT_TIMEOUT = 15  # seconds
 
-def is_typescript_file(file_path: str) -> bool:
-    """Check if file is a TypeScript source file."""
-    return file_path.endswith((".ts", ".tsx"))
+
+def is_target_file(file_path: str) -> bool:
+    """Check if file has a targeted extension."""
+    return file_path.endswith(LINT_EXTENSIONS)
 
 
 def get_target_dir(file_path: str, project_dir: str) -> Optional[str]:
-    """Return the target directory (backend/ or mobile-app/) if file is inside one."""
+    """Return the target directory if file is inside a configured subdirectory."""
     file_abs = Path(file_path).resolve()
 
-    for subdir in ("backend", "mobile-app"):
+    for subdir in LINT_TARGETS:
         target = Path(project_dir) / subdir
         try:
             file_abs.relative_to(target)
@@ -39,53 +61,51 @@ def get_target_dir(file_path: str, project_dir: str) -> Optional[str]:
 
 def should_process_file(file_path: str, project_dir: str) -> Tuple[bool, Optional[str]]:
     """Determine if file should be formatted. Returns (should_process, target_dir)."""
-    if not is_typescript_file(file_path):
+    if not is_target_file(file_path):
         return False, None
 
     target_dir = get_target_dir(file_path, project_dir)
     if not target_dir:
         return False, None
 
-    # Skip generated files
-    if any(skip in file_path for skip in (
-        "node_modules", ".generated.", "prisma/migrations", "dist/"
-    )):
+    # Skip generated/vendored files
+    if any(skip in file_path for skip in SKIP_PATTERNS):
         return False, None
 
     return True, target_dir
 
 
 def format_file(file_path: str, cwd: str) -> Tuple[bool, str]:
-    """Auto-format file with Prettier. Returns (success, message)."""
+    """Auto-format file. Returns (success, message)."""
     try:
         result = subprocess.run(
-            ["npx", "prettier", "--write", file_path],
+            FORMAT_CMD + [file_path],
             cwd=cwd,
             capture_output=True,
             text=True,
-            timeout=15
+            timeout=FORMAT_TIMEOUT,
         )
 
         file_name = Path(file_path).name
         if result.returncode == 0:
-            return True, f"prettier: formatted {file_name}"
+            return True, f"formatted {file_name}"
         else:
             err = result.stderr.strip()[:200]
-            return False, f"prettier: failed on {file_name} — {err}"
+            return False, f"failed on {file_name} — {err}"
 
     except subprocess.TimeoutExpired:
-        return False, "prettier: timed out (15s)"
+        return False, f"timed out ({FORMAT_TIMEOUT}s)"
     except FileNotFoundError:
-        return False, "prettier: not found (npx not available)"
+        return False, "formatter not found (check FORMAT_CMD)"
     except Exception as e:
-        return False, f"prettier: error — {e}"
+        return False, f"error — {e}"
 
 
 def main() -> None:
     """Main hook execution."""
     try:
         input_data = json.load(sys.stdin)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, ValueError):
         sys.exit(0)
 
     tool_name = input_data.get("tool_name", "")
@@ -100,16 +120,16 @@ def main() -> None:
         sys.exit(0)
 
     should_process, target_dir = should_process_file(file_path, project_dir)
-    if not should_process:
+    if not should_process or not target_dir:
         sys.exit(0)
 
     if not Path(file_path).exists():
         sys.exit(0)
 
     success, msg = format_file(file_path, target_dir)
-    print(f"{'✓' if success else '✗'} {msg}", file=sys.stderr)
+    formatter_name = FORMAT_CMD[0] if FORMAT_CMD else "formatter"
+    print(f"{'✓' if success else '✗'} {formatter_name}: {msg}", file=sys.stderr)
 
-    # Always non-blocking
     sys.exit(0)
 
 

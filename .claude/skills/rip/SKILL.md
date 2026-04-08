@@ -114,7 +114,7 @@ Questions? Next?
 
 > **Why:** Store word learning history
 > **What:** `WordProgress` table links user+word, stores metrics
-> **Concepts:** Prisma schema = DB blueprint as code
+> **Concepts:** Database schema = DB blueprint as code
 > **Impact:** "Progress" screen → word-level stats
 >
 > **Warning:**

@@ -75,3 +75,5 @@ Thumbs.db
 .claude/hooks/logs/.read-streak.json
 .claude/hooks/logs/.tsc-cache.json
 .claude/hooks/logs/.stop-guard-fired
+.claude/hooks/logs/.test-last-run.json
+.claude/hooks/logs/commands.jsonl

@@ -1,15 +1,30 @@
 #!/usr/bin/env python3
 """
-Claude Code Pre-Commit Validation Hook
+Pre-Commit Validation — Quick checks before git commit.
 
-Быстрые проверки перед git commit (Level 1):
-- Syntax validation
-- Merge conflicts detection
-- Debug code warnings
-- Large files detection
+Event:     PreToolUse
+Matcher:   Bash (internally filters for git commit commands only)
+Blocking:  Yes (exit 2 blocks commit on critical errors)
+Wired:     Yes (default in settings.json)
 
-Этот hook работает ДО попытки коммита, давая Claude возможность исправить проблемы.
-Полные проверки (formatting, linting, tests) выполняются git pre-commit hook'ом.
+Runs fast validation before commits:
+- Python syntax errors (blocks commit)
+- Merge conflict markers (blocks commit)
+- Debug code detection (warning only)
+- Large file detection (warning only)
+
+Supports .py, .ts, .tsx files. Skips files in .claude/hooks/ to avoid
+false positives from pattern strings in the hook scripts themselves.
+
+Configuration:
+  No configuration required — works universally.
+  Debug logging to .claude/hooks/logs/hook-debug.log (1MB rotation).
+
+To enable, add to .claude/settings.json hooks.PreToolUse:
+  {
+    "matcher": "Bash",
+    "hooks": [{"type": "command", "command": "python3 $CLAUDE_PROJECT_DIR/.claude/hooks/validation/pre-commit-validation.py", "timeout": 30}]
+  }
 """
 
 import json

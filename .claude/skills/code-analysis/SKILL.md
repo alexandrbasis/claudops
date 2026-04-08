@@ -70,12 +70,12 @@ find . -type f -name "*.ts" ! -path "*/node_modules/*" ! -path "*/dist/*" \
 
 Read project context dynamically — don't assume the stack:
 - `CLAUDE.md` at repo root for architecture overview
-- `backend/AGENTS.md` for backend-specific conventions
+- `{{DOCS_DIR}}/AGENTS.md` for project-specific conventions
 - `package.json` / `tsconfig.json` for actual dependencies and versions
 
 ## 3. Architecture Analysis
 
-- Identify layers and boundaries (read `backend/docs/project-structure.md` for canonical structure)
+- Identify layers and boundaries (read `{{DOCS_DIR}}/project-structure.md` for canonical structure)
 - Map module dependencies and import relationships
 - Find circular dependencies or layer violations
 - Check adherence to documented patterns
@@ -132,11 +132,11 @@ git rev-list --count --since="6 months ago" --until="3 months ago" HEAD
 For this project, run targeted checks. Read `references/project-checks.md` for detailed commands.
 
 Key areas:
-- **DDD layer separation**: domain files must NOT import from infrastructure
-- **Prisma schema health**: model count, index coverage, migration count
-- **NestJS module boundaries**: providers stay within their module
+- **Architecture layer separation**: verify layer boundaries are respected (e.g., domain must NOT import from infrastructure)
+- **Database schema health**: model count, index coverage, migration count (check {{SCHEMA_PATH}} if configured)
+- **{{FRAMEWORK}} module boundaries**: providers/services stay within their module
 - **Error handling**: consistent use of domain exceptions (not raw `Error` throws)
-- **API surface**: controller endpoints, guard coverage, DTO definitions
+- **API surface**: endpoint inventory, guard/middleware coverage, DTO/contract definitions
 
 ## 8. Output Format
 

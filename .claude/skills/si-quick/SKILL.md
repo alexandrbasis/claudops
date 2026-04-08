@@ -65,7 +65,7 @@ Get user confirmation before proceeding.
   - Write a FAILING test first that specifies the expected behavior
   - If you wrote production code before a failing test: delete it and restart with RED
   - Implement the minimal fix to make the test pass (GREEN)
-  - Verify test passes: `npm run test:unit:silent`
+  - Verify test passes: `{{TEST_CMD}}`
   - "Tests after" is not TDD — it produces confirmation tests, not specification tests
 - For non-logic changes (config, docs, formatting): just make the change
 
@@ -74,19 +74,19 @@ Run the smallest repo-appropriate verification that proves the changed behavior 
 
 Examples:
 
-**Backend logic change:**
+**Logic change:**
 ```bash
-cd backend && npm run lint:check && npx tsc --noEmit && npm run test:unit:silent
+{{LINT_CMD}} && {{TYPECHECK_CMD}} && {{TEST_CMD}}
 ```
 
-**Backend config/docs change:**
+**Config/docs change:**
 ```bash
-cd backend && npm run lint:check
+{{LINT_CMD}}
 ```
 
-**Mobile app change:**
+**Type-only change:**
 ```bash
-cd mobile-app && npx tsc --noEmit
+{{TYPECHECK_CMD}}
 ```
 
 If the touched package uses different scripts or stronger verification is warranted, run those instead. If any check fails, fix it before proceeding.

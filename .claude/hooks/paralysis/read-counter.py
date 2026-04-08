@@ -1,14 +1,30 @@
 #!/usr/bin/env python3
 """
-Analysis Paralysis Guard — PostToolUse hook.
+Analysis Paralysis Guard — Warn after too many reads without writing.
+
+Event:     PostToolUse
+Matcher:   (none — fires on all tools, filters internally)
+Blocking:  No (always exit 0, injects warning via additionalContext)
+Wired:     Yes (default in settings.json)
 
 Tracks consecutive read-only tool calls (Read, Grep, Glob) without any
-write action (Write, Edit, Bash) in between. After 5+ consecutive reads,
-injects a warning into the system message telling the agent to stop
-exploring and start writing code.
+write action (Write, Edit, Bash) in between. After STREAK_THRESHOLD
+consecutive reads, injects a warning telling the agent to stop exploring
+and start writing code.
 
-State is persisted to .claude/hooks/logs/.read-streak.json so it
-survives across hook invocations within a session.
+State persists to .claude/hooks/logs/.read-streak.json (gitignored).
+Resets after 30 minutes of inactivity (new session likely started).
+
+Configuration:
+  STREAK_THRESHOLD  — consecutive reads before warning (default: 5)
+  STALE_TIMEOUT_S   — seconds before state resets (default: 1800)
+  READ_TOOLS        — tools counted as "reads"
+  WRITE_TOOLS       — tools that reset the streak
+
+To enable, add to .claude/settings.json hooks.PostToolUse:
+  {
+    "hooks": [{"type": "command", "command": "python3 $CLAUDE_PROJECT_DIR/.claude/hooks/paralysis/read-counter.py"}]
+  }
 """
 
 import json

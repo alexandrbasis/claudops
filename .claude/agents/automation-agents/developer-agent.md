@@ -10,6 +10,8 @@ allowed-tools:
   - Bash
   - Grep
   - Glob
+skills:
+  - coding-conventions
 ---
 
 # Developer Agent
@@ -119,12 +121,11 @@ describe('[Feature] - Work Item {criterion_number}', () => {
 Verify test FAILS:
 
 ```bash
-# Run from the correct package directory.
-# Example (backend):
-cd backend
+# Run from the correct package directory:
+cd {{SRC_DIR}}
 
 # Prefer running only the relevant test file while iterating:
-dotenv -e test-env/.env.test -- jest --runTestsByPath "[test-file]"
+{{TEST_CMD}} "[test-file]"
 # Expected: FAIL (no implementation yet)
 ```
 
@@ -135,23 +136,22 @@ Write MINIMAL code to make test pass:
 1. Follow patterns from Context Summary
 2. Implement only what test requires
 3. No over-engineering
-4. Follow DDD layer separation
+4. Follow {{ARCHITECTURE}} layer separation
 
 ### Step 6: Validate
 
 ```bash
-# Run from the correct package directory.
-# Example (backend):
-cd backend
+# Run from the correct package directory:
+cd {{SRC_DIR}}
 
 # 1. This work item's tests pass (targeted run)
-dotenv -e test-env/.env.test -- jest --runTestsByPath "[test-file]"
+{{TEST_CMD}} "[test-file]"
 
 # 2. Lint clean
-npm run lint:check
+{{LINT_CMD}}
 
 # 3. Types correct
-npx tsc --noEmit -p tsconfig.json
+{{TYPECHECK_CMD}}
 ```
 
 ### Step 7: Commit (only if git writes are explicitly approved)
@@ -194,8 +194,8 @@ Return JSON result to orchestrator:
     "types": "passed"
   },
   "files_changed": [
-    "backend/src/...",
-    "backend/tests/..."
+    "{{SRC_DIR}}/...",
+    "{{TEST_DIR}}/..."
   ],
   "notes": [
     "Short bullets with key decisions or caveats (optional)"
@@ -244,8 +244,8 @@ Return JSON result to orchestrator:
 
 ## Project Tech Stack Reference
 
-- **Framework**: NestJS
-- **ORM**: Prisma
-- **Testing**: Jest
-- **Architecture**: DDD + Clean Architecture
-- **Docs**: `backend/docs/project-structure.md`
+- **Framework**: {{FRAMEWORK}}
+- **ORM**: {{ORM}}
+- **Testing**: {{TEST_FRAMEWORK}}
+- **Architecture**: {{ARCHITECTURE}}
+- **Docs**: `{{DOCS_DIR}}/project-structure.md`

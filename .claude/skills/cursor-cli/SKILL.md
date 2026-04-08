@@ -133,8 +133,8 @@ File paths are referenced directly in the prompt text (no `@path` syntax like Ge
 **Example**:
 ```bash
 agent -p "Review the implementation in:
-- backend/src/application/sessions/use-cases/create-session.use-case.ts
-- backend/src/infrastructure/web/dto/sessions/create-session.dto.ts
+- {{SRC_DIR}}/application/sessions/use-cases/create-session.use-case.ts
+- {{SRC_DIR}}/infrastructure/web/dto/sessions/create-session.dto.ts
 
 Check against requirements in: tasks/task-2026-01-09-feature/tech-decomposition.md
 Focus on: correctness, edge cases, error handling" \

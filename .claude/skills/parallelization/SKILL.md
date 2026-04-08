@@ -120,14 +120,9 @@ git merge <worktree_branch> --no-ff -m "feat(scope): implement criterion N"
 
 After all patches are applied, run the project's quality checks. Detect the project area from the task:
 
-**Backend** (`backend/`):
+**Project verification:**
 ```bash
-cd backend && npm run format:check && npm run lint:check && npx tsc --noEmit -p tsconfig.json && npm run test:silent
-```
-
-**Mobile** (`mobile-app/`):
-```bash
-cd mobile-app && npx tsc --noEmit && npm run lint && npm test
+{{LINT_CMD}} && {{TYPECHECK_CMD}} && {{TEST_CMD}}
 ```
 
 If validation fails, identify which worker's changes caused the issue and fix in the main working tree.

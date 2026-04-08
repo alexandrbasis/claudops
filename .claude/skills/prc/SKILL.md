@@ -93,7 +93,7 @@ For "Discuss" items the user resolved: apply the agreed-upon fix.
 ### Step 2: Run Verification
 
 1. Run project tests (`npm test` or equivalent)
-2. Run lint checks (`npm run lint` or equivalent)
+2. Run lint checks (`{{LINT_CMD}}` or equivalent)
 3. Run type checks if applicable (`tsc --noEmit`)
 
 **Error — tests or lint fail:**

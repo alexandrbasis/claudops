@@ -161,7 +161,7 @@ Adapt output to the research depth determined in step 1.
 
 Instead of relying on a static list, read project context dynamically:
 - Check `CLAUDE.md` at the repo root for current stack and architecture
-- Check `backend/AGENTS.md` for backend-specific constraints
+- Check `{{DOCS_DIR}}/AGENTS.md` for project-specific constraints
 - Check `package.json` / `tsconfig.json` for actual dependencies and versions
 - Reference existing patterns in the codebase when making recommendations
 

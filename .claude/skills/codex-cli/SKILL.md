@@ -186,8 +186,8 @@ only tell codex WHICH diff to look at, not HOW to review it. The prompt provides
 **Example**:
 ```bash
 codex exec "Review the implementation in:
-- backend/src/application/sessions/use-cases/create-session.use-case.ts
-- backend/src/infrastructure/web/dto/sessions/create-session.dto.ts
+- {{SRC_DIR}}/application/sessions/use-cases/create-session.use-case.ts
+- {{SRC_DIR}}/infrastructure/web/dto/sessions/create-session.dto.ts
 
 Check against requirements in: tasks/task-2026-01-09-feature/tech-decomposition.md
 Focus on: correctness, edge cases, error handling" \

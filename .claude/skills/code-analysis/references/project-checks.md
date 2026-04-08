@@ -2,75 +2,80 @@
 
 Detailed commands for project-specific code analysis. Read this when analyzing the project codebase.
 
-## DDD Layer Separation
+## Generic Codebase Metrics
 
-The canonical structure is documented in `backend/docs/project-structure.md`.
-Key rule: domain layer has NO dependencies on infrastructure.
-
-```bash
-# Domain files importing from infrastructure (VIOLATION)
-grep -rn "from.*infrastructure" backend/src/*/domain/ 2>/dev/null
-
-# Domain files importing Prisma directly (VIOLATION)
-grep -rn "from.*@prisma\|from.*prisma" backend/src/*/domain/ 2>/dev/null
-
-# Application layer importing infrastructure internals (CONCERN)
-grep -rn "from.*\.repository\|from.*\.adapter" backend/src/*/application/ 2>/dev/null
-```
-
-## Prisma Schema Health
+These checks work for any project.
 
 ```bash
-# Model count
-grep -c "^model " backend/prisma/schema.prisma
+# Total source file count
+find {{SRC_DIR}} -type f -name "*.{{LANGUAGE}}" 2>/dev/null | wc -l
 
-# Index coverage
-grep -c "@@index\|@@unique" backend/prisma/schema.prisma
+# Test file count
+find {{TEST_DIR}} -type f -name "*.test.*" -o -name "*.spec.*" 2>/dev/null | wc -l
 
-# Migration count (high count may indicate schema churn)
-ls backend/prisma/migrations/ 2>/dev/null | wc -l
+# Lines of code (source, excluding tests)
+find {{SRC_DIR}} -type f -name "*.{{LANGUAGE}}" | xargs wc -l 2>/dev/null | tail -1
 
-# Relations (potential N+1 risk if unindexed)
-grep -B2 "@relation" backend/prisma/schema.prisma
-```
-
-## NestJS Module Boundaries
-
-```bash
-# Services injected across modules
-grep -rn "@Inject" backend/src/ --include="*.ts" | grep -v "node_modules"
-
-# Module provider exports (what's shared between modules)
-grep -rn "exports:" backend/src/ --include="*.module.ts"
+# Dependency count
+cat package.json 2>/dev/null | jq '.dependencies | length' || \
+cat requirements.txt 2>/dev/null | wc -l || \
+cat go.mod 2>/dev/null | grep -c "require" || \
+echo "Unknown package manager"
 ```
 
 ## Error Handling Patterns
 
 ```bash
 # Raw Error throws (should use domain exceptions instead)
-grep -rn "throw new Error(" backend/src/ --include="*.ts" \
+grep -rn "throw new Error(" {{SRC_DIR}} --include="*.ts" --include="*.js" \
   | grep -v "node_modules\|spec\|test"
-
-# Domain exception usage (expected pattern)
-grep -rn "throw new.*Exception" backend/src/*/domain/ 2>/dev/null
 
 # Empty catch blocks (swallowed errors)
-grep -rn "catch.*{" backend/src/ --include="*.ts" \
+grep -rn "catch.*{" {{SRC_DIR}} --include="*.ts" --include="*.js" \
   | grep -v "node_modules\|spec\|test"
+
+# TODO/FIXME/HACK markers
+grep -rn "TODO\|FIXME\|HACK\|XXX" {{SRC_DIR}} --include="*.ts" --include="*.js" --include="*.py" \
+  | grep -v "node_modules\|__pycache__"
 ```
 
-## API Surface
+## Configuration & Security
 
 ```bash
-# All controller endpoints
-grep -rn "@Get\|@Post\|@Put\|@Patch\|@Delete" backend/src/ --include="*.ts"
+# Hardcoded secrets (potential)
+grep -rn "password\|secret\|api_key\|apikey\|token" {{SRC_DIR}} --include="*.ts" --include="*.js" --include="*.py" \
+  | grep -v "node_modules\|test\|spec\|\.env\.example\|__pycache__"
 
-# Guards applied (auth coverage)
-grep -rn "@UseGuards" backend/src/ --include="*.ts"
+# Environment variable usage
+grep -rn "process\.env\|os\.environ\|env\.get" {{SRC_DIR}} --include="*.ts" --include="*.js" --include="*.py" \
+  | grep -v "node_modules\|__pycache__"
 
-# DTOs defined
-find backend/src -name "*.dto.ts" | wc -l
-
-# Validators used
-grep -rn "class-validator\|IsString\|IsNumber\|IsNotEmpty" backend/src/ --include="*.dto.ts"
+# Config files present
+ls {{CONFIG_FILES}} 2>/dev/null
 ```
+
+## Architecture Layer Checks
+
+```bash
+# File distribution across top-level directories
+for dir in {{SRC_DIR}}/*/; do
+  echo "$(basename "$dir"): $(find "$dir" -type f | wc -l) files"
+done
+
+# Circular dependency risk: files importing from parent directories
+grep -rn "from '\.\.\/" {{SRC_DIR}} --include="*.ts" --include="*.js" 2>/dev/null | head -20
+```
+
+## Schema / Data Model Health
+
+```bash
+# Schema file stats (if schema path configured)
+wc -l {{SCHEMA_PATH}} 2>/dev/null || echo "No schema file configured"
+
+# Migration count (if migrations directory exists)
+find . -path "*/migrations/*" -type f 2>/dev/null | wc -l
+```
+
+## Project-Specific Checks
+
+{{PROJECT_SPECIFIC_CHECKS}}

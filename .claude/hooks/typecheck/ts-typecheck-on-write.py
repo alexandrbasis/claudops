@@ -1,11 +1,26 @@
 #!/usr/bin/env python3
 """
-PostToolUse hook: run TypeScript type checking after editing .ts/.tsx files.
+TypeScript Typecheck on Write — Run tsc after editing .ts/.tsx files.
 
-Non-blocking — surfaces type errors as additionalContext so Claude sees them
-but the tool call is not denied.
+Event:     PostToolUse
+Matcher:   Write|Edit
+Blocking:  No (always exit 0, surfaces errors via additionalContext)
+Wired:     No (project-specific — configure TYPECHECK_TARGET first)
 
-Uses a simple cache to avoid re-running tsc when nothing changed.
+Uses a file-hash cache to avoid re-running tsc when nothing changed.
+Cache expires after 5 minutes to force periodic re-checks.
+
+Configuration:
+  TYPECHECK_TARGET      — subdirectory containing tsconfig.json
+  TYPECHECK_CMD         — typecheck command as list
+  TYPECHECK_EXTENSIONS  — file extensions to trigger on
+  TYPECHECK_TIMEOUT     — max seconds for typecheck run
+
+To enable, add to .claude/settings.json hooks.PostToolUse:
+  {
+    "matcher": "Write|Edit",
+    "hooks": [{"type": "command", "command": "python3 $CLAUDE_PROJECT_DIR/.claude/hooks/typecheck/ts-typecheck-on-write.py", "timeout": 60}]
+  }
 """
 
 import hashlib
@@ -16,24 +31,33 @@ import sys
 import time
 from pathlib import Path
 
+# === CONFIGURE FOR YOUR PROJECT ===
+TYPECHECK_TARGET = "backend"  # subdirectory with tsconfig.json
+TYPECHECK_CMD = ["npx", "tsc", "--noEmit", "-p", "tsconfig.json"]
+TYPECHECK_EXTENSIONS = (".ts", ".tsx")
+TYPECHECK_TIMEOUT = 30  # seconds
 
 # Cache file to avoid re-running tsc on unchanged state
 CACHE_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     "..", "logs", ".tsc-cache.json"
 )
+CACHE_TTL = 300  # 5 minutes
 
 
-def is_backend_typescript(file_path: str, project_dir: str) -> bool:
-    """Check if file is a TypeScript file under backend/."""
-    if not file_path.endswith((".ts", ".tsx")):
+def is_target_file(file_path: str, project_dir: str) -> bool:
+    """Check if file is a TypeScript file under the target directory."""
+    if not file_path.endswith(TYPECHECK_EXTENSIONS):
+        return False
+
+    if not TYPECHECK_TARGET:
         return False
 
     file_abs = Path(file_path).resolve()
-    backend_dir = Path(project_dir) / "backend"
+    target_dir = Path(project_dir) / TYPECHECK_TARGET
 
     try:
-        file_abs.relative_to(backend_dir)
+        file_abs.relative_to(target_dir)
         return True
     except ValueError:
         return False
@@ -57,8 +81,7 @@ def should_skip_cache(file_path: str) -> bool:
         with open(CACHE_PATH, "r") as f:
             cache = json.load(f)
 
-        # Cache is stale after 5 minutes (force re-check)
-        if time.time() - cache.get("timestamp", 0) > 300:
+        if time.time() - cache.get("timestamp", 0) > CACHE_TTL:
             return False
 
         current_hash = get_file_hash(file_path)
@@ -76,7 +99,7 @@ def update_cache(file_path: str, has_errors: bool) -> None:
             "timestamp": time.time(),
             "last_file_hash": get_file_hash(file_path),
             "last_file": file_path,
-            "had_errors": has_errors
+            "had_errors": has_errors,
         }
         with open(CACHE_PATH, "w") as f:
             json.dump(cache, f)
@@ -85,24 +108,22 @@ def update_cache(file_path: str, has_errors: bool) -> None:
 
 
 def run_typecheck(project_dir: str) -> tuple[bool, str]:
-    """Run tsc --noEmit and return (success, output)."""
-    backend_dir = os.path.join(project_dir, "backend")
+    """Run the typecheck command. Returns (success, output)."""
+    target_dir = os.path.join(project_dir, TYPECHECK_TARGET)
 
     try:
         result = subprocess.run(
-            ["npx", "tsc", "--noEmit", "-p", "tsconfig.json"],
-            cwd=backend_dir,
+            TYPECHECK_CMD,
+            cwd=target_dir,
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=TYPECHECK_TIMEOUT,
         )
 
         if result.returncode == 0:
             return True, ""
 
-        # Extract meaningful error lines (skip "Found N errors" summary)
         errors = result.stdout.strip() or result.stderr.strip()
-        # Limit output to prevent context bloat
         lines = errors.split("\n")
         if len(lines) > 20:
             errors = "\n".join(lines[:20]) + f"\n... and {len(lines) - 20} more errors"
@@ -110,10 +131,10 @@ def run_typecheck(project_dir: str) -> tuple[bool, str]:
         return False, errors
 
     except subprocess.TimeoutExpired:
-        return False, "tsc timed out (30s)"
+        return False, f"tsc timed out ({TYPECHECK_TIMEOUT}s)"
     except FileNotFoundError:
-        return True, ""  # npx not available — skip silently
-    except Exception as e:
+        return True, ""  # Command not found — skip silently
+    except Exception:
         return True, ""  # Don't block on unexpected errors
 
 
@@ -121,7 +142,7 @@ def main() -> None:
     """Main hook execution."""
     try:
         input_data = json.load(sys.stdin)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, ValueError):
         sys.exit(0)
 
     tool_name = input_data.get("tool_name", "")
@@ -132,10 +153,9 @@ def main() -> None:
         sys.exit(0)
 
     file_path = tool_input.get("file_path", "")
-    if not file_path or not is_backend_typescript(file_path, project_dir):
+    if not file_path or not is_target_file(file_path, project_dir):
         sys.exit(0)
 
-    # Skip if file hasn't changed since last successful check
     if should_skip_cache(file_path):
         sys.exit(0)
 
@@ -143,7 +163,6 @@ def main() -> None:
     update_cache(file_path, not success)
 
     if not success and errors:
-        # Surface errors as additionalContext (non-blocking)
         output = {
             "hookSpecificOutput": {
                 "hookEventName": "PostToolUse",

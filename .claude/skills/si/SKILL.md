@@ -90,7 +90,7 @@ The task document is the source of truth. Do not endlessly explore the codebase.
 
    ```markdown
    - [x] Sub-step 3.1: Update CreateSessionUseCase logic
-     - **Tests**: `npm run test -- create-session` - PASS
+     - **Tests**: `{{TEST_CMD}} -- [test-filter]` - PASS
    ```
 
 2. **Commit (permission gate)**:

@@ -70,7 +70,7 @@ git stash list
    ```
 4. **Capture test state**:
    ```bash
-   cd backend && npm run test:silent 2>&1 | tail -20
+   {{TEST_CMD}} 2>&1 | tail -20
    ```
 
 ### STEP 4: Capture Context
@@ -107,7 +107,7 @@ Load these files to rebuild context (ordered by importance):
 2. `[path/to/test-file]` — [why: e.g., "failing test that needs GREEN implementation"]
 3. `[path/to/related-module]` — [why: e.g., "dependency modified in Step 2"]
 4. `[path/to/task-doc]` — [why: "source of truth for requirements"]
-5. `[path/to/context-file]` — [why: e.g., "Prisma schema with new model"]
+5. `[path/to/context-file]` — [why: e.g., "database schema with new model"]
 
 ## Working Tree State
 
