@@ -16,6 +16,19 @@ A production-tested `.claude/` folder you drop into **any** codebase. Includes a
 
 Works with any language, framework, and architecture — TypeScript, Python, Go, Ruby, Java, and more.
 
+## Philosophy
+
+This is a **human-in-the-loop pipeline**, not a fully autonomous agent. Every stage is triggered by you, every output is validated by you. The AI proposes — you approve, adjust, or reject. Nothing ships without your explicit sign-off.
+
+- **You trigger** each stage — `/nf` for discovery, `/ct` for planning, `/si` for implementation, `/sr` for review
+- **You validate** between stages — review the discovery doc before planning, review the plan before coding
+- **You control the gates** — quality checks run automatically, but merging is always your decision
+- **Agents assist, not replace** — 17 agents handle the grunt work (linting, testing, architecture checks), you make the calls
+
+The result: AI speed with human judgment. Full context at every step, no black-box automation.
+
+> Subtitles by [@DimaTorzok](https://x.com/DimaTorzok)
+
 ## Highlights
 
 - **`/setup` wizard** — auto-detects your tech stack, project structure, and commands, then configures all skills, agents, and hooks in one pass
