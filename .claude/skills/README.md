@@ -1,6 +1,13 @@
 # Project skills
 
-Index of skills in this repo (26). Each folder contains a `SKILL.md`.
+Index of skills in this repo (27). Each folder contains a `SKILL.md`.
+
+## Setup & config
+
+| Skill | Purpose |
+|-------|---------|
+| [/setup](./setup) | Initial workflow configuration for a new codebase |
+| [/update-setup](./update-setup) | Pull upstream changes from claudops repo |
 
 ## Core workflow
 
