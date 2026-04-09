@@ -1,6 +1,6 @@
 # Project skills
 
-Index of skills in this repo (27). Each folder contains a `SKILL.md`.
+Index of skills in this repo (30). Each folder contains a `SKILL.md`.
 
 ## Setup & config
 
