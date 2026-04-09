@@ -19,9 +19,9 @@
 #     "hooks": [{"type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/guards/analytics-reminder.sh"}]
 #   }
 
-# === CONFIGURE FOR YOUR PROJECT ===
-SCREEN_FILE_PATTERN="/mobile-app/(app/.*\.tsx|src/features/.*/screens/.*\.tsx)$"
-REMINDER_MESSAGE="Analytics check: does this screen/flow need analytics events? Check your analytics config and consider tracking key user actions."
+# === CONFIGURE FOR YOUR PROJECT (updated by /setup wizard) ===
+SCREEN_FILE_PATTERN="{{SCREEN_FILE_PATTERN}}"  # regex matching screen/page files, e.g. "/app/.*\.tsx$" or empty to disable
+REMINDER_MESSAGE="{{ANALYTICS_REMINDER_MESSAGE}}"
 
 # --- Read file path from stdin ---
 FILE_PATH=$(jq -r '.tool_input.file_path // ""')

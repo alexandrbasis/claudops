@@ -25,8 +25,8 @@
 VERIFY_FILES=true
 VERIFY_TESTS=true
 VERIFY_BUILD=true
-TEST_CMD="{{TEST_CMD}}"
-BUILD_CMD="{{BUILD_CMD}}"
+TEST_CMD="{{STOP_TEST_CMD}}"
+BUILD_CMD="{{STOP_BUILD_CMD}}"
 
 # --- Once-per-session: skip if already fired within 24h ---
 STATE_DIR="${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/logs"

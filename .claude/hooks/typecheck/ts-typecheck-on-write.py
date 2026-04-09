@@ -31,10 +31,10 @@ import sys
 import time
 from pathlib import Path
 
-# === CONFIGURE FOR YOUR PROJECT ===
-TYPECHECK_TARGET = "backend"  # subdirectory with tsconfig.json
-TYPECHECK_CMD = ["npx", "tsc", "--noEmit", "-p", "tsconfig.json"]
-TYPECHECK_EXTENSIONS = (".ts", ".tsx")
+# === CONFIGURE FOR YOUR PROJECT (updated by /setup wizard) ===
+TYPECHECK_TARGET = "{{TYPECHECK_TARGET}}"  # subdirectory with tsconfig.json, e.g. "." for root or "backend"
+TYPECHECK_CMD = {{TYPECHECK_CMD}}  # e.g. ["npx", "tsc", "--noEmit"]
+TYPECHECK_EXTENSIONS = {{TYPECHECK_EXTENSIONS}}  # e.g. (".ts", ".tsx")
 TYPECHECK_TIMEOUT = 30  # seconds
 
 # Cache file to avoid re-running tsc on unchanged state

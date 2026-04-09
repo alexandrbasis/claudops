@@ -27,15 +27,15 @@
 #   }
 
 # === CONFIGURE FOR YOUR PROJECT (updated by /setup wizard) ===
-PROTECTED_FILE_PATTERN=""     # regex for files needing special workflow, empty to disable
-PROTECTED_FILE_MESSAGE=""     # message shown when file is blocked
-CORE_LAYER_PATH=""            # path substring for core/domain layer, empty to disable
-CORE_FORBIDDEN_IMPORTS=""     # regex for imports forbidden in core layer
-INTERFACE_NAMING_ENABLED=false
-INTERFACE_PATH_FILTER="/src/"
-CONSOLE_LOG_BLOCKED=false
-CONSOLE_LOG_PATH_FILTER="/src/"
-CONSOLE_LOG_ALTERNATIVE="Use your framework's logger instead of console.log"
+PROTECTED_FILE_PATTERN="{{PROTECTED_FILE_PATTERN}}"     # regex for files needing special workflow, empty to disable
+PROTECTED_FILE_MESSAGE="{{PROTECTED_FILE_MESSAGE}}"     # message shown when file is blocked
+CORE_LAYER_PATH="{{CORE_LAYER_PATH}}"                   # path substring for core/domain layer, empty to disable
+CORE_FORBIDDEN_IMPORTS="{{CORE_FORBIDDEN_IMPORTS}}"     # regex for imports forbidden in core layer
+INTERFACE_NAMING_ENABLED={{INTERFACE_NAMING_ENABLED}}
+INTERFACE_PATH_FILTER="{{INTERFACE_PATH_FILTER}}"       # e.g. "/src/"
+CONSOLE_LOG_BLOCKED={{CONSOLE_LOG_BLOCKED}}
+CONSOLE_LOG_PATH_FILTER="{{CONSOLE_LOG_PATH_FILTER}}"   # e.g. "/src/"
+CONSOLE_LOG_ALTERNATIVE="{{CONSOLE_LOG_ALTERNATIVE}}"
 
 # --- Read input ---
 INPUT=$(cat)

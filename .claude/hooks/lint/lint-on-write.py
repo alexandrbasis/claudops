@@ -31,11 +31,11 @@ import sys
 from pathlib import Path
 from typing import Optional, Tuple
 
-# === CONFIGURE FOR YOUR PROJECT ===
-LINT_TARGETS = ["backend", "mobile-app"]  # subdirs with package.json + formatter
-LINT_EXTENSIONS = (".ts", ".tsx")
-SKIP_PATTERNS = ("node_modules", ".generated.", "prisma/migrations", "dist/")
-FORMAT_CMD = ["npx", "prettier", "--write"]
+# === CONFIGURE FOR YOUR PROJECT (updated by /setup wizard) ===
+LINT_TARGETS = {{LINT_TARGETS}}  # subdirs with package.json + formatter, e.g. ["src"] or ["backend", "frontend"]
+LINT_EXTENSIONS = {{LINT_EXTENSIONS}}  # e.g. (".ts", ".tsx") or (".py",)
+SKIP_PATTERNS = {{SKIP_PATTERNS}}  # path substrings to skip, e.g. ("node_modules", "dist/")
+FORMAT_CMD = {{FORMAT_CMD}}  # e.g. ["npx", "prettier", "--write"] or ["npx", "eslint", "--fix"]
 FORMAT_TIMEOUT = 15  # seconds
 
 

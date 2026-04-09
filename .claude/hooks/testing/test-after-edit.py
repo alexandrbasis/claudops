@@ -30,10 +30,10 @@ import subprocess
 import sys
 import time
 
-# === CONFIGURE FOR YOUR PROJECT ===
-TEST_CMD = ["npm", "run", "test:silent"]
-SOURCE_DIRS = ["src"]
-SOURCE_EXTENSIONS = (".ts", ".tsx", ".py")
+# === CONFIGURE FOR YOUR PROJECT (updated by /setup wizard) ===
+TEST_CMD = {{TEST_CMD_LIST}}  # e.g. ["npm", "run", "test:silent"] or ["pytest", "-q"]
+SOURCE_DIRS = {{SOURCE_DIRS}}  # e.g. ["src"] or ["backend/src", "frontend/src"]
+SOURCE_EXTENSIONS = {{SOURCE_EXTENSIONS}}  # e.g. (".ts", ".tsx") or (".py",)
 TEST_TIMEOUT = 60
 COOLDOWN_SECONDS = 30
 

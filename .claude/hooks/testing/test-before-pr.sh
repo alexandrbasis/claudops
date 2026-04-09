@@ -23,8 +23,8 @@
 set -euo pipefail
 
 # === CONFIGURE FOR YOUR PROJECT (updated by /setup wizard) ===
-TEST_CMD="{{TEST_CMD}}"
-BUILD_CMD="{{BUILD_CMD}}"  # empty string to skip build check
+TEST_CMD="{{PR_TEST_CMD}}"
+BUILD_CMD="{{PR_BUILD_CMD}}"  # empty string to skip build check
 
 # --- Allow bypass via env var ---
 if [ "${SKIP_TEST_BEFORE_PR:-false}" = "true" ]; then

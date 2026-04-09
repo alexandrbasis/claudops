@@ -162,18 +162,77 @@ Ask user confirmation every 5 files: "Continue applying to next batch?"
 
 **Step 3: Fill hook scripts**
 
-Scan `.sh` files in `.claude/hooks/` for `{{PLACEHOLDER}}` patterns and replace with confirmed values. Hook scripts use the same `{{VARIABLE}}` syntax as skills — the wizard treats them identically.
+Scan `.sh` and `.py` files in `.claude/hooks/` for `{{PLACEHOLDER}}` patterns and replace with confirmed values. Hook scripts use `{{VARIABLE}}` syntax — Python hooks use Python literal syntax (lists, tuples), shell hooks use plain strings.
 
-Also update hook-specific configuration variables based on the detected stack:
-- `bash-guard.sh`: Set `PROTECTED_DIRS`, `DB_DANGER_PATTERN`, `DB_SAFE_CMD` based on detected ORM
-- `file-guard.sh`: Set `PROTECTED_FILE_PATTERN`, `CORE_LAYER_PATH`, `CORE_FORBIDDEN_IMPORTS` based on detected architecture
-- `stop-guard.sh` and `test-before-pr.sh`: Already covered by `{{TEST_CMD}}` and `{{BUILD_CMD}}`
+**Hook placeholder mapping** — derive each value from Phase 1 detection results:
 
-**Step 4: Generate project-specific checks**
+| Hook File | Placeholder | How to Fill |
+|---|---|---|
+| **lint-on-write.py** | `{{LINT_TARGETS}}` | Python list of source dirs, e.g. `["src"]` or `["backend", "frontend"]` |
+| | `{{LINT_EXTENSIONS}}` | Python tuple of extensions, e.g. `(".ts", ".tsx")` or `(".py",)` |
+| | `{{SKIP_PATTERNS}}` | Python tuple of path substrings to skip, e.g. `("node_modules", "dist/", "prisma/migrations")` |
+| | `{{FORMAT_CMD}}` | Python list for formatter, e.g. `["npx", "prettier", "--write"]` or `["npx", "eslint", "--fix"]`. If no formatter detected, set to `[]` |
+| **ts-typecheck-on-write.py** | `{{TYPECHECK_TARGET}}` | Directory with tsconfig.json relative to project root. `"."` for root-level tsconfig, or subdir like `"backend"` |
+| | `{{TYPECHECK_CMD}}` | Python list, e.g. `["npx", "tsc", "--noEmit"]` |
+| | `{{TYPECHECK_EXTENSIONS}}` | Python tuple, e.g. `(".ts", ".tsx")` |
+| **test-after-edit.py** | `{{TEST_CMD_LIST}}` | Python list form of test command, e.g. `["npm", "run", "test:silent"]` or `["pytest", "-q"]` |
+| | `{{SOURCE_DIRS}}` | Python list of watched dirs, e.g. `["src"]` or `["backend/src", "lib"]` |
+| | `{{SOURCE_EXTENSIONS}}` | Python tuple matching language, e.g. `(".ts", ".tsx")` or `(".py",)` |
+| **bash-guard.sh** | `{{PROTECTED_DIRS}}` | Pipe-separated dir names, e.g. `node_modules\|src\|dist` |
+| | `{{DB_DANGER_PATTERN}}` | Regex for destructive DB commands based on ORM. Prisma: `prisma migrate reset\|prisma db push --force-reset`. Django: `migrate --run-syncdb\|flush`. Empty if no ORM. |
+| | `{{DB_SAFE_CMD}}` | Safe alternative, e.g. `prisma migrate dev` or `python manage.py migrate` |
+| | `{{DB_MIGRATE_PATTERN}}` | Regex for migration commands. Prisma: `prisma migrate`. Django: `manage.py migrate`. Empty if no ORM. |
+| | `{{DB_MIGRATE_SAFE_FLAG}}` | Safety flag. Prisma: `--create-only`. Django: `--plan`. Empty if no ORM. |
+| | `{{TEST_SILENT_PATTERN}}` | Regex matching test commands, e.g. `npm run test\|npm test`. Empty to disable enforcement. |
+| | `{{TEST_SILENT_SUFFIX}}` | Suffix to enforce, e.g. `:silent` or ` --quiet` |
+| **file-guard.sh** | `{{PROTECTED_FILE_PATTERN}}` | Regex for files needing special workflow, empty if none |
+| | `{{PROTECTED_FILE_MESSAGE}}` | Block message, empty if none |
+| | `{{CORE_LAYER_PATH}}` | Path substring for core/domain layer based on architecture. DDD: `/domain/`. Clean arch: `/core/`. Empty if no clear domain layer. |
+| | `{{CORE_FORBIDDEN_IMPORTS}}` | Regex for forbidden imports in core layer, e.g. `from.*infrastructure\|from.*@prisma`. Empty if no core layer. |
+| | `{{INTERFACE_NAMING_ENABLED}}` | `true` or `false` — enable only if codebase uses I-prefix convention |
+| | `{{INTERFACE_PATH_FILTER}}` | Path filter for naming enforcement, e.g. `/src/` |
+| | `{{CONSOLE_LOG_BLOCKED}}` | `true` or `false` — enable only if project uses a structured logger |
+| | `{{CONSOLE_LOG_PATH_FILTER}}` | Path filter, e.g. `/src/` |
+| | `{{CONSOLE_LOG_ALTERNATIVE}}` | Alternative message, e.g. `Use the Logger service instead of console.log` |
+| **analytics-reminder.sh** | `{{SCREEN_FILE_PATTERN}}` | Regex for screen/page files. React Native: `/(app\|screens)/.*\.tsx$`. Next.js: `/app/.*/page\.tsx$`. Empty to disable. |
+| | `{{ANALYTICS_REMINDER_MESSAGE}}` | Reminder text, or empty to disable |
+| **stop-guard.sh** | `{{STOP_TEST_CMD}}` | Shell test command string, e.g. `npm run test:silent` |
+| | `{{STOP_BUILD_CMD}}` | Shell build command string, e.g. `npm run build` |
+| **test-before-pr.sh** | `{{PR_TEST_CMD}}` | Shell test command string, e.g. `npm run test:silent` |
+| | `{{PR_BUILD_CMD}}` | Shell build/typecheck command, e.g. `npx tsc --noEmit`. Empty to skip. |
+
+**Important**: For Python hook files, placeholders are replaced with Python literals (no quotes around lists/tuples). For shell hook files, values go inside existing double quotes. When a value should be empty/disabled, use empty string `""` for shell or `[]`/`()` for Python.
+
+**Step 4: Wire ALL hooks into settings.json**
+
+Wire every configured hook into `.claude/settings.json`. Group by event and matcher:
+
+**PreToolUse — Bash matcher** (add to existing or create):
+1. `bash-guard.sh` — blocks `rm -rf`, force-push, destructive DB commands
+2. `test-before-pr.sh` (timeout: 120) — blocks `gh pr create` unless tests + build pass
+
+**PreToolUse — Write|Edit matcher** (add to existing or create):
+3. `file-guard.sh` — architecture layer boundary enforcement
+
+**PostToolUse — Write|Edit matcher** (create new):
+4. `lint-on-write.py` — auto-format after file edits
+5. `ts-typecheck-on-write.py` (timeout: 60) — run tsc after TS edits
+6. `test-after-edit.py` (timeout: 120) — run tests after source edits (has 30s cooldown)
+7. `analytics-reminder.sh` — remind about analytics for new screens/pages
+
+**Stop** (add to existing or create):
+8. `stop-guard.sh` — verification checklist before stopping (once per 24h)
+9. `auto-commit-on-stop.sh` — WIP auto-commit on session end
+
+**Wiring rules:**
+- Add to **existing** matcher arrays when the event+matcher already exists in settings.json
+- Create new matcher entries when they don't exist
+- Preserve all existing hooks (like `pre-commit-validation.py`, `command-logger.py`, `sensitive-file-guard.py`, `read-counter.py`, `cost-tracker.py`)
+- Set `timeout` for hooks that run external commands (typecheck, test, PR gate)
 
 If the codebase has a clear architecture pattern (DDD, MVC, etc.), generate `code-analysis/references/project-checks.md` with architecture-specific grep commands tailored to the detected source directory and patterns.
 
-**Step 5: Prune irrelevant skills**
+**Step 6: Prune irrelevant skills**
 
 Based on detected tech stack, identify skills that are not applicable to this project. For each irrelevant skill, ask the user whether to disable it.
 
@@ -198,9 +257,9 @@ multiSelect: true
 
 After all files are updated:
 
-1. Run: `grep -r '{{' .claude/skills/ .claude/agents/ --include='*.md' | head -20`
+1. Run: `grep -r '{{' .claude/skills/ .claude/agents/ .claude/hooks/ --include='*.md' --include='*.sh' --include='*.py' | head -30`
 2. If any `{{PLACEHOLDER}}` variables remain, report them to the user
-3. Show a summary of all changes made
+3. Show a summary of all changes made (skills, agents, AND hooks)
 
 ## Output
 
@@ -212,6 +271,21 @@ Tech stack: [LANGUAGE] + [FRAMEWORK] + [ORM]
 Architecture: [ARCHITECTURE]
 Files configured: X skills, Y agents, Z hooks
 Skills disabled: [list or "none"]
+
+Hooks wired (active in settings.json):
+  PreToolUse:Bash
+  ├── bash-guard.sh             — blocks rm -rf, force-push, destructive DB
+  └── test-before-pr.sh         — tests + build before gh pr create
+  PreToolUse:Write|Edit
+  └── file-guard.sh             — architecture layer enforcement
+  PostToolUse:Write|Edit
+  ├── lint-on-write.py          — auto-format after edits
+  ├── ts-typecheck-on-write.py  — tsc after TS edits
+  ├── test-after-edit.py        — tests after source edits (30s cooldown)
+  └── analytics-reminder.sh     — analytics reminder for new screens
+  Stop
+  ├── stop-guard.sh             — verification checklist (once/24h)
+  └── auto-commit-on-stop.sh    — WIP auto-commit on session end
 
 Next steps:
 - Run /sr to test the code review pipeline

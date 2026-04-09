@@ -27,13 +27,13 @@
 set -euo pipefail
 
 # === CONFIGURE FOR YOUR PROJECT (updated by /setup wizard) ===
-PROTECTED_DIRS="node_modules|src|dist"
-DB_DANGER_PATTERN=""          # regex for destructive DB commands, empty to disable
-DB_SAFE_CMD=""                # safe alternative command to suggest
-DB_MIGRATE_PATTERN=""         # regex for migration commands needing safety flag
-DB_MIGRATE_SAFE_FLAG=""       # safety flag to suggest
-TEST_SILENT_PATTERN=""        # regex for test commands that need silent variant, empty to disable
-TEST_SILENT_SUFFIX=""
+PROTECTED_DIRS="{{PROTECTED_DIRS}}"              # pipe-separated dirs to protect from rm -rf, e.g. "node_modules|src|dist"
+DB_DANGER_PATTERN="{{DB_DANGER_PATTERN}}"        # regex for destructive DB commands, empty to disable
+DB_SAFE_CMD="{{DB_SAFE_CMD}}"                    # safe alternative command to suggest
+DB_MIGRATE_PATTERN="{{DB_MIGRATE_PATTERN}}"      # regex for migration commands needing safety flag
+DB_MIGRATE_SAFE_FLAG="{{DB_MIGRATE_SAFE_FLAG}}"  # safety flag to suggest
+TEST_SILENT_PATTERN="{{TEST_SILENT_PATTERN}}"    # regex for test commands that need silent variant, empty to disable
+TEST_SILENT_SUFFIX="{{TEST_SILENT_SUFFIX}}"
 
 # --- Read command from stdin ---
 COMMAND=$(jq -r '.tool_input.command')
