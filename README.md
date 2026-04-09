@@ -4,10 +4,10 @@
 
 **Author:** [@alexandrbasis](https://x.com/alexandrbasis) | [@MishkaKey](https://x.com/MishkaKey)
 
-[![Live Site](https://img.shields.io/badge/Live_Site-claudops-0d9488?style=flat-square)](https://claudops-production.up.railway.app)
+[![Live Site](https://img.shields.io/badge/Live_Site-claudops-0d9488?style=flat-square)](https://alexandrbasis.com/claudops/workflows/)
 
-<a href="https://claudops-production.up.railway.app">
-  <img src="docs/workflow-overview.jpg" alt="Claudops: AI Development Workflow — 7-stage pipeline from Ideation to Post-Merge" width="100%">
+<a href="https://alexandrbasis.com/claudops/workflows/">
+  <img src="docs/workflow-overview.png" alt="Claudops AI Development Pipeline — 7 stages from feature discovery to deployment" width="100%">
 </a>
 
 ---
