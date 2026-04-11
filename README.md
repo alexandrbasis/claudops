@@ -27,8 +27,6 @@ This is a **human-in-the-loop pipeline**, not a fully autonomous agent. Every st
 
 The result: AI speed with human judgment. Full context at every step, no black-box automation.
 
-> Subtitles by [@DimaTorzok](https://x.com/DimaTorzok)
-
 ## Highlights
 
 - **`/setup` wizard** — auto-detects your tech stack, project structure, and commands, then configures all skills, agents, and hooks in one pass
