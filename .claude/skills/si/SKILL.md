@@ -79,6 +79,24 @@ If work can be done safely in parallel, use `.claude/skills/parallelization/SKIL
 
 The task document is the source of truth. Do not endlessly explore the codebase.
 
+#### Mutation & Async Safety Checks
+When the current step creates, updates, or deletes entities, or involves async callbacks:
+
+**Post-mutation UX checklist:**
+- Is the async call awaited by the UI event handler (not fire-and-forget)?
+- Does the caller show success feedback or navigate to a visible result?
+- Does the caller refresh every local state snapshot that depends on the mutation?
+- Are semantic defaults set (category, type, order, visibility) — not just technically required fields?
+- If the current screen cannot display the new entity, is that intentional and documented?
+
+**Async callback checklist:**
+- Is the callback marked `async` and does it `await` the mutation?
+- Does the caller have `try/catch` with a user-visible error state?
+- Does a modal/dialog/overlay close only after the async chain resolves (not before)?
+- If the operation can fail, is there a rollback or cleanup path for partial writes?
+
+Skip these checks for steps that don't involve mutations or async UI interactions.
+
 #### After Each Step:
 1. **Update task document** (REQUIRED):
    - Mark step checkbox: `- [ ]` → `- [x]`

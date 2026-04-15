@@ -193,6 +193,14 @@ Document non-trivial choices in the tech-decomposition file:
 - Tracking / Notes (optional)
 
 **Planning rules:**
+- **Entity lifecycle** (when the task creates, updates, or deletes entities): add a `## Entity Lifecycle` section covering:
+  - Creation entry points: where can the entity be created?
+  - Persistence defaults: which fields must be set, including semantic defaults (category, type, order, visibility)?
+  - Immediate feedback: what confirms success to the user?
+  - Canonical visibility: where should the entity appear after creation?
+  - Cross-surface visibility: what other pages, lists, widgets, searches, or groupings must reflect it?
+  - Data normalization: should existing misclassified or orphaned entities be migrated?
+- **Constraint-to-UI traceability**: for every service-layer validation rule in the spec, require a mapped UI element — error message, disabled/hidden option, input hint, or highlighted field. If a validation rule has no corresponding UI affordance, flag it as a gap.
 - Add `## Must Haves` immediately after the objective:
   ```markdown
   ## Must Haves

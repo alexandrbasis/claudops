@@ -93,6 +93,14 @@ Confirm the detected type with the user via AskUserQuestion before proceeding.
 
 If no project-specific design context exists, instruct the playground to use a neutral, accessible default style that is easy to adapt.
 
+**Required states in every prototype:**
+- **Error states**: what does the user see when validation fails, a request errors, or input is invalid?
+- **Constraint flows**: what options are available, disabled, or hidden based on context? Show pre-submission guidance, not just post-submission errors.
+- **Empty states**: what appears when there's no data yet? Include actionable guidance (not just "nothing here").
+- **Success feedback**: after a create/update/delete action, what confirms it worked?
+
+If the feature involves entity creation, the prototype must show where the entity appears after creation — on the current screen and on any cross-surface management page.
+
 **Fallback:** if the `playground` skill is not available, generate the HTML file directly:
 - Self-contained single file (inline CSS/JS, no external deps)
 - Dark theme, single state object pattern, live preview updates
