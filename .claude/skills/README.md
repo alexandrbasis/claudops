@@ -1,6 +1,6 @@
 # Project skills
 
-Index of skills in this repo (30). Each folder contains a `SKILL.md`.
+Index of skills in this repo (31). Each folder contains a `SKILL.md`.
 
 ## Setup & config
 
@@ -46,6 +46,7 @@ Index of skills in this repo (30). Each folder contains a `SKILL.md`.
 
 | Skill | Purpose |
 |-------|---------|
+| [/dev-server](./dev-server) | Start dev server and monitor for errors |
 | [/dbg](./dbg) | Runtime debugging with evidence |
 | [/fci](./fci) | CI failures |
 

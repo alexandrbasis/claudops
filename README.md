@@ -32,7 +32,7 @@ The result: AI speed with human judgment. Full context at every step, no black-b
 - **`/setup` wizard** — auto-detects your tech stack, project structure, and commands, then configures all skills, agents, and hooks in one pass
 - **`/update-setup`** — pulls upstream changes from claudops, shows a diff, lets you cherry-pick updates while preserving your local customizations
 - **17 specialized agents** — TDD, code review, task validation, research
-- **30 skills** — full dev lifecycle and cross-AI helpers (Gemini CLI, Codex CLI, Cursor CLI)
+- **31 skills** — full dev lifecycle, dev server monitoring, and cross-AI helpers (Gemini CLI, Codex CLI, Cursor CLI)
 - **Skills ↔ Agents composability** — agents preload shared convention skills via `skills:` frontmatter
 - **Cross-AI plan review** — optional Gemini verification of plans (see `review-plan-gemini.sh`)
 - **Hooks** — lint on write, sync, validation, guards, metrics
@@ -83,7 +83,7 @@ The result: AI speed with human judgment. Full context at every step, no black-b
 
 ---
 
-### Skills (28)
+### Skills (31)
 
 See [`.claude/skills/README.md`](.claude/skills/README.md) for the full index. Summary:
 
@@ -92,7 +92,7 @@ See [`.claude/skills/README.md`](.claude/skills/README.md) for the full index. S
 | Setup & conventions | `setup`, `update-setup`, `coding-conventions`, `review-conventions` |
 | Core workflow | `ct`, `si`, `si-quick`, `sr`, `prc`, `ph`, `nf`, `product`, `vp`, `blueprint` |
 | Discovery & design | `brainstorm`, `design-exploration`, `analyze`, `grill-me`, `rip` |
-| Quality & debugging | `code-analysis`, `dbg`, `fci` |
+| Quality & debugging | `dev-server`, `code-analysis`, `dbg`, `fci` |
 | Cross-AI | `gemini-cli`, `codex-cli`, `cursor-cli` |
 | Integrations & meta | `cc-linear`, `deep-research`, `parallelization`, `sbs`, `update-docs` |
 

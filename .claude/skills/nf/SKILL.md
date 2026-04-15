@@ -122,6 +122,15 @@ Drive the conversation toward the sections of the discovery template. Ask additi
 - Security, accessibility, performance, privacy, or platform limitations that materially shape the feature
 - Assumptions the downstream implementation must preserve
 
+**Post-Action & Cross-Surface Behavior** (for any create/update/delete workflow):
+- After this action succeeds, what exactly should the user see?
+- Which screen is the canonical place to confirm the created/updated entity exists?
+- If the current screen doesn't show the result directly, what success feedback should appear?
+- Does this entity also appear on other pages, lists, dashboards, search results, or category groupings? What metadata governs how it appears there?
+- For every backend validation rule, what's the corresponding UI affordance (error message, disabled option, hint, highlighted field)?
+- If the user picks an invalid option, do they see the error before or after submission?
+- Are there options that should be hidden or visually distinguished based on context?
+
 Continue deep-dive until the user confirms the document is clear, scoped, and ready to stand on its own.
 
 ### Step 4: "Grill Me" Challenge Round

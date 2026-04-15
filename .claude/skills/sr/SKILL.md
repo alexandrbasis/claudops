@@ -101,6 +101,8 @@ Use `quick` only when ALL are true:
 
 Otherwise use `full`.
 
+**Full-feature scope option (`--scope=feature`):** When reviewing Phase N of a multi-phase task and the task directory contains earlier phases, optionally include the full feature diff (all phases from the earliest base commit to HEAD). Flag files changed in earlier phases but not in the current phase as **integration surface** — these are where cross-phase bugs hide. Use this when the current phase integrates with prior phases or when the task doc mentions cross-phase dependencies.
+
 ## STEP 5: Review Pipeline
 
 ### 5.1 Optional Spec Gate
@@ -127,6 +129,31 @@ In `full` scope, also run:
 - `test-coverage-reviewer`
 - `documentation-accuracy-reviewer`
 - `performance-reviewer`
+
+### 5.4 Targeted Reviewers
+
+Run conditionally based on diff content:
+
+**Error path reviewer** — when the diff contains async call chains:
+- For each async call chain: what happens if it throws? Where does the error propagate?
+- Does the caller have try/catch with a user-visible error state?
+- Does a modal/dialog/overlay close before the async chain resolves?
+- Are there multi-step write operations that lack atomicity (if step 2 fails, step 1 is orphaned)?
+
+**Integration seams reviewer** — when the diff crosses component/module boundaries:
+- Data passed through navigation or routing (are all required params forwarded?)
+- Callback shapes: does the caller await the callback? Does it handle errors?
+- State subscriptions: after a mutation, is every dependent state snapshot refreshed?
+- Modal/dialog lifecycle vs async operations: does the UI update only after resolution?
+
+**Cross-surface entity reviewer** — when the diff creates, updates, or deletes entities:
+- Does the entity appear correctly on its canonical management/list surface, not just the origin screen?
+- Are semantic defaults set (category, type, grouping, order)?
+- Is there success feedback visible to the user after the operation?
+
+### 5.5 Pattern Propagation
+
+After **any** reviewer flags a major or critical finding, grep the codebase for the same anti-pattern in related files before finalizing the review. Document sibling occurrences in the `key-findings` section even if those files are outside the current diff.
 
 For every skipped reviewer, write a one-line reason in that section.
 
@@ -189,6 +216,14 @@ Verdicts:
 - `NEEDS FIXES`: any critical or major finding
 
 Never return `APPROVED` for an uncommitted working-tree draft.
+
+## STEP 10: QA Gate Recommendation
+
+After the verdict is written, check if the diff includes UI/frontend files (e.g., `.svelte`, `.tsx`, `.jsx`, `.vue`, `.html`, component files). If it does, append a **QA recommendation** to the review file:
+
+> **QA recommended**: This review includes UI changes. Static code review cannot catch runtime layout, navigation, or user-flow issues. Consider running browser-based QA (manual or automated) before merging.
+
+This is a recommendation, not a blocker. It surfaces the gap between "code looks correct" and "feature works correctly."
 
 ## Common Mistakes
 - Creating multiple CR files — there is always exactly ONE per review target
