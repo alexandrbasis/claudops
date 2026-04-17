@@ -77,3 +77,7 @@ Thumbs.db
 .claude/hooks/logs/.stop-guard-fired
 .claude/hooks/logs/.test-last-run.json
 .claude/hooks/logs/commands.jsonl
+
+# Local audit/scratch artifacts (kept locally, not committed)
+tasks/
+test-results/
