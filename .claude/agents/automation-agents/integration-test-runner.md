@@ -209,7 +209,16 @@ Report every failure and every warning — do not pre-filter based on perceived 
   "task_path": "path/to/task/directory",
   "report_doc": "path/to/Integration Test Report - Task.md",
   "tests": {
-    "e2e": {"status": "passed|failed|skipped", "total": 10, "passed": 10},
+    "e2e": {
+      "status": "passed|failed|skipped",
+      "total": 10,
+      "passed": 8,
+      "failed": 2,
+      "failures": [
+        {"file": "test/e2e/foo.spec.ts", "name": "POST /resource", "message": "Status 500"},
+        {"file": "test/e2e/bar.spec.ts", "name": "GET /health", "message": "timeout"}
+      ]
+    },
     "database": {"status": "passed|failed|skipped", "migrations_ok": true},
     "api_contract": {"status": "passed|failed|skipped"},
     "service_health": {"status": "passed|failed", "startup_time_ms": 2500},
