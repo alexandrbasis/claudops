@@ -31,7 +31,7 @@ allowed-tools:
 
 ## Overview
 
-Perform comprehensive code analysis returning structured findings. Since this runs in a forked context, explore extensively — only the final report returns to the main conversation.
+Perform code analysis scoped to the depth tier in Step 1 (Quick / Standard / Deep). Stop as soon as you have enough evidence to fill the output template for that tier — do not expand scope beyond it. Since this runs in a forked context, be decisive: a focused 10-finding report beats a 40-finding report with filler.
 
 ## Scope Boundaries
 
@@ -51,11 +51,11 @@ Match the depth to the request — not every question needs a full audit:
 | **Standard** | "analyze", "assess", "audit", "code quality" | Steps 2-5 |
 | **Deep** | "full audit", "comprehensive analysis", "deep dive" | Steps 2-6 + dependency analysis |
 
-Default to **Standard** if ambiguous.
+When the request is ambiguous, pick the mode whose "When" column best matches the user's phrasing. If still unclear, use Standard.
 
 ## 2. Scope Discovery
 
-Understand what you're analyzing before diving in:
+Understand what you're analyzing before diving in. When multiple discovery commands in a step have no dependencies between them, batch them in one turn. Never use placeholders or guess missing parameters.
 
 ```bash
 # Project structure overview
@@ -72,6 +72,8 @@ Read project context dynamically — don't assume the stack:
 - `CLAUDE.md` at repo root for architecture overview
 - `{{DOCS_DIR}}/AGENTS.md` for project-specific conventions
 - `package.json` / `tsconfig.json` for actual dependencies and versions
+
+If any `{{VARIABLE}}` placeholder in this skill or in `references/project-checks.md` is not populated (e.g. `{{SRC_DIR}}` is still literal), detect the real path by inspection (e.g. `ls` the repo root for `src/`, `lib/`, `app/`) before running any command. Do not run a command containing an unresolved `{{…}}` placeholder.
 
 ## 3. Architecture Analysis
 
@@ -177,7 +179,8 @@ Adapt the report to the analysis depth from step 1. Only include sections releva
 - [finding]
 
 ### Concerns
-- [severity: CRITICAL/MAJOR/MINOR] [finding]
+Include every concern you found, labeled with severity. Do not pre-filter to only CRITICAL/MAJOR — a small number of MINOR items in the report is expected and useful.
+- [severity: CRITICAL/MAJOR/MINOR] [confidence: high/med/low] [finding]
 
 ## Recommendations
 1. [actionable recommendation]

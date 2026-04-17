@@ -1,6 +1,6 @@
 ---
 name: automated-quality-gate
-description: Runs automated quality checks (tests, lint, types, coverage) after implementation. Acts as a gate before human-like code review to catch obvious issues early.
+description: Runs automated pre-review gates (format, lint, types, tests, build) after an implementation task and reports PASS/FAIL for each. Use immediately before a human-like code-review agent, so reviewers don't waste effort on code that fails basic automated checks. Coverage runs are optional and only when explicitly requested.
 tools: Bash, Read, Write, Edit, Grep
 model: sonnet
 effort: low

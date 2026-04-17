@@ -26,39 +26,43 @@ Use when:
 ### STEP 1: Resolve Task Path
 
 1. Parse `$ARGUMENTS` for a task directory path
-2. If not provided — **Ask**: "Which task to update docs for? Provide task directory path (e.g., `tasks/task-2026-02-09-feature-name/`)."
+2. If not provided — Ask: "Which task to update docs for? Provide task directory path (e.g., `tasks/task-2026-02-09-feature-name/`)."
+   (Don't guess — picking the wrong task would generate a misleading
+   changelog that may end up in the repo history.)
 3. Validate: find `tech-decomposition-*.md` inside the task directory
 4. If not found — error with available task directories
 
-### STEP 2: Update Documentation (docs-updater agent)
+### STEP 2: Update Docs + Generate Changelog (parallel subagents)
 
-Call **docs-updater** agent:
-```
-Task: "Update documentation based on task implementation"
-Prompt: "Review the task document at [TASK_DOCUMENT_PATH] and update all relevant documentation files based on the implemented changes. Return a summary of what documentation was updated."
-```
+Spawn both subagents in the same turn — they operate on the same task
+document and do not depend on each other's output:
 
-Capture the summary of documentation changes.
+- **docs-updater** — "Review the task document at [TASK_DOCUMENT_PATH] and update all relevant documentation files based on the implemented changes. Return a summary of what documentation was updated."
+- **changelog-generator** — "Generate a changelog entry based on the task document at [TASK_DOCUMENT_PATH] covering the main feature implementation. The docs-updater runs in parallel; its updates will be included in the same commit."
 
-### STEP 3: Generate Changelog (changelog-generator agent)
+Do not default to sequential. When calls have no dependencies, batch them in one turn.
 
-Call **changelog-generator** agent:
-```
-Task: "Generate changelog entry for completed task"
-Prompt: "Generate a changelog entry based on the task document at [TASK_DOCUMENT_PATH] and documentation updates: [DOCS_UPDATES_SUMMARY]. Include the main feature implementation and any documentation changes."
-```
+Capture both outputs: the summary of documentation changes and the changelog entry.
 
-Capture the changelog entry.
-
-### STEP 4: Commit (Optional)
+### STEP 3: Offer Commit (user-gated)
 
 1. Show user what changed:
    - `git diff --stat` for modified files
    - Brief summary from both agents
-2. **Ask**: "Commit these documentation and changelog updates?"
+2. Ask: "Commit these documentation and changelog updates?"
+   (This skill may run before a PR is opened; the user may want to
+   squash docs into the feature commit rather than create a separate
+   docs commit.)
 3. If approved:
    ```bash
-   git add docs/
+   # Stage exactly the files the two subagents reported touching.
+   # Do not use `git add -A` (may pull in secrets) and do not assume
+   # everything lives under docs/ — changelog-generator writes to
+   # docs/changelogs/, but docs-updater may touch README.md,
+   # product-docs/, or other locations.
+
+   git add <files listed in docs-updater summary> \
+           docs/changelogs/YYYY-MM-DD/changelog.md
    git commit -m "docs: update documentation and changelog
 
    - Documentation updates: [DOCS_SUMMARY]
@@ -68,7 +72,7 @@ Capture the changelog entry.
    ```
 4. If on a feature branch, ask whether to push
 
-### STEP 5: Summary
+### STEP 4: Summary
 
 Report to user:
 ```
@@ -89,6 +93,6 @@ Documentation updated!
 
 - [ ] Task document found and analyzed
 - [ ] Documentation updated for affected files
-- [ ] Changelog entry created in correct date directory
+- [ ] Changelog entry created under `docs/changelogs/YYYY-MM-DD/` using today's date (the date the docs update runs, not the task creation or completion date)
 - [ ] User informed of all changes
 - [ ] Changes committed only with user approval

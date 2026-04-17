@@ -1,10 +1,12 @@
 ---
 name: codex-cli
 description: >-
-  Run OpenAI Codex CLI for cross-AI code review or validation. Use when asked for
-  'second opinion', 'codex review', 'cross-AI check', 'ask codex', 'run codex',
-  or when another workflow needs cross-AI verification.
-  NOT for interactive conversations (codex is one-shot only).
+  Run OpenAI Codex CLI for one-shot cross-AI code review or approach validation.
+  Invoke ONLY when the user explicitly asks ('second opinion', 'codex review',
+  'ask codex', 'run codex', 'cross-AI check'), or when another skill passes an
+  explicit instruction to delegate to codex. Do not invoke proactively on general
+  review requests — the primary review skills handle those.
+  Not for interactive conversations (codex is one-shot only).
 allowed-tools:
   - Bash
   - Read
@@ -34,20 +36,23 @@ official sources to update commands and reference files:
 Use `WebFetch` or `mcp__exa__web_search_exa` to check for updates when:
 - A codex command fails with an unknown flag error
 - The user mentions a codex feature not covered here
-- It's been a while since the skill was last updated
+- The user explicitly asks to verify the skill against upstream docs
 
 > **Last verified**: v0.116.0 (March 2026), default model `gpt-5.4`
 
-## Prerequisite: Update First
+## Prerequisite: Verify Installation
 
-**Always update codex to latest before running any command.** Codex releases frequently and older versions may have bugs (e.g., v0.115-0.116 approval loop regression).
+Before the first codex call in a session, verify the binary works:
 
 ```bash
-# Step 1: Update to latest
-npm i -g @openai/codex@latest > /dev/null 2>&1
-
-# Step 2: Verify
 codex --version
+```
+
+Update only if (a) a command fails with an unknown-flag error, (b) the version is older than v0.116.1, or (c) the user explicitly asks. The reason: v0.115-0.116 had an approval-loop regression; older versions work fine for most reviews.
+
+```bash
+# Run only when needed, not automatically
+npm i -g @openai/codex@latest
 ```
 
 If codex is not installed at all:
@@ -55,7 +60,7 @@ If codex is not installed at all:
 npm i -g @openai/codex
 ```
 
-## Critical: `codex review` vs `codex exec review`
+## Command variants: `codex review` vs `codex exec review`
 
 These are **NOT equivalent** — they have different flag sets:
 
@@ -144,9 +149,9 @@ Then read with **Read tool**: `/tmp/codex-review.md`
 > The actual review findings are at the **end** of the file. When reading, scan for lines
 > starting with `- [P` (priority findings) or `Review comment:` markers.
 
-### 3. Background Execution (for long tasks)
+### 3. Background Execution (for long tasks *with parallel work*)
 
-For complex tasks that take 2-10 minutes:
+Use `run_in_background: true` only when you have a concrete non-codex task queued for the same turn (reading files, editing, running another CLI). If the next step is "wait for codex to finish and summarize", run synchronously — the notification overhead isn't worth it.
 
 ```bash
 # Use Bash tool with run_in_background=true
@@ -161,15 +166,15 @@ codex exec "[complex prompt]" -m gpt-5.4 --full-auto \
 4. Read `/tmp/codex-result.md` with the Read tool
 5. Summarize findings to the user
 
-## Critical Rules
+## Output capture
 
-### Token Optimization (mandatory)
+### Why it matters
 
-Without redirection, Bash returns ~4700+ tokens of verbose output. With `-o` + redirect, you get ~30 tokens.
+Without redirection, Bash returns ~4700+ tokens of verbose output. With `-o` + redirect, you get ~30 tokens — a ~150× reduction. Use this pattern whenever you invoke codex.
 
 **Pattern**: `-o /tmp/codex-result.md > /dev/null 2>&1 && echo "Codex completed"`
 
-Always read the result with the **Read tool**, never `cat`.
+Read the result with the **Read tool** (not `cat`) so the file is registered with the harness and counted once.
 
 ### Codex Has No Context From This Conversation
 
@@ -193,6 +198,10 @@ Check against requirements in: tasks/task-2026-01-09-feature/tech-decomposition.
 Focus on: correctness, edge cases, error handling" \
   -m gpt-5.4 --full-auto -o /tmp/codex-result.md > /dev/null 2>&1
 ```
+
+### Parallel with sibling CLI skills
+
+When the caller wants perspectives from multiple external CLIs (e.g. codex + cursor + gemini) on the same diff or question, issue the three Bash calls in the same turn rather than sequentially. The calls have no dependency on each other and the external CLIs take 1-10 minutes each — serializing them multiplies wall-clock time.
 
 ### One-Shot Only
 

@@ -22,7 +22,9 @@ Use the playground skill to create a design playground for [FEATURE_NAME].
 - Theme, tokens, or style-guide sources: [PATHS, FILES, OR NOTES]
 - Existing components or screens to visually align with: [PATHS, LINKS, OR NOTES]
 - Brand cues or visual tone: [e.g. minimal, playful, editorial, enterprise]
-- If no project-specific design context exists, keep the prototype visually coherent, accessible, and easy to adapt rather than inventing a heavy branded system.
+- **Chosen visual direction:** [ONE OF THE 3–4 DIRECTIONS THE USER PICKED]
+  (If the user has not chosen, stop and surface 3–4 one-line direction
+  rationales for them to pick from before generating HTML.)
 
 **Playground Requirements:**
 - Create an interactive playground with controls, preview, and implementation notes.
@@ -36,6 +38,9 @@ Use the playground skill to create a design playground for [FEATURE_NAME].
 
 **Scenarios to include:**
 1. Happy Path: [Main flow from discovery]
+   For each screen in the happy path, include the four required states
+   (error, constraint, empty, success) — do not apply them only to the
+   first screen.
 2. Empty / Loading / Error States: [If applicable]
 3. Edge Cases: [From discovery]
 4. Key Variants / Breakpoints / Modes: [If applicable]
@@ -61,7 +66,9 @@ Use the playground skill to create a design playground for [FEATURE_NAME].
 **Requirements:**
 - Create an interactive playground with controls, preview, and implementation notes.
 - Use a viewport or frame appropriate to the platform.
-- If no project-specific styling is known, use a neutral, accessible default style.
+- **Chosen visual direction:** [ONE OF THE 3–4 DIRECTIONS THE USER PICKED]
+  (If the user has not chosen, stop and surface 3–4 one-line direction
+  rationales for them to pick from before generating HTML.)
 - Label as "Exploratory Prototype" in the header.
 
 **Key screens/interactions:**

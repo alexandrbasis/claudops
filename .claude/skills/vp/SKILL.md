@@ -76,6 +76,8 @@ Read the discovery document holistically. The question is not "which keywords ap
 
 Confirm the detected type with the user via AskUserQuestion before proceeding.
 
+If UI_FACING and no project design system is documented, add a second AskUserQuestion offering 3–4 concrete visual directions (one-line each) so the user anchors the aesthetic instead of inheriting model defaults.
+
 ---
 
 ## GATE 2: Playground Generation
@@ -91,9 +93,9 @@ Confirm the detected type with the user via AskUserQuestion before proceeding.
 - Existing screens or components that the prototype should visually align with
 - Brand cues or visual tone
 
-If no project-specific design context exists, instruct the playground to use a neutral, accessible default style that is easy to adapt.
+If no project-specific design context exists, first propose 3–4 distinct visual directions as one-line rationales (e.g. "editorial-serif", "utility-mono", "soft-neumorphic", "dense-enterprise"). Ask the user to pick one via AskUserQuestion before generating the playground. Avoid defaulting to a cream/serif/warm-accent house style unless the user explicitly picks it.
 
-**Required states in every prototype:**
+**Required states — apply to every screen and every flow in the prototype, not just the first:**
 - **Error states**: what does the user see when validation fails, a request errors, or input is invalid?
 - **Constraint flows**: what options are available, disabled, or hidden based on context? Show pre-submission guidance, not just post-submission errors.
 - **Empty states**: what appears when there's no data yet? Include actionable guidance (not just "nothing here").
@@ -120,9 +122,9 @@ Iterative approval loop — allows refinement without restarting.
 1. **Present to user:** "Playground created and opened in browser. Please explore and provide your decision."
 
 2. **Use AskUserQuestion with options:**
-   - **Approve** — ready for technical decomposition
-   - **Request Changes** — specify modifications (stays in /vp loop)
-   - **Reject** — needs significant discovery rework
+   - **Approve** — design matches the intended feel; proceed to /ct
+   - **Request Changes** — close, but needs specific tweaks (stay in /vp)
+   - **Reject** — wrong direction entirely; discovery needs to be revisited
 
 3. **Handle each decision:**
 
@@ -164,15 +166,6 @@ Write approval status to a **separate sidecar file** (keeps the discovery doc cl
 
 ## Notes for Technical Decomposition
 [Clarifications discovered during prototype review]
-```
-
-**Notify user:**
-```
-Visual prototype approved!
-
-- Playground: playground-[feature-name].html
-- Approval recorded: vp-approval.md
-- Ready for /ct to proceed with technical decomposition
 ```
 
 ---

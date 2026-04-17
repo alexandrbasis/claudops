@@ -3,17 +3,22 @@ name: cc-linear
 description: >
   Execute Linear operations via direct GraphQL API — create issues, update
   status/priority/title, add comments, search tasks, manage labels, assign work,
-  and link PRs. Use this skill whenever the user mentions Linear, refers to
-  TEAM-* issue identifiers, says "create a ticket/issue", "move to done/in
-  progress/review", "update the task status", "close the issue", "what's in our
-  backlog", "assign this to", "my issues", or any project management operation
-  targeting Linear. Also trigger when other skills (ct, si, sr) need to sync
-  state with Linear.
+  and link PRs. Use this skill when the user mentions Linear explicitly, or
+  references a Linear-style identifier (uppercase team prefix + dash + number,
+  e.g. ENG-123, OPS-7; the project's team key is in $LINEAR_TEAM_KEY). Trigger
+  on phrases like "create a Linear ticket/issue", "move TEAM-X to done/in
+  progress/review", "update the Linear task status", "close the Linear issue",
+  "what's in our Linear backlog", "assign this Linear issue to", "my Linear
+  issues", or any project management operation targeting Linear. Also trigger
+  when other skills (ct, si, sr) need to sync state with Linear. Do not trigger
+  on ambiguous "create an issue" when the user clearly means a GitHub Issue
+  (repo context, `gh issue` commands, issues.md), unless they also reference
+  Linear.
 ---
 
 # CC Linear
 
-> **Announcement**: Begin with: "I'm using the **cc-linear** skill for Linear project management."
+> Prefix the first response in a session with a one-line tag: `[cc-linear]`.
 
 Interact with Linear via `.claude/scripts/linear-api.sh` — a direct `curl` wrapper over Linear's GraphQL API. Each command is atomic and deterministic.
 
@@ -36,6 +41,9 @@ Multiline comment here
 EOF
 .claude/scripts/linear-api.sh list-comments TEAM-66
 ```
+
+Use `"-"` as the body argument to read from stdin — preferred for any
+description or comment longer than one line or containing quotes.
 
 ### Labels, Assignment & Relations
 ```bash
@@ -68,7 +76,23 @@ The script returns raw JSON. Present results to the user clearly:
 - **my-issues**: Show as a compact table grouped by status
 - **list-***: Show as a compact table
 
-Always include the Linear URL so the user can click through.
+Include the Linear URL in every issue response — the user will want to click
+through.
+
+## Before Acting
+
+Linear mutations are visible to the whole team and send notifications. Before
+running any of these commands, echo back what you are about to do and wait for
+confirmation on first use in a session:
+
+- `create-issue`, `add-comment`, `add-relation`, `link-pr` (new visible content)
+- `update-status`, `update-issue`, `assign`, `add-label`, `remove-label` (state changes)
+
+Read-only commands (`get-issue`, `search`, `ai-search`, `list-*`, `my-issues`)
+do not need confirmation — run them freely.
+
+For multi-step patterns below, confirm the whole chain once, then execute
+without re-prompting between steps.
 
 ## Configuration
 
@@ -91,7 +115,10 @@ Backlog → Todo → In Progress → In Review → Done | Canceled | Duplicate
 
 ## Workflow Patterns
 
-Common multi-step sequences. Each command is atomic — chain them together.
+Common multi-step sequences. Each command is atomic. When the steps have no
+dependency on each other (e.g. adding a label and assigning at the same time),
+batch them in a single turn; run sequentially only when a later step needs
+output from an earlier one.
 
 ### Start Implementation
 ```bash
@@ -118,7 +145,9 @@ EOF
 
 ## Cross-Skill Integration
 
-When working with other skills, proactively suggest or perform Linear operations:
+When other skills touch Linear-adjacent work, offer the matching Linear
+operation as a suggestion — do not run it unprompted. Only execute when the
+user agrees or when the outer skill explicitly delegates to you.
 
 | Skill | When | Linear Action |
 |-------|------|---------------|
@@ -135,7 +164,8 @@ Don't force these — suggest them when the context is clear (e.g., a TEAM-* ID 
 - If "State not found", run `list-states` to refresh the cache, then retry.
 - If "Label/User not found", run `list-labels` or `list-users` to check exact names.
 - Clear all caches: `rm /tmp/linear-TEAM-*.json`
-- Never silently swallow errors — always report failures to the user.
+- Report command failures (non-zero exits, GraphQL errors) to the user with the
+  exact error message — don't retry hidden.
 
 ## References
 

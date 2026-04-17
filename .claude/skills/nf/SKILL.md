@@ -20,14 +20,20 @@ allowed-tools: Read, Write, Edit, Grep, Glob, AskUserQuestion, Task, Skill
 Conduct a discovery interview that turns a rough feature idea into a clear, easy-to-read discovery document. The output should serve as the entry point for anyone who later needs to visualize, plan, or implement the feature.
 
 ## Guidelines
-- **Use `AskUserQuestion` tool for ALL clarifications**
-- **Never assume behavior**: if any behavior is unclear/ambiguous (UX flow, edge cases, error handling, states), ask the user to define expected behavior
+- Use `AskUserQuestion` for any clarification that the user hasn't already answered — structured options reduce ambiguity and keep the interview auditable.
+- If behavior is unclear (UX flow, edge cases, error handling, states), ask the user to define it rather than inferring. Downstream `/vp` and `/ct` trust this document as the source of truth, so silent assumptions compound.
 - Ask non-obvious and thought-provoking questions
-- Actively challenge assumptions; do not be a yes-boy. Grill.
+- Challenge assumptions actively. When the user's answer sounds confident but under-specified, name the gap ("You said X — does that cover case Y?") rather than accepting it at face value.
 - Offer alternatives, shortcuts, and "go deeper" paths
 - Continue until the feature is fully understood
 - Work with the final discovery template in mind throughout the interview
 - Gather exactly the information needed to fill the discovery document clearly
+
+**Context management.** This workflow can run long (design-exploration + research + interview + grill + validators). If you notice a compaction event or context refresh:
+- Re-read any already-created task files in the task directory before continuing.
+- Re-open the discovery template to reconfirm output shape.
+- Do not restart discovery from scratch — resume from the last unanswered template section.
+Do not stop early due to token-budget worries — the parent harness handles compaction.
 
 ## Workflow
 
@@ -70,7 +76,7 @@ For discovery work, prefer fit, options, constraints, and risks over implementat
 
 When you need current information, best practices, or technical research:
 
-- **Quick lookups**: Use Exa MCP tools directly
+- **Quick lookups**: Use Exa MCP tools when the user asserts a factual claim about an external product, spec, or standard that you can't verify from the codebase or prior turns. Skip Exa if the question is about internal codebase behavior (design-exploration covers that) or about subjective product preference.
 - **In-depth research**: Spawn `comprehensive-researcher` only when the answer materially affects the chosen direction, scope boundaries, key requirements, or constraints.
 
 When invoking `comprehensive-researcher`, ask for a **concise decision memo for discovery**, not a broad general report by default. The memo should return:
@@ -122,16 +128,22 @@ Drive the conversation toward the sections of the discovery template. Ask additi
 - Security, accessibility, performance, privacy, or platform limitations that materially shape the feature
 - Assumptions the downstream implementation must preserve
 
-**Post-Action & Cross-Surface Behavior** (for any create/update/delete workflow):
-- After this action succeeds, what exactly should the user see?
-- Which screen is the canonical place to confirm the created/updated entity exists?
-- If the current screen doesn't show the result directly, what success feedback should appear?
-- Does this entity also appear on other pages, lists, dashboards, search results, or category groupings? What metadata governs how it appears there?
-- For every backend validation rule, what's the corresponding UI affordance (error message, disabled option, hint, highlighted field)?
-- If the user picks an invalid option, do they see the error before or after submission?
+**Post-Action & Cross-Surface Behavior** — use the subset that applies:
+
+*Any workflow with a submit / confirm action (create, update, delete, toggle, selection-apply):*
+- After success, what exactly should the user see?
+- Which screen is the canonical place to confirm the result?
+- If the current screen doesn't show the result, what success feedback appears?
+
+*Any feature that renders lists, search results, dashboards, or categorized views:*
+- Where else does this entity appear? What metadata governs how it appears there?
+
+*Any feature with user input or selection (including read-only filters):*
+- For every validation rule, what's the UI affordance (error, disabled option, hint, highlighted field)?
+- For invalid input, does feedback appear before or after submission?
 - Are there options that should be hidden or visually distinguished based on context?
 
-Continue deep-dive until the user confirms the document is clear, scoped, and ready to stand on its own.
+Stop the deep-dive when every template section has an answer the user has confirmed once — don't keep re-confirming. If a section would require speculation, ask once, accept "skip / TBD" as a valid answer, and note it in the draft as `[NEEDS CLARIFICATION: ...]`. The document does not have to be perfect before writing — the grill round catches real gaps.
 
 ### Step 4: "Grill Me" Challenge Round
 
@@ -154,7 +166,7 @@ Now that the draft shape is clear, **invoke the `/grill-me` skill** to pressure-
 
 ### Completion Check
 
-Before writing the final discovery document, confirm that a new reader can answer without extra verbal context:
+One-pass completion check (not a loop): verify the six questions below have at least a one-sentence answer in the draft:
 - What is this feature?
 - Why does it exist?
 - How does it work?
@@ -162,13 +174,13 @@ Before writing the final discovery document, confirm that a new reader can answe
 - What is out of scope?
 - What requirements or constraints materially shape it?
 
-If any of those remain unclear, continue discovery instead of finalizing the document.
+If two or fewer are weak, flag them inline and proceed to writing — `/grill-me` and cross-AI validation will catch real blockers. If more than two are missing, run a single additional round of questions, then proceed regardless.
 
 ### Step 5: Discovery Document Writing
 
 After interview completion:
 
-1. **Re-read template if needed**: Review `.claude/docs/templates/discovery-template.md` to confirm the expected structure and clarity level
+1. Re-read `.claude/docs/templates/discovery-template.md` before writing. Long interviews drift from the template shape, and re-reading takes <5s while preventing section order/heading mismatches that downstream `/vp` and `/ct` parsers depend on.
 2. **Create task directory**: `tasks/task-YYYY-MM-DD-[feature-name]/`
 3. **Write discovery document** by filling the template with the decisions, flows, scope boundaries, requirements, and constraints resolved during discovery
    - Output file: `discovery-[feature-name].md`
@@ -178,14 +190,13 @@ After interview completion:
 
 ### Step 6: Cross-AI Validation
 
-**Important:** Do not guess or improvise the underlying CLI commands. The skill initialization step is mandatory for each validator.
+The skill initialization step loads each validator's CLI contract, so invent underlying CLI commands will produce unreliable results — run the skill initializer first for each.
 
-**Invoke skills sequentially first:**
-1. Invoke `/codex-cli`
-2. Invoke `/gemini-cli`
-3. Invoke `/cursor-cli`
+Two phases — initialization (sequential), then review (parallel):
 
-**Only after all three skills are invoked**, launch the three validation runs in parallel. Do not wait for Codex to finish before starting Gemini, and do not wait for Gemini to finish before starting Cursor. The `invoke` steps happen one-by-one; the review runs happen concurrently after initialization.
+Phase 1 — Initialization. Invoke `/codex-cli`, `/gemini-cli`, `/cursor-cli` one at a time to load each validator's CLI contract. The skills need to run in turn because they modify runtime state.
+
+Phase 2 — Review. In a single assistant turn, dispatch all three validator runs as parallel tool calls (one turn, three tool invocations). Reviews are independent, so sequential execution only adds latency. If one validator is unavailable, dispatch the other two anyway.
 
 Format output per `.claude/docs/templates/cross-ai-protocol.md` (comparison table, validation, verdict).
 

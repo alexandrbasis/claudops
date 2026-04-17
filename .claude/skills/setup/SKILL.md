@@ -20,6 +20,8 @@ allowed-tools:
 
 > **Announcement**: "Running the **setup wizard** to configure this workflow for your codebase."
 
+> Context will be automatically compacted during long runs. Do not stop early due to token concerns. If you need to, write interim state (files touched, placeholders filled) to a TodoWrite list so it survives compaction.
+
 Configure all workflow skills, agents, and hooks to match the target codebase's tech stack, structure, and conventions. This skill reads the codebase, detects patterns, confirms with the user, then fills in `{{PLACEHOLDER}}` variables across all workflow files.
 
 ## When to Run
@@ -31,9 +33,9 @@ Configure all workflow skills, agents, and hooks to match the target codebase's 
 
 ## Process
 
-### Phase 1: Codebase Discovery (Parallel Agents)
+### Phase 1: Codebase Discovery (parallel agents, same turn)
 
-Launch **3 Explore agents in parallel** to scan the target codebase:
+Spawn all 3 Explore subagents in a single turn — do not run them sequentially. The three scans (tech stack, project structure, commands) have no dependencies between them, so batching them saves wall-clock time.
 
 **Agent 1 — Tech Stack Detection:**
 ```
@@ -100,7 +102,7 @@ Return a structured report:
 
 ### Phase 2: User Confirmation (Interactive)
 
-Present discovery results and confirm with user. Use `AskUserQuestion` for each category.
+Present discovery results and confirm with user. Use `AskUserQuestion` for **every detection category** returned by Phase 1 — the four rounds below are the minimum, not the maximum. If Phase 1 surfaced additional categories (e.g. container runtime, IaC tool, custom tool registry), add matching rounds.
 
 **Round 1 — Tech Stack:**
 ```
@@ -151,11 +153,11 @@ Replace ALL `{{VARIABLE}}` placeholders with detected values. For multi-line sec
 
 **Step 2: Fill remaining skills and agents**
 
-Scan ALL `.md` files under `.claude/skills/` and `.claude/agents/` for remaining `{{PLACEHOLDER}}` patterns. For each file with placeholders:
+Scan every `.md` file under `.claude/skills/` and `.claude/agents/` for remaining `{{PLACEHOLDER}}` patterns. For each match:
 
 1. Read the file
 2. Identify all `{{VARIABLE}}` placeholders
-3. Replace with confirmed values
+3. If the placeholder name appears in the confirmed Phase-2 values, substitute it. If the name is unknown (not confirmed), leave it intact and add the file to a "needs follow-up" list shown at the end. Do not invent values.
 4. Show the user a brief summary: "Updated [filename]: replaced X placeholders"
 
 Ask user confirmation every 5 files: "Continue applying to next batch?"
@@ -203,9 +205,9 @@ Scan `.sh` and `.py` files in `.claude/hooks/` for `{{PLACEHOLDER}}` patterns an
 
 **Important**: For Python hook files, placeholders are replaced with Python literals (no quotes around lists/tuples). For shell hook files, values go inside existing double quotes. When a value should be empty/disabled, use empty string `""` for shell or `[]`/`()` for Python.
 
-**Step 4: Wire ALL hooks into settings.json**
+**Step 4: Wire hooks into settings.json**
 
-Wire every configured hook into `.claude/settings.json`. Group by event and matcher:
+Why this needs a preview: `settings.json` is user-owned; stomping existing matchers silently is worse than a slower workflow. Before writing, show the user the exact JSON diff (existing matchers + the additions) and ask "Apply this settings.json update?" via AskUserQuestion. Only write on "Apply". Group additions by event and matcher:
 
 **PreToolUse — Bash matcher** (add to existing or create):
 1. `bash-guard.sh` — blocks `rm -rf`, force-push, destructive DB commands
@@ -230,6 +232,18 @@ Wire every configured hook into `.claude/settings.json`. Group by event and matc
 - Preserve all existing hooks (like `pre-commit-validation.py`, `command-logger.py`, `sensitive-file-guard.py`, `read-counter.py`, `cost-tracker.py`)
 - Set `timeout` for hooks that run external commands (typecheck, test, PR gate)
 
+Example — existing `settings.json` has:
+  "PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "existing.sh"}]}]
+
+Adding `bash-guard.sh` and `test-before-pr.sh` should produce:
+  "PreToolUse": [{"matcher": "Bash", "hooks": [
+    {"type": "command", "command": "existing.sh"},
+    {"type": "command", "command": ".claude/hooks/bash-guard.sh"},
+    {"type": "command", "command": ".claude/hooks/test-before-pr.sh", "timeout": 120}
+  ]}]
+
+**Step 5: Generate architecture checks**
+
 If the codebase has a clear architecture pattern (DDD, MVC, etc.), generate `code-analysis/references/project-checks.md` with architecture-specific grep commands tailored to the detected source directory and patterns.
 
 **Step 6: Prune irrelevant skills**
@@ -244,7 +258,9 @@ Irrelevant skill detection rules:
 - `gemini-cli` — skip if user doesn't use Gemini CLI
 - `parallelization` — skip if project is too small (< 5 source files)
 
-To disable a skill: rename `SKILL.md` to `SKILL.md.disabled` in the skill's directory. This prevents Claude Code from loading it while preserving the file for re-enabling later.
+Gate: only rename skills the user explicitly selected in the multi-select below. Never disable a skill that wasn't in the returned selection set, even if detection flagged it as irrelevant. Before renaming, print the final list of skills to be disabled and wait for a plain "yes" confirmation.
+
+To disable an approved skill: rename `SKILL.md` to `SKILL.md.disabled` in that skill's directory. This preserves the file for re-enabling later.
 
 Present as a single AskUserQuestion with multiSelect:
 ```
@@ -304,8 +320,8 @@ If the user runs `/setup` again on an already-configured repo:
 
 ## Constraints
 
-- NEVER delete user-customized content outside of `{{PLACEHOLDER}}` regions
-- Always show what will change before writing
+- Only modify text inside `{{PLACEHOLDER}}` regions. Content the user wrote outside those regions is theirs — leaving it intact is how the wizard stays idempotent and safe to re-run.
+- Before writing to a file, print a one-line summary (`path — N placeholders replaced: NAME1, NAME2, …`) so the user can stop the wizard if a substitution looks wrong. For `settings.json`, show the JSON diff, not just the summary.
 - All values are written directly into files — no intermediate config files
 - Support monorepos by asking which workspace to configure (or configure all)
 - If architecture is not detected, leave architecture sections with helpful generic content rather than empty placeholders

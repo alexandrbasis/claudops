@@ -25,12 +25,17 @@ Shared knowledge preloaded into developer agents. Follow these when implementing
 
 ## Code Style
 
-- Prefer project-established type/interface conventions
-- No `any` — use proper types
-- No unnecessary `_` prefixes for unused vars
-- Secrets via config providers only — never hardcoded, never logged
-- DTOs match API schemas and tech-decomposition acceptance criteria
-- Database queries use parameter binding — no dynamic SQL or string interpolation
+- Match the project's existing type/interface conventions — new code should look
+  like it was written by the same person as the surrounding code.
+- Use proper types instead of `any`. `any` hides type errors that only surface at
+  runtime, which is the failure mode our type system exists to prevent.
+- Drop the `_` prefix on unused vars unless the project's lint config requires it.
+- Route secrets through config providers only — never hardcoded, never logged
+  (logs ship to observability tools; hardcoded secrets leak via git history).
+- Keep DTOs aligned with API schemas and the tech-decomposition's acceptance
+  criteria — these are the contract downstream consumers rely on.
+- Use parameter binding for database queries (not string interpolation) to prevent
+  SQL injection.
 
 ## Testing
 
@@ -44,9 +49,12 @@ Shared knowledge preloaded into developer agents. Follow these when implementing
 
 ## Implementation Rules
 
-- Read task document FIRST — it's the source of truth for WHAT to build
-- Minimal code — only what tests require
-- No scope creep — implement exactly the assigned work item
-- No over-engineering or speculative abstractions
-- Follow existing codebase patterns — new code should look like it belongs
+- Start by reading the task document — it's the source of truth for what to build,
+  and implementation choices should flow from it rather than from prior assumptions.
+- Write the minimum code that makes the tests pass and the acceptance criteria
+  hold. Don't add features, abstractions, or cleanup that weren't asked for.
+- Bug fixes don't need surrounding refactors — fix the bug, leave the rest.
+- Skip defensive error handling for scenarios that can't actually happen in this
+  codebase's flow.
+- Match existing codebase patterns — new code should look like it belongs.
 - No git writes unless explicitly approved by orchestrator

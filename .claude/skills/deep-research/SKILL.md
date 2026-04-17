@@ -48,19 +48,20 @@ If the user's intent is ambiguous, default to **Comparison** — it's the most c
 
 ### Tool Priority (Exa-first)
 
-Research tools should be used in this order — Exa provides the fastest, most code-aware results:
+Pick the smallest set of tools that answers the question. Many Quick-depth queries need zero tool calls. When you do search, choose by fit:
 
-1. **`get_code_context_exa`** — code-oriented queries (API usage, library examples, patterns)
-2. **`web_search_exa`** — broader technical topics, comparisons, ecosystem info
-3. **`ref_search_documentation`** — only when Exa results seem outdated or contradictory
-4. **`ref_read_url`** — read primary docs when clarification is needed
-5. **`WebSearch` / `WebFetch`** — fallback for anything Exa/Ref can't reach
+- **`get_code_context_exa`** when you need API/library code examples or usage patterns.
+- **`web_search_exa`** when the question is conceptual, comparative, or ecosystem-wide.
+- **`ref_search_documentation` / `ref_read_url`** when you need authoritative confirmation and Exa's summary is insufficient.
+- **`WebSearch` / `WebFetch`** only as a fallback when the above can't reach the source.
+
+Do not run a tool to confirm something you already know confidently from the docs or the codebase — cite the source instead.
 
 ### Parallel Search
 
 Since this runs in a fork, optimize for speed by launching parallel queries:
-- Fire Exa code context + Exa web search simultaneously for different facets of the question
-- While web results load, scan the local codebase (`Grep`, `Glob`) for relevant existing patterns
+- When queries have no dependencies, emit all of them in the **same assistant turn** (one tool-use block per query). Do not wait for the first to return before issuing the next.
+- Combine web searches with a local `Grep`/`Glob` pass in the same turn when codebase context is relevant.
 - Use multiple small, focused queries rather than one broad query
 
 ### Source Types
@@ -97,8 +98,9 @@ Since this runs in a fork, optimize for speed by launching parallel queries:
 
 ## 4. Cross-Verification
 
-- Never rely on a single source — triangulate across at least 2-3
-- Verify claims against official docs
+- Match source count to depth: Quick = 1–2 sources (skip Cross-Verification entirely); Comparison = 2–3; Deep = 3–5.
+- Stop gathering once the answer is stable across sources — additional confirmatory sources add little value. If the first 2 sources agree and are authoritative (official docs, primary repos), that's enough.
+- Verify claims against official docs only when the claim is load-bearing for a recommendation.
 - Check publication dates — prefer content from the last 12 months
 - Look for consensus; flag disagreements explicitly
 - Be skeptical of AI-generated content in search results
@@ -163,7 +165,7 @@ Instead of relying on a static list, read project context dynamically:
 - Check `CLAUDE.md` at the repo root for current stack and architecture
 - Check `{{DOCS_DIR}}/AGENTS.md` for project-specific constraints
 - Check `package.json` / `tsconfig.json` for actual dependencies and versions
-- Reference existing patterns in the codebase when making recommendations
+- Reference existing patterns in the codebase when making recommendations. If you cite a file or function, open it with `Read` first — do not speculate about code you have not read.. If you cite a file or function, open it with `Read` first — do not speculate about code you have not read.
 
 This ensures recommendations stay aligned with the project as it evolves.
 

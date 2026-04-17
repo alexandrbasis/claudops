@@ -22,6 +22,8 @@ allowed-tools:
 
 > **Announcement**: "Checking for upstream workflow updates from **claudops**…"
 
+> Context will be automatically compacted during long runs. Do not stop early due to token concerns. If you need to, write interim state (files touched, placeholders filled) to a TodoWrite list so it survives compaction.
+
 Sync the local `.claude/` folder with the latest changes from the upstream claudops repository. Shows a categorized changelog, warns about conflicts, and lets the user cherry-pick what to update.
 
 ## Core Principle — Upstream-Only Scope
@@ -66,15 +68,15 @@ Your job is to identify what changed UPSTREAM and how it relates to local state.
 UPSTREAM: /tmp/claudops-upstream-sync/.claude/
 LOCAL:    {CWD}/.claude/
 
-## CRITICAL SCOPE RULE
-Only iterate over UPSTREAM files. Never flag, mention, or categorize local-only files.
-The user may have custom skills, agents, hooks that don't exist upstream — those are theirs and must be invisible to this comparison.
+## Scope rule — upstream-only
+
+Iterate only over upstream files. Local-only files (custom skills, agents, hooks the user built themselves) stay out of the comparison entirely — don't flag, mention, or categorise them. Why: the whole promise of this skill is that it won't touch user customisations; leaking them into the report violates that promise and trains the user to distrust the tool.
 
 ## Steps
 
 1. List ALL files in upstream .claude/ (using Glob "**/*" under the upstream path)
 
-2. For EACH upstream file, determine its status:
+2. For each upstream file, determine its status. Batch the diffs: when you have a list of N upstream/local file pairs to compare, run the `diff` calls in a single turn (parallel tool calls) rather than one-at-a-time. There are no dependencies between per-file diffs.
 
    a. **Skip entirely** — don't process these:
       - .claude/settings.json and .claude/settings.local.json (always local config)
@@ -113,6 +115,7 @@ The user may have custom skills, agents, hooks that don't exist upstream — tho
    - Any folder that exists locally AND matches a name pattern typical of upstream skills (not custom user additions) but is MISSING from upstream → flag as **POSSIBLY_REMOVED_UPSTREAM**
    - Since we can't be 100% sure, always present these as suggestions, not definitive removals
    NOTE: Err on the side of NOT flagging. If uncertain whether something is an upstream file or a user's custom file, skip it. Only flag obvious cases where the file/folder name exactly matches a known upstream pattern.
+   - For candidate "removed upstream" files, restrict the check to folders whose names appear in upstream's current `skills/README.md` or `agents/README.md` listing. If the folder name isn't in that listing, treat it as user-custom and skip. Do not infer upstream membership from naming style.
 
 ## Output Format
 
@@ -169,7 +172,7 @@ After the Agent returns, parse its report and present a clean changelog:
 [list — inform user the upstream version changed but they'd disabled it]
 ```
 
-If ALL categories are empty (only UNCHANGED + PLACEHOLDER_ONLY): announce **"Your workflow is up to date with upstream. No changes needed."** and stop.
+If every category is empty (only UNCHANGED + PLACEHOLDER_ONLY), announce **"Your workflow is up to date with upstream. No changes needed."** and stop.
 
 Then use **AskUserQuestion** with multi-select to let the user choose what to apply:
 
@@ -191,8 +194,9 @@ Then use **AskUserQuestion** with multi-select to let the user choose what to ap
 For each MODIFIED file the user selected:
 
 1. **CONFLICT RISK = high**: Show a preview before applying:
-   - Read the upstream version (first 80 lines)
-   - Read the local version (first 80 lines)
+   - Read both files fully (both versions are small enough that full reads are fine).
+   - If either side exceeds 300 lines, fall back to a unified diff so the user sees every hunk rather than the head of the file.
+   - Summarise what upstream changed vs what the user customized locally.
    - Explain what specifically changed upstream vs what the user customized locally
    - Use AskUserQuestion: "This file has local customizations. How should we handle `{filename}`?"
      - "Replace with upstream version (will lose local changes)"
@@ -223,19 +227,23 @@ UPSTREAM (new structure): [full content of upstream file]
 LOCAL (customized values): [full content of local file]
 
 Rules:
-- Keep ALL local filled-in values (anything that replaced a {{PLACEHOLDER}})
-- Adopt new sections, rewritten instructions, removed sections, and logic changes from upstream
-- If upstream added new {{PLACEHOLDER}} variables not present in local, keep them as-is — the user will run /setup to fill them
-- If upstream renamed a placeholder, carry the local value to the new name
-- Preserve the file's frontmatter structure (YAML header in skills/agents)
-- Write the merged result directly to the local file path
+- Preserve local filled-in values (anything that replaced a {{PLACEHOLDER}}), unless upstream deleted the placeholder entirely — in that case, drop the value and note the removal in the merge summary.
+- Adopt upstream's new sections, rewritten instructions, and logic changes.
+- For sections upstream removed: if local had custom content in that section, stop and ask the user ("Upstream removed section X; your local copy has custom content there. Keep local / adopt upstream removal / show me?").
+- If upstream added new {{PLACEHOLDER}} variables, keep them literal — /setup fills them.
+- If upstream renamed a placeholder, carry the local value to the new name.
+- Preserve the file's frontmatter YAML structure.
+- After merging, print a 3-line summary ("kept N local values, adopted M upstream changes, K open questions") and write to the local path.
+- If any merge step is uncertain, emit the uncertainty to the summary instead of guessing silently.
 ```
 
-**Deleted files**: Remove from local:
+**Deleted files**: Before running `rm`, print the final list of paths selected for deletion and the count. If the count is > 3, re-confirm with AskUserQuestion ("Delete these N files? Yes / No / Let me deselect some"). Then run:
+
 ```bash
 rm .claude/{path}
 ```
-If removing the last file in a directory, also remove the empty directory.
+
+If removing the last file in a directory, `rmdir` the now-empty directory; never `rm -r` a non-empty directory.
 
 **Disabled files with updates**: Copy upstream file to the `.disabled` path:
 ```bash
@@ -282,7 +290,7 @@ cp /tmp/claudops-upstream-sync/.claude/{path} .claude/{path}.disabled
 
 **Skipped:**
 - [count] files skipped by user choice
-- [count] local-only files untouched (your custom additions)
+- [count] placeholder-only differences (not real changes)
 ```
 
 ## Edge Cases
