@@ -19,13 +19,18 @@ allowed-tools: Read, Write, Edit, Grep, Glob, AskUserQuestion, Task, Skill
 Create best-in-class JTBD or PRD documents through a structured interview, mandatory research, and pressure-testing process. The output should be a standalone document that any team member can read and understand without extra verbal context.
 
 ## Guidelines
-- **Use `AskUserQuestion` tool for ALL clarifications** — never assume behavior, needs, or context
-- Ask non-obvious and thought-provoking questions; actively challenge assumptions
-- Focus on user progress and context, not features or demographics
-- A job statement describes progress the user wants to make — not a feature request
-- Work with the templates as output contracts throughout the interview
-- Research is MANDATORY — product decisions without research are assumptions
-- Do not include any time estimates
+- Use `AskUserQuestion` for clarifications — structured options reduce ambiguity and keep the interview auditable. Skip it only when the user has already unambiguously answered in prior turns.
+- Ask non-obvious, thought-provoking questions. If the user's answer sounds confident but vague ("users want it faster"), name the gap ("faster than what, measured how?") rather than accepting it.
+- Focus on user progress and context, not features or demographics. A job statement is about the progress a user wants to make, not a feature request.
+- Use the templates as output contracts throughout the interview — the interview gathers exactly what the template needs.
+- Research is required for both JTBD and PRD. The template's "Research Findings" section must have cited sources because product decisions without evidence are assumptions, and downstream `/ct` and `/vp` inherit those assumptions silently.
+- Do not include time estimates in any output.
+
+**Context management.** This workflow runs long (design-exploration + research + interview + grill + write + validators). If compaction happens mid-flow:
+- Re-open the template you're writing against.
+- Re-open any existing JTBD or previously-written product doc in `product-docs/`.
+- Resume from the last unanswered template section; do not restart.
+Do not stop early due to token-budget worries — the parent harness handles compaction.
 
 ## Workflow
 
@@ -39,7 +44,7 @@ Create best-in-class JTBD or PRD documents through a structured interview, manda
 - `[feature]` only → `AskUserQuestion`: "Which document type?" Options: "JTBD — Jobs-to-be-Done analysis" / "PRD — Product Requirements Document"
 - No argument → `AskUserQuestion`: "What feature?" + free-text option, then ask document type
 
-**Quick mode**: When `quick` prefix is detected, skip directly to Step 5 (document writing). Read templates, fill from available context, mark unknowns with `[NEEDS CLARIFICATION: ...]`. Present output with note: "Quick mode used. For deeper product thinking, run the full `/product` flow."
+**Quick mode**: When `quick` prefix is detected, skip Steps 1-4 (skip design-exploration, research, interview, and grill). Go directly to Step 5 (document writing): read the template, fill from the user's prompt and any linked context, and mark each unknown inline as `[NEEDS CLARIFICATION: <question>]`. Then run Step 6 (Cross-AI Validation) as usual — validation catches gaps that the skipped interview would have caught. Present output with: "Quick mode used — N clarifications remain. For deeper product thinking, run the full `/product` flow."
 
 ### Step 0: Load the Output Shape
 
@@ -65,9 +70,9 @@ For product documentation, prefer fit, constraints, and risks over implementatio
 
 **Checkpoint:** Present findings summary. `AskUserQuestion`: "Does this context align with what you're building?" Options: "Yes, continue" / "I have corrections" / "Skip codebase context"
 
-### Step 2: Research (MANDATORY)
+### Step 2: Research
 
-Research is not optional. Both JTBD and PRD templates have mandatory Research Findings sections that must be filled with cited sources.
+Fill the "Research Findings" section of the template with cited sources. The research doesn't have to be exhaustive — two or three high-quality references per claim is enough. Use quick lookups by default; only escalate to `comprehensive-researcher` when findings would materially change the job statement, scope, or requirements.
 
 **Quick lookups** (Exa MCP tools directly):
 - Competitor approaches to the same job/problem
@@ -88,7 +93,7 @@ Only when findings materially affect the job statement, scope boundaries, or req
 
 ### Step 3: Deep-Dive Interview
 
-Drive the conversation section-by-section toward filling the template. Ask 2-3 questions per round. After each round, summarize what was gathered and which template section it fills.
+Drive the conversation section-by-section toward filling the template. Batch questions per round — typically 2-4, matched to how much the user can reasonably answer at once. One-by-one drags; a ten-question firehose loses signal. When in doubt, 3. After each round, summarize what was gathered and which template section it fills.
 
 ---
 
@@ -148,7 +153,7 @@ Drive the conversation section-by-section toward filling the template. Ask 2-3 q
 
 ---
 
-Continue until the template can be filled clearly. Use multiple-choice options in `AskUserQuestion` when there are clear alternatives. Challenge assumptions — do not be a yes-agent.
+Aim for 3-5 rounds total per document. After round 5, present what's still unclear and ask the user: "continue interviewing" / "mark unknowns and proceed to grill". Use `AskUserQuestion` with multiple-choice options when there are clear alternatives — it's faster than free-text for both sides. Challenge assumptions: when an answer is confident but under-specified, name the gap ("You said X — how would that work for case Y?") instead of accepting at face value.
 
 ### Step 4: "Grill Me" Challenge Round
 
@@ -194,20 +199,19 @@ If any remain unclear, continue the interview.
 3. **Write the document(s)**:
    - JTBD output: `product-docs/JTBD/JTBD-[feature-name].md`
    - PRD output: `product-docs/PRD/PRD-[feature-name].md`
-4. **For PRD without prior JTBD**: If the interview gathered sufficient JTBD data (which it should from the shared questions), also write the JTBD document for traceability
+4. **For PRD without prior JTBD**: Write a companion `JTBD-[feature-name].md` whenever the interview produced a clear job statement, at least one answer per Four Force (push/pull/anxiety/habit), and a named primary user. If any of those are missing, note it in the PRD's "Related JTBD" section and skip the JTBD write — don't stub a thin JTBD.
 5. **If any required section cannot be filled clearly**, continue the interview instead of writing placeholder content
 6. **Present summary** to user for confirmation
 
 ### Step 6: Cross-AI Validation
 
-**Important:** Do not guess or improvise the underlying CLI commands. The skill initialization step is mandatory for each validator.
+The skill initialization step loads each validator's CLI contract, so invented CLI commands produce unreliable results — run the skill initializer first for each.
 
-**Invoke skills sequentially first:**
-1. Invoke `/codex-cli`
-2. Invoke `/gemini-cli`
-3. Invoke `/cursor-cli`
+Two phases — initialization (sequential), then review (parallel):
 
-**Only after all three skills are invoked**, launch the three validation runs in parallel.
+Phase 1 — Initialization. Invoke `/codex-cli`, then `/gemini-cli`, then `/cursor-cli` in separate turns. Each skill loads its CLI contract into runtime state, so they must run serially.
+
+Phase 2 — Review. In a single assistant turn, dispatch all three validator runs as parallel tool calls. The three reviews are independent — sequential execution only adds latency. If one validator is unavailable, dispatch the other two anyway.
 
 Format output per `.claude/docs/templates/cross-ai-protocol.md` (comparison table, validation, verdict).
 

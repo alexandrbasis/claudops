@@ -14,6 +14,8 @@ Reusable prompt templates for common Codex operations.
 - Reviews: `-o /tmp/codex-review.md > /dev/null 2>&1 && echo "Review completed"`
 - Always read result with **Read tool**, never `cat`
 
+> **Reasoning effort**: Templates pin `model_reasoning_effort=xhigh`. That is the current Opus-era recommendation for coding/agentic cross-AI review — `max` over-thinks, `medium` under-thinks. Only override if the caller has a specific reason.
+
 ---
 
 ## Approach Validation

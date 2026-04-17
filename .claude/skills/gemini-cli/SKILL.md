@@ -67,7 +67,7 @@ Then read with **Read tool**: `/tmp/gemini-result.txt`
 
 ```bash
 gemini \
-  -p "Output ONLY the final answer. No chain of thought. No reasoning.
+  -p "Respond with the final review only — concise, fact-forward.
 Review these files for bugs, security issues, and improvements:
 - @path/to/file.ts
 - @path/to/other-file.ts
@@ -86,7 +86,7 @@ Gemini's unique differentiator over other CLI tools: native Google Search ground
 
 ```bash
 gemini \
-  -p "Output ONLY the final answer. No chain of thought. No reasoning.
+  -p "Respond with the final answer only — concise, fact-forward.
 Use Google Search to find: [topic]. Cite sources with URLs.
 Format: markdown with bullet points." \
   --approval-mode=yolo -o json \
@@ -98,7 +98,7 @@ Then read with **Read tool**: `/tmp/gemini-research.txt`
 
 ### 4. Background Execution (for long tasks)
 
-For complex tasks that take 2-10 minutes:
+For complex tasks that take 2-10 minutes. When you have multiple *independent* gemini queries (e.g. a security review and a perf review of the same diff), launch them in the same turn as separate background Bash calls — don't serialize.
 
 ```bash
 # Use Bash tool with run_in_background=true
@@ -112,10 +112,11 @@ gemini \
 
 **Workflow**:
 1. Run with `run_in_background: true` on the Bash tool
-2. Continue working on other tasks while gemini runs
-3. You will be notified automatically when it completes
-4. Read `/tmp/gemini-result.txt` with the Read tool
-5. Summarize findings to the user
+2. If there are other independent gemini calls, fire them in the same turn (different output files: `/tmp/gemini-sec.txt`, `/tmp/gemini-perf.txt`)
+3. Continue working on other tasks while gemini runs
+4. You will be notified automatically when each completes
+5. Read each result with the Read tool
+6. Summarize findings to the user
 
 ### 5. Capacity & Timeout Notes
 
@@ -132,13 +133,13 @@ Auto routing handles capacity via a fallback chain: Gemini 3.1 Pro → Gemini 2.
 
 ### 6. @path Safety
 
-**CRITICAL**: Verify that `@path` references point to files/directories that actually exist. Gemini CLI can hang indefinitely on nonexistent `@path` references (see [#6440](https://github.com/google-gemini/gemini-cli/issues/6440)). Before running, mentally verify the paths or use `ls` to check.
+Verify every `@path` reference points to a real file or directory before invoking — Gemini CLI can hang indefinitely on a missing path (upstream bug [#6440](https://github.com/google-gemini/gemini-cli/issues/6440)), and a hung background job will silently eat your timeout budget. A quick `ls` or `[ -f path ]` guard is enough.
 
 ## Critical Rules
 
 ### Auto Routing (Default — Do Not Pass `-m`)
 
-Do NOT pass `-m` flag — rely on **Auto** routing (requires `previewFeatures: true` in `~/.gemini/settings.json` for Gemini 3 access).
+Rely on **Auto** routing (omit `-m`, set `previewFeatures: true` in `~/.gemini/settings.json`); Auto handles the Gemini-3 fallback chain for you.
 
 **How Auto routing actually works** (verified via test output and official docs):
 1. A lightweight **classifier** (`gemini-2.5-flash-lite`) analyzes the prompt complexity
@@ -149,28 +150,28 @@ Do NOT pass `-m` flag — rely on **Auto** routing (requires `previewFeatures: t
 
 > **Note**: The 2.5-flash-lite classifier is internal and expected — it doesn't affect answer quality. Only the **main** model response matters.
 
-### Always Use `-p` Flag
+### Use `-p` for One-Shot
 
-The `-p` flag forces non-interactive mode. Without it, commands may default to interactive REPL in a TTY, which breaks one-shot execution from Claude Code.
+Claude Code can only drive Gemini non-interactively. Without `-p`, the CLI may drop into an interactive REPL in a TTY and hang the Bash call.
 
 ### Final Answer Only
 
 Use `-o json` + `jq -r '.response'` to extract only the final answer.
 
-### Token Optimization (mandatory)
+### Token Optimization
 
-Without redirection, Bash returns thousands of tokens of verbose output. With the redirect pattern, you get ~30 tokens.
+Without redirection, Bash returns thousands of tokens of verbose gemini output; the redirect + `jq` pattern below collapses that to ~30 tokens, which is why every template uses it.
 
 **Pattern**: `> /tmp/gemini.json 2> /dev/null && jq -r '.response' /tmp/gemini.json > /tmp/gemini-result.txt && echo "Gemini completed"`
 
-Always read the result with the **Read tool**, never `cat`.
+Read the result file with the **Read tool** — `cat` will dump the full payload back into the conversation and defeat the token-optimization pipeline above.
 
 ### Gemini Has No Context From This Conversation
 
-Gemini starts with zero context. Always include in your prompt:
-- **Task/requirement file paths** using `@path` syntax
-- **Implementation file paths** for review targets
-- **Directory paths** for broader context (`@src/`)
+Gemini starts with zero context — it cannot see this conversation, open files, or prior turns. For any useful answer, the prompt itself has to carry what it needs:
+- Task/requirement file paths via `@path`
+- Implementation file paths for review targets
+- Directory paths (`@src/`) when broader context matters
 
 ### One-Shot Only
 

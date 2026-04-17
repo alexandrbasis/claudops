@@ -8,6 +8,8 @@ Structured checklists for what to explore based on feature type. Use these to gu
 - [Cross-Cutting Feature](#cross-cutting-feature)
 - [Data Model Or Contract Change](#data-model-or-contract-change)
 
+> Use these checklists as a **menu**, not a requirement. Pick 3–5 items per scan angle that are most relevant to the caller's goal. Stop when you have enough evidence to propose approaches — unchecked items are not debts.
+
 ---
 
 ## Service Or API Feature

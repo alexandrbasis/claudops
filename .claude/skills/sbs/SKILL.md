@@ -20,7 +20,11 @@ allowed-tools: Read, Edit, Write, Bash, Glob, Grep, AskUserQuestion, TodoWrite, 
 
 ## SCOPE
 - **Use for:** Teaching any task interactively — "teach me", "walk me through", "explain step by step", "I want to understand how X works", "show me how to do Y"
-- **NOT for:** Open brainstorming (use `/brainstorm`), task documentation (use `/ct`), debugging (use `/dbg`), quick one-off questions (just answer directly)
+- **Route elsewhere when:**
+  - The user wants to explore possibilities without a concrete topic → `/brainstorm`
+  - The user wants a task doc produced, not learning → `/ct`
+  - The user has a failing thing to fix, not a concept to learn → `/dbg`
+  - The question is one-off and factual → answer directly, don't start a session
 
 ## PRIMARY OBJECTIVE
 Guide the user through their requested task as an interactive teacher, explaining each step clearly while building genuine understanding — not just completing work. The user should walk away able to repeat and adapt what they learned, not just follow a recipe.
@@ -83,8 +87,12 @@ Teaching is more effective when grounded in real code the user is working with.
 ## RESEARCH (When Needed)
 
 If the topic involves a library, API, or pattern that needs verification:
-- Use `get_code_context_exa` for code-specific context (API docs, library usage)
-- Use `web_search_exa` for current best practices and patterns
+- Reach for `get_code_context_exa` when you are about to cite a specific
+  API shape or library behaviour that you can't verify from the
+  codebase. Skip it for concepts the user already knows.
+- Reach for `web_search_exa` when current practice may have shifted
+  (post-2024 library guidance, framework defaults). Skip it for
+  stable, well-documented topics.
 - Cite sources when sharing external knowledge — accuracy matters in teaching
 
 This ensures the teaching is current and correct. Confidently-stated wrong information is worse than saying "let me look that up."
@@ -92,11 +100,14 @@ This ensures the teaching is current and correct. Confidently-stated wrong infor
 ## TEACHING PROTOCOL
 
 ### Core Teaching Principles
-- **One Step at a Time:** Present ONLY the current step, never jump ahead
-- **Explain Before Action:** Always explain WHY before showing HOW — understanding motivation makes the steps stick
-- **Confirm Understanding:** Wait for explicit user confirmation before proceeding
-- **Learn by Doing:** User executes each action themselves with your guidance
-- **Ground in Reality:** Use real project code and files whenever possible
+- One step at a time. Present the current step only — jumping ahead hides
+  the action the user is meant to execute themselves.
+- Explain before action. The rationale makes the mechanics stick; a
+  recipe without the why doesn't transfer.
+- Confirm understanding. Ask at the end of each step before moving on.
+- Learn by doing. The user runs each action — you guide, not execute.
+- Ground in reality. Prefer real code from this project to contrived
+  examples; the user will recognise it again later.
 
 ### Step Structure — Guided Execution (default)
 For EACH step, follow this format:
@@ -104,7 +115,9 @@ For EACH step, follow this format:
 ```
 ### Step [N]: [Clear Action Title]
 
-**What we're doing:** [1-2 sentences on purpose]
+**What we're doing:** Purpose, calibrated to session depth
+(Quick: one sentence. Full: 2–3 sentences with a bit of context.
+Deep: include what this replaces or competes with.)
 **Why this matters:** [How this fits the bigger picture]
 **Technical concept:** [Simple explanation of new concepts — skip if no new concept]
 **Your action:** [Specific instruction with code blocks]
@@ -123,7 +136,11 @@ When user chose Socratic mode, replace **Your action** with guided questions:
 **Think about it:** [1-2 questions to guide the user toward the solution]
   - e.g., "What command would you use to...?" or "Where do you think this config lives?"
 **Hint (if stuck):** [Partial answer or pointer]
-**Full answer:** [Reveal only after user attempts — use AskUserQuestion to gate this]
+**Full answer:** Reveal only after the user has either (a) proposed an
+answer (right or wrong), (b) explicitly asked for the answer ("just tell
+me", "I give up"), or (c) answered a clarifying hint. Do not reveal after
+a pure clarification question ("what do you mean by X?") — respond to
+the clarification first.
 ```
 
 ### Depth Adaptation
@@ -133,7 +150,7 @@ Scale detail to the session depth chosen in setup:
 | Element | Quick Walkthrough | Full Tutorial | Deep Mastery |
 |---------|:-:|:-:|:-:|
 | Why this matters | Brief | Detailed | With alternatives |
-| Technical concept | Skip if obvious | Always include | Include trade-offs |
+| Technical concept | Skip if obvious | Include when a new concept appears | Include trade-offs |
 | Code examples | Minimal | From codebase | Multiple approaches |
 | Exercises | None | Optional | Required |
 | Edge cases | Skip | Mention | Explore |
@@ -143,7 +160,11 @@ Scale detail to the session depth chosen in setup:
 ### Communication Rules
 1. **Language:** Maintain consistent language throughout the session (match user's language)
 2. **Terminology:** Define technical terms on first use with simple analogies
-3. **Pacing:** Use AskUserQuestion after each step — NEVER proceed without explicit confirmation
+3. Pacing: Ask the user to confirm at each numbered step before moving to
+   the next step. Reason: without a pause, the user can't execute the
+   action themselves, which defeats the "learn by doing" goal.
+   Mid-step clarifying questions (asking what error they saw, which option
+   they picked) are fine and don't count as "proceeding".
 4. **Questions:** Encourage questions at each step — learning is the priority, not speed
 
 ### Error Handling
@@ -165,6 +186,14 @@ Scale detail to the session depth chosen in setup:
 - Introduce complexity gradually
 - Connect new concepts to previously learned ones
 - For Deep Mastery sessions: provide "bonus learning" notes and exercises
+
+### Context continuity
+Long sessions (Full Tutorial, Deep Mastery) can span many turns. If
+context is compacted mid-session, do not wrap the session up early —
+the learning plan from SESSION SETUP is the source of truth. Before
+any summarisation pass, save current step number, chosen depth, and
+pending bonus-learning notes into the resume file under `docs/learning/`
+so the session can pick up from the correct step.
 
 ## SESSION CAPTURE
 

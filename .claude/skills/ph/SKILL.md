@@ -21,7 +21,11 @@ allowed-tools:
 
 ## PRIMARY OBJECTIVE
 
-Capture the current implementation state into a cold-start brief (`HANDOFF.md`) so a fresh Claude session can resume work without re-exploring the codebase. This is critical when context windows run long or when work spans multiple sessions.
+Capture the current implementation state into a cold-start brief (`HANDOFF.md`) so a fresh Claude session can resume work without re-exploring the codebase. This is invoked when context windows run long or when work spans multiple sessions.
+
+### Write-first discipline
+
+Context may compact while this skill runs. Create `HANDOFF.md` with section headers immediately after STEP 1, then fill each section as you complete STEPS 2–5. A partially-written handoff on disk is more useful than a fully-planned one that never gets saved. Produce every section through to the end — do not stop early due to token concerns.
 
 ## WHY THIS EXISTS
 
@@ -40,6 +44,8 @@ Capture the current implementation state into a cold-start brief (`HANDOFF.md`) 
 3. Read the task document (tech-decomposition)
 
 ### STEP 2: Capture Git State
+
+Run all of the following bash calls in the same turn — they are independent. Batch them into a single response with parallel tool calls rather than issuing them one at a time.
 
 ```bash
 # Branch and last commit
@@ -60,10 +66,11 @@ git stash list
 ### STEP 3: Capture Implementation State
 
 1. **Identify current step**: Read task doc checkmarks — find the last checked step and the first unchecked step
-2. **Reconcile with reality**: Compare task doc claims against actual code:
+2. **Reconcile with reality**: Compare task doc claims against actual code. Check every file in the diff, not only the files named in steps:
    - Do files mentioned in checked steps exist?
    - Do tests for checked steps pass?
-   - Are there files modified but not mentioned in any step?
+   - Are there files modified but not mentioned in any step? (exploratory changes, debug code, temp scaffolding — all go under "Gotchas")
+   - Is there uncommitted work that belongs to no step at all? Document it.
 3. **Identify recently modified files**:
    ```bash
    git diff --name-only $(git merge-base HEAD main)..HEAD
@@ -72,6 +79,8 @@ git stash list
    ```bash
    {{TEST_CMD}} 2>&1 | tail -20
    ```
+
+The `git diff --name-only` call above can run in the same turn as the test command and the STEP 2 git calls — batch them with parallel tool calls.
 
 ### STEP 4: Capture Context
 
@@ -169,6 +178,6 @@ After `/si` Continue mode successfully resumes:
 
 ## CONSTRAINTS
 
-- **Do not commit HANDOFF.md** — it's a transient artifact for the next session, not a permanent record
-- **Do not modify implementation code** — this skill only captures state, it doesn't fix things
+- **HANDOFF.md stays uncommitted** — it's a transient artifact consumed by the next session. Leave it in the working tree, not in git history.
+- **This skill only captures state** — If you notice a quick fix while reviewing, log it under "Next Actions" and let the next session decide. Fixing mid-handoff corrupts the snapshot you are about to save.
 - **Be honest about state** — if tests are failing, say so. If a step is partially done, say so. The next session needs truth, not optimism.

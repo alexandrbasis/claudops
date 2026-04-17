@@ -48,7 +48,7 @@ Find the task directory and its documents:
 
 Read all spec documents and extract a numbered list of requirements:
 
-- From **discovery docs**: `How It Works`, `In Scope`, `Out Of Scope`, `Key Requirements`, `Constraints`, and any equivalent older sections such as Functional Requirements, Non-Functional Requirements, UI/UX Specifications, and acceptance scenarios
+- From **discovery docs**: walk every top-level heading. Extract requirements from `How It Works`, `In Scope`, `Key Requirements`, `Constraints` (and their older equivalents: Functional/Non-Functional Requirements, UI/UX Specifications, acceptance scenarios). For any heading you are unsure about, include it in a `[UNCERTAIN-SOURCE]` note rather than skipping.
 - From **JTBD docs**: Core Needs, Desired Outcomes
 - From **PRD docs**: Functional Requirements, User Stories, Acceptance Criteria
 
@@ -87,22 +87,26 @@ For each requirement, determine:
 - Does at least one implementation step fulfill this requirement?
 
 For each implementation step, determine:
-- Does it trace back to a requirement? (via `[REQ-XXX]` tag or semantic match)
+- Does it trace back to a requirement, either by explicit `[REQ-XXX]` tag or by covering one or more sub-clauses of a requirement? If it only covers part of a requirement, flag the uncovered portion as a separate `[UNCOVERED]` finding for that sub-clause.
 - Does it have an associated test?
 
 ---
 
-## Step 6: Flag Gaps
+## Step 6: Flag Gaps (coverage pass)
 
-Report findings using these tags:
+Report every gap you find, including low-signal ones. Do not suppress findings based on severity at this stage — a separate verification step will filter. Annotate each finding with a tag and a severity guess:
 
-| Tag | Meaning | Severity |
+| Tag | Meaning | Default severity |
 |-----|---------|----------|
 | `[UNCOVERED]` | Requirement has no test case | Major |
 | `[UNTESTED]` | Implementation step has no associated test | Minor |
 | `[SCOPE CREEP]` | Implementation step maps to no requirement | Major |
 | `[CONFLICT]` | Requirement contradicts a tech decision or another requirement | Critical |
 | `[UNRESOLVED]` | `[NEEDS CLARIFICATION]` marker not yet resolved | Critical |
+
+## Step 6a: Verdict (filter pass)
+
+Apply severity gating only when computing the final verdict, not when collecting findings.
 
 ---
 

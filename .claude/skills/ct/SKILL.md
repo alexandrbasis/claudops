@@ -26,12 +26,13 @@ Create implementation-ready technical documentation that a developer can execute
 - **Protect scope** — new ideas become follow-ups, not stealth additions
 - **Discover repo conventions** — prefer searching the actual workspace over assuming fixed paths
 - **Stay executable** — name files, commands, dependencies, and completion signals explicitly
+- **Context is compacted automatically** — for long sessions, save the in-progress decomposition to disk as you go; do not stop early due to token concerns
 
 
 ## Control Gates
 
 ### GATE 0: Confirm the Task Is Ready for Technical Planning
-**Complete BEFORE writing the plan:**
+**Complete before writing the plan:**
 
 - If no argument is provided, ask what task or feature should be planned
 - Determine whether the request is actually ready for decomposition:
@@ -44,18 +45,18 @@ Create implementation-ready technical documentation that a developer can execute
   - success criteria
   - boundaries / out-of-scope items
   - dependencies, constraints, or non-negotiables
-- Exclude time estimates from the plan
+- Exclude time estimates from the plan — this doc is a technical contract, not a schedule; estimates expire fast and mislead consumers of the doc
 
 **Exit criteria:** The task can be stated as a single clear implementation objective with known boundaries.
 
 ---
 
 ### GATE 1: Discover Source Material and Prior Art
-**Complete BEFORE codebase exploration:**
+**Complete before codebase exploration:**
 
 Search for inputs instead of assuming one repository layout. Prefer the project's existing document conventions if they already exist.
 
-**Look for:**
+**Look for (run these Glob calls in a single turn — they are independent):**
 - Discovery docs: `**/discovery-*.md`
 - Product docs: `**/JTBD-*.md`, `**/PRD*.md`, `**/*requirements*.md`
 - Architecture notes: `**/ADR*.md`, `**/*architecture*.md`, `**/*decision*.md`
@@ -79,7 +80,7 @@ Search for inputs instead of assuming one repository layout. Prefer the project'
 ---
 
 ### GATE 1.5: Requirements Quality and Scope Check
-**Complete AFTER reading source material, BEFORE decomposition:**
+**Complete after reading source material, before decomposition:**
 
 Review the inputs like "unit tests for English." Validate the quality of the requirements themselves, not just their technical feasibility.
 
@@ -106,9 +107,9 @@ Do not hide requirement gaps inside implementation steps.
 ---
 
 ### GATE 2: Explore the Codebase
-**Complete BEFORE writing implementation steps:**
+**Complete before writing implementation steps:**
 
-Launch **2-3 Explore agents in parallel**, each with a specific mandate:
+Launch **2-3 Explore agents in a single turn** (fan out in the same tool-call batch — do not sequence them), each with a specific mandate:
 
 1. **Architecture & Patterns** — understand the change area:
    - Closest similar feature, module, or workflow
@@ -146,7 +147,7 @@ Return a short findings summary:
 ---
 
 ### GATE 3: Resolve Ambiguity Before Decomposition
-**Complete AFTER exploration, BEFORE writing the plan:**
+**Complete after exploration, before writing the plan:**
 
 Identify gray areas across the inputs and codebase findings:
 - Requirements that could be interpreted multiple ways
@@ -172,7 +173,7 @@ Document non-trivial choices in the tech-decomposition file:
 ---
 
 ### GATE 4: Write the Technical Decomposition
-**Complete AFTER context, exploration, and ambiguity resolution:**
+**Complete after context, exploration, and ambiguity resolution:**
 
 **Step 0: Load the Output Shape**
 - Before drafting, read `.claude/docs/templates/technical-decomposition-template.md`
@@ -221,8 +222,8 @@ Document non-trivial choices in the tech-decomposition file:
 - If no formal requirements doc exists, still write explicit requirement statements in plain language
 - Add optional wave annotations only when steps are genuinely independent
 - Reference constraints or architecture decisions that shaped the plan
-- Do not invent `Issue ID`, `Branch / PR`, `Split status`, or `Completion Summary` values during `/ct` unless they already exist from prior workflow steps
-- Exclude time estimates
+- Leave `Issue ID`, `Branch / PR`, `Split status`, and `Completion Summary` blank or omitted unless prior workflow steps produced real values — those fields are owned by later skills (`/si`, tracker integration) and must reflect reality
+- Exclude time estimates — this doc is a technical contract, not a schedule; estimates expire fast and mislead consumers of the doc
 
 #### Test Case Format (Given/When/Then)
 - **Given**: preconditions already in place
@@ -235,7 +236,7 @@ Document non-trivial choices in the tech-decomposition file:
 ---
 
 ### GATE 5: Review and Strengthen the Plan
-**Complete AFTER the first draft exists:**
+**Complete after the first draft exists:**
 
 **Minimum self-check:**
 - Does every must-have map to tests and steps?
@@ -252,7 +253,9 @@ Document non-trivial choices in the tech-decomposition file:
 | Medium | 3-5 steps, multiple touchpoints | `plan-reviewer` agent + `senior-architecture-reviewer` agent |
 | Complex | 6+ steps, architecture or cross-system risk | `plan-reviewer` agent + `senior-architecture-reviewer` agent + cross-AI validation |
 
-Do not skip the required review path for the selected complexity level.
+> Reviewer agents should follow a coverage-then-filter pattern — surface every issue they find (with severity + confidence), and filter in a separate pass. Do not instruct them to report "only important" findings; 4.7 obeys that literally and recall drops.
+
+Follow the review path for the complexity tier above — skipping it has historically produced plans that miss architecture risks and require re-decomposition.
 For **Complex** plans, cross-AI validation is part of the required review path. Follow `.claude/docs/templates/cross-ai-protocol.md` if present.
 
 **Additional validation branches and follow-ups:**
@@ -266,9 +269,9 @@ For **Complex** plans, cross-AI validation is part of the required review path. 
 ---
 
 ### GATE 6: Task Splitting Evaluation
-**Complete AFTER the required review path and iterative feedback loop are finished:**
+**Complete after the required review path and iterative feedback loop are finished:**
 
-Always invoke the `task-splitter` agent on the finalized parent plan. Provide:
+Invoke the `task-splitter` agent on the finalized parent plan so the splitting decision is made against the reviewed doc, not a draft. Provide:
 - task directory path
 - finalized `tech-decomposition-[feature-name].md` path
 

@@ -28,7 +28,7 @@ gemini  # First run prompts for auth
 
 ## Core Command: One-Shot
 
-All commands from Claude Code use `-p` flag to force non-interactive mode. Do NOT pass `-m` — rely on **Auto (Gemini 3)** routing.
+All commands from Claude Code use `-p` flag to force non-interactive mode. Rely on **Auto (Gemini 3)** routing — omit `-m` so the CLI can pick the right tier and handle the fallback chain for you.
 
 ```bash
 gemini -p "prompt"
@@ -53,7 +53,7 @@ gemini -p "prompt"
 
 ### Auto Routing — Default Mode
 
-Do NOT pass `-m` flag. Auto routing uses a classifier + main model pattern:
+Omit the `-m` flag. Auto routing uses a classifier + main model pattern:
 
 1. **Classifier**: `gemini-2.5-flash-lite` (lightweight, fast — determines task complexity)
 2. **Simple tasks** → `gemini-3-flash-preview` or `gemini-2.5-flash` (routing can vary — [known issue #22381](https://github.com/google-gemini/gemini-cli/issues/22381))

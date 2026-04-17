@@ -1,10 +1,13 @@
 ---
 name: cursor-cli
 description: >-
-  Run Cursor CLI (Composer 2 model) for cross-AI code review or validation. Use when asked for
-  'cursor review', 'ask cursor', 'cross-AI check', 'run cursor', or when another workflow
-  needs cross-AI verification with a non-OpenAI/non-Anthropic perspective.
-  NOT for interactive conversations (cursor is one-shot only).
+  Run Cursor CLI (Composer 2, a Kimi-K2.5 lineage) for one-shot cross-AI code
+  review when a non-OpenAI/non-Anthropic perspective is specifically wanted.
+  Invoke ONLY when the user explicitly asks ('cursor review', 'ask cursor',
+  'run cursor'), or when another skill passes an explicit instruction to
+  delegate to cursor. For generic 'cross-AI check' requests, the caller skill
+  should pick the specific CLI; do not invoke both cursor and codex implicitly.
+  Not for interactive conversations (cursor is one-shot only).
 allowed-tools:
   - Bash
   - Read
@@ -32,20 +35,23 @@ official sources to update commands and reference files:
 Use `WebFetch` or `mcp__exa__web_search_exa` to check for updates when:
 - A cursor command fails with an unknown flag error
 - The user mentions a cursor feature not covered here
-- It's been a while since the skill was last updated
+- The user explicitly asks to verify the skill against upstream docs
 
 > **Last verified**: v2026.03.20 (March 2026), pinned model `composer-2`
 
-## Prerequisite: Update First
+## Prerequisite: Verify Installation
 
-**Always update cursor agent CLI to latest before running.** Releases are frequent.
+Before the first cursor call in a session:
 
 ```bash
-# Step 1: Update to latest
-curl https://cursor.com/install -fsS | bash > /dev/null 2>&1
-
-# Step 2: Verify
 agent --version
+```
+
+Update only if (a) a flag fails with an unknown-flag error, (b) the user explicitly asks, or (c) the version is older than the one pinned at the top of this file. The install script is a `curl | bash` — run it interactively, not silently, so the user sees any installer output:
+
+```bash
+# Run only when needed
+curl https://cursor.com/install -fsS | bash
 ```
 
 If agent is not installed at all:
@@ -101,25 +107,25 @@ agent -p "[complex prompt]" \
 4. Read `/tmp/cursor-result.txt` with the Read tool
 5. Summarize findings to the user
 
-## Critical Rules
+## Output capture
 
-### Token Optimization (mandatory)
+### Why it matters
 
-Without redirection, Bash returns thousands of tokens of verbose output. With the redirect pattern, you get ~30 tokens.
+Without redirection, Bash returns thousands of tokens of verbose output. With the redirect pattern, you get ~30 tokens. Use this pattern on every invocation.
 
 **Pattern**: `--output-format text > /tmp/cursor-result.txt 2> /dev/null && echo "Cursor completed"`
 
-Always read the result with the **Read tool**, never `cat`.
+Read with the **Read tool** (not `cat`) so the file is registered with the harness and counted once.
 
-### Always Use `--model composer-2`
+### Required flags for cross-AI review
 
-Composer 2 is Cursor's frontier in-house model (fine-tuned Kimi K2.5 with RL on long-horizon coding tasks). It provides a unique non-OpenAI/non-Anthropic perspective for cross-AI validation. Always pass `--model composer-2` explicitly.
+| Flag | Why |
+|---|---|
+| `--model composer-2` | Pins to Cursor's Kimi-K2.5 lineage — the whole reason to use this skill instead of codex/gemini. Without it, you get a default that may duplicate another CLI. |
+| `--mode=ask` | Read-only mode, enforced at the CLI level. A review must not modify files. |
+| `--trust` | Bypasses the workspace-trust prompt, which would otherwise hang headless mode. |
 
-### Always Use `--mode=ask` and `--trust`
-
-- `--mode=ask` ensures read-only operation — Cursor will not modify any files during cross-AI validation.
-- `--trust` bypasses the workspace trust prompt, which would otherwise block non-interactive execution.
-- **Never** use `--force` or `--yolo` for cross-AI validation reviews.
+Do not use `--force` or `--yolo` here — those authorize writes, which defeats the read-only guarantee above.
 
 ### Cursor Has No Context From This Conversation
 
@@ -142,6 +148,10 @@ Focus on: correctness, edge cases, error handling" \
   --output-format text > /tmp/cursor-result.txt 2> /dev/null
 ```
 
+### Parallel with sibling CLI skills
+
+When the caller wants perspectives from multiple external CLIs (e.g. codex + cursor + gemini) on the same diff or question, issue the three Bash calls in the same turn rather than sequentially. The calls have no dependency on each other and the external CLIs take 1-10 minutes each — serializing them multiplies wall-clock time.
+
 ### One-Shot Only
 
 Cursor runs non-interactively via `-p`. No follow-up questions, no conversation. Craft your prompt to be complete and self-contained.
@@ -151,6 +161,8 @@ Cursor runs non-interactively via `-p`. No follow-up questions, no conversation.
 - Simple, quick tasks (overhead not worth the 1-10 min wait)
 - Tasks requiring interactive conversation/refinement
 - Trivial changes (typos, formatting)
+- General "review this code" requests where no sibling-AI perspective was asked for — those belong to `/sr` or other primary-review skills; cursor-cli supplements, it does not replace.
+- When the user is iterating live on code and wants fast feedback — primary Claude is lower-latency.
 
 ## Unique Strengths
 

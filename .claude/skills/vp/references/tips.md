@@ -24,6 +24,6 @@
 
 ## Common Pitfalls
 
-- **Overloading the playground** — Focus on the core flow. Avoid cramming every edge case into a single view. Use presets/scenarios to separate concerns.
+- **One flow per view** — keep each view focused on one flow. Split edge cases across presets or scenarios so each view stays readable.
 - **Ignoring empty states** — The first thing a new user sees is often an empty state. Always include one.
 - **Static-only preview** — Even backend diagrams benefit from interaction (click to expand, hover for details). Use the playground's interactivity, don't just render a static image.

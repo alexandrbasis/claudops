@@ -1,6 +1,6 @@
 ---
 name: automated-quality-gate
-description: Runs automated quality checks (tests, lint, types, coverage) after implementation. Acts as a gate before human-like code review to catch obvious issues early.
+description: Runs automated pre-review gates (format, lint, types, tests, build) after an implementation task and reports PASS/FAIL for each. Use immediately before a human-like code-review agent, so reviewers don't waste effort on code that fails basic automated checks. Coverage runs are optional and only when explicitly requested.
 tools: Bash, Read, Write, Edit, Grep
 model: sonnet
 effort: low
@@ -51,37 +51,37 @@ tasks/task-YYYY-MM-DD-[feature]/
 ```bash
 {{FORMAT_CMD}}
 ```
-- **Pass**: No formatting issues
-- **Fail**: Any formatting issue
-- **Skip**: If `{{FORMAT_CMD}}` is not configured
+- **Coverage (always report)**: File:line list of every formatting issue detected.
+- **Gate verdict**: PASS if no issues; FAIL on any issue.
+- **Skip**: If `{{FORMAT_CMD}}` is not configured.
 
 ### 2. Linting
 ```bash
 {{LINT_CMD}}
 ```
-- **Pass**: No lint errors
-- **Fail**: Any lint error (warnings acceptable)
+- **Coverage (always report)**: Total error count, total warning count, and a file:line list of every finding — including warnings and "style-only" rules. Do not filter at this stage.
+- **Gate verdict**: FAIL if any error; PASS if only warnings. (Warnings don't fail the gate, but they must still appear in the report so the reviewer can decide.)
 
 ### 3. Type Checking
 ```bash
 {{TYPECHECK_CMD}}
 ```
-- **Pass**: No type errors
-- **Fail**: Any type error
+- **Coverage (always report)**: File:line list of every type error and every type warning detected. Do not filter at this stage.
+- **Gate verdict**: FAIL if any type error; PASS if only warnings.
 
 ### 4. Test Suite (token-efficient)
 ```bash
 {{TEST_CMD}}
 ```
-- **Pass**: All tests pass
-- **Fail**: Any test failure
+- **Coverage (always report)**: Count of passed/failed/skipped tests, and the file:line of every failure and every skipped test. Do not suppress skipped tests from the report.
+- **Gate verdict**: FAIL if any test failure; PASS otherwise.
 
 ### 5. Build Verification
 ```bash
 {{BUILD_CMD}}
 ```
-- **Pass**: Build succeeds
-- **Fail**: Build fails
+- **Coverage (always report)**: File:line list of every build error and every build warning detected.
+- **Gate verdict**: FAIL if the build fails; PASS if it succeeds (even with warnings).
 
 ### Optional: Coverage (only if explicitly requested)
 ```bash
@@ -98,12 +98,14 @@ tasks/task-YYYY-MM-DD-[feature]/
 
 ## Gate Execution Order
 
+Run all five gates in this order, **always running every gate** even if an earlier one fails — the point is to collect every issue in one pass so the developer can fix all of them at once.
+
 ```
-Format → Lint → TypeCheck → Test Suite → Build
-     ↓
-If ANY fails → GATE_FAILED (return to implementation)
-     ↓
-All pass → GATE_PASSED (proceed to review)
+Format → Lint → TypeCheck → Test Suite → Build   (all run, no short-circuit)
+                        ↓
+      Any gate failed?  → GATE_FAILED (return to implementation)
+                        ↓
+      All five passed?  → GATE_PASSED (proceed to review)
 ```
 
 ## Output Mode
@@ -116,6 +118,7 @@ Write your findings directly to the Code Review file:
 2. **Locate** your section markers: `<!-- SECTION:quality-gate -->` ... `<!-- /SECTION:quality-gate -->`
 3. **Use the Edit tool** to replace the placeholder text between markers with your findings
 4. **Do NOT** edit anything outside your section markers
+5. If the section markers are missing or only one of the pair is present, do NOT create them and do NOT write outside them. Return inline mode output instead and flag the missing markers in your summary (e.g., `"cr_file_path provided but section markers missing — returning inline"`).
 
 **Write this format to your section:**
 
@@ -124,13 +127,13 @@ Write your findings directly to the Code Review file:
 
 **Agent**: `automated-quality-gate` | **Status**: PASSED/FAILED
 
-| Check | Status | Details |
-|-------|--------|---------|
-| Format | PASSED/FAILED | [details] |
-| Lint | PASSED/FAILED | [X errors, Y warnings] |
-| TypeCheck | PASSED/FAILED | [X errors] |
-| Tests | PASSED/FAILED | [X passed, Y failed, Z skipped] |
-| Build | PASSED/FAILED | [details] |
+| Check | Status | Details | Findings (file:line) |
+|-------|--------|---------|----------------------|
+| Format | PASSED/FAILED | [details] | [every finding, even if gate passed] |
+| Lint | PASSED/FAILED | [X errors, Y warnings] | [every error + every warning] |
+| TypeCheck | PASSED/FAILED | [X errors, Y warnings] | [every error + every warning] |
+| Tests | PASSED/FAILED | [X passed, Y failed, Z skipped] | [every failure + every skipped test] |
+| Build | PASSED/FAILED | [details] | [every error + every warning] |
 
 **Gate Result**: GATE_PASSED / GATE_FAILED
 ```
@@ -144,9 +147,9 @@ If any gate failed, add failure details below the table:
 ```
 
 **Then return ONLY a short summary:**
-`"GATE_PASSED. 0 critical, 0 major, 0 minor. All 5 gates passed — format, lint, types, tests, build clean."`
+`"GATE_PASSED (warnings: 4 — see table). All 5 gates passed. Lint: 0 errors, 4 warnings (unused-imports ×3, prefer-const ×1). Format/types/tests/build clean."`
 or
-`"GATE_FAILED. 1 critical, 0 major, 0 minor. TypeCheck failed: 3 type errors in auth module."`
+`"GATE_FAILED. TypeCheck: 3 errors (src/auth.ts:42, src/auth.ts:55, src/session.ts:17). Lint: 0 errors, 7 warnings. Tests: 2 failures (auth.spec.ts:81, session.spec.ts:22). Build: ran — 0 errors."`
 
 ### Inline mode (when `cr_file_path` is NOT provided)
 
@@ -169,8 +172,7 @@ When a gate fails, provide actionable feedback with file paths, line numbers, er
 
 ## Constraints
 
-- Run ALL gates even if one fails (collect all issues)
-- Provide specific file paths and line numbers for failures
-- Do NOT approve if ANY gate fails
-- Only run coverage when explicitly requested
-- Truncate very long outputs but keep essential info
+- Run every gate in a single pass — the value is collecting all failures so the developer fixes them together.
+- For every failure, include file path, line number, and the raw error output (don't paraphrase).
+- Coverage runs only when the invoker explicitly asks for them (it's slow and usually duplicates unit-test signal).
+- For each failing gate, include: the exact failing command, up to 20 lines of the most-relevant output (usually the first error + stack frame pointing at project code), and the file:line of each distinct failure. If you truncate, say so explicitly: `[... truncated 340 lines ...]`. Never summarise errors into prose — paste the raw lines so the developer can grep.

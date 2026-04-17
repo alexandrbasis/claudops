@@ -52,16 +52,20 @@ Inform user: "No review comments found on PR #{number}. Nothing to address." Sto
 
 ### Step 1: Categorize Comments
 
-For each review comment, evaluate:
+List **every** comment fetched in Gate 1 — do not drop any. Reviewer noise, nits, and resolved threads all appear in the plan so the user sees what was received.
+
+For each comment, evaluate:
 - Is the feedback valid and technically correct?
 - Is it applicable to the current code?
 - Does it align with project conventions and architecture?
 - Is it a blocker or a nice-to-have suggestion?
 
-Classify each comment into one of:
-- **Address** — Valid feedback, will fix
-- **Skip** — Not applicable or already handled (provide reason)
-- **Discuss** — Ambiguous or disagreed, needs user input
+For each comment, propose one of:
+- **Address** — Valid feedback, will fix.
+- **Skip** — Not applicable, already handled, or nit you recommend ignoring. Always include a one-line reason so the user can override.
+- **Discuss** — Ambiguous, contested, or would change scope — escalate to user.
+
+When in doubt between Address and Skip, pick Discuss. The user decides in Gate 2 whether to drop it.
 
 ### Step 2: Present Action Plan
 
@@ -75,7 +79,7 @@ Display a table:
 | 3 | src/baz.ts:88 | Architecture concern | Discuss | Significant |
 ```
 
-**STOP** — Use AskUserQuestion to confirm the plan. Ask user to approve, modify, or flag any items they disagree with. Do not proceed until user approves.
+Before implementing anything, confirm the plan with AskUserQuestion. Ask the user to approve, edit, or flag items they disagree with — including items you marked Skip. Implementation starts only after approval.
 
 ---
 
@@ -97,7 +101,7 @@ For "Discuss" items the user resolved: apply the agreed-upon fix.
 3. Run type checks if applicable (`tsc --noEmit`)
 
 **Error — tests or lint fail:**
-Present failures to user. Do not proceed to GATE 4. Work with user to resolve, or revert changes if needed.
+Present failures to user. Work with user to resolve, or revert changes if needed before moving to GATE 4.
 
 ---
 

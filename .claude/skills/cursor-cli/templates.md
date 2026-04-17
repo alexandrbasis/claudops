@@ -179,7 +179,9 @@ Find the root cause and suggest a fix." # ...pipeline
 
 ### Multi-Model Comparison
 
-Run the same prompt with different models to get diverse perspectives:
+Run the same prompt with different models to get diverse perspectives.
+
+Use this only when the caller explicitly asks for multi-model fan-out, or when a high-stakes decision justifies ~10 minutes of extra CLI time. Default to a single `composer-2` run. When you do fan out, batch the three calls into one turn (they have no dependency on each other).
 
 ```bash
 # Composer 2 (default — Kimi K2.5 fine-tune)

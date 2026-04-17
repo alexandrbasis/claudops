@@ -60,13 +60,14 @@ Quick plan:
 Get user confirmation before proceeding.
 
 ### STEP 3: Implement
-- Make changes directly — no task document needed
+- Stay inside the quick plan from STEP 2. Don't refactor adjacent code, rename unrelated symbols, or add defensive checks for cases the plan didn't identify. If you find something tempting, note it as a follow-up instead of doing it.
+- Apply the change to **every file listed** in the STEP 2 plan — not only the first. If implementation reveals a file that wasn't in the plan, confirm before expanding scope.
 - **Follow TDD for any logic changes** (same bright-line rules as /si):
-  - Write a FAILING test first that specifies the expected behavior
-  - If you wrote production code before a failing test: delete it and restart with RED
-  - Implement the minimal fix to make the test pass (GREEN)
-  - Verify test passes: `{{TEST_CMD}}`
-  - "Tests after" is not TDD — it produces confirmation tests, not specification tests
+  - Write the test first, and confirm it fails for the right reason before writing code
+  - If production code landed before the failing test, revert it and restart from the test
+  - Implement the minimum change that turns the test green
+  - Verify: `{{TEST_CMD}}`
+  - The test-first order matters because it lets the test specify the behavior, not just confirm the implementation the model already wrote.
 - For non-logic changes (config, docs, formatting): just make the change
 
 ### STEP 4: Verify
@@ -91,7 +92,7 @@ Examples:
 
 If the touched package uses different scripts or stronger verification is warranted, run those instead. If any check fails, fix it before proceeding.
 
-**Evidence requirement**: Do not claim the task is done without running these checks and confirming they pass. Project hooks (for example `stop-guard.sh`) may enforce similar checks.
+**Evidence requirement**: Before reporting completion, run the checks above and show their passing output. Project hooks (for example `stop-guard.sh`) enforce the same contract, so skipping them will block the run anyway.
 
 ### STEP 4.5: De-Sloppify (if logic changes were made)
 If STEP 3 included logic changes (not just config/docs), run a quick de-sloppify pass:

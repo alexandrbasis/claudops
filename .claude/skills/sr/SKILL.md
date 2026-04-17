@@ -130,30 +130,30 @@ In `full` scope, also run:
 - `documentation-accuracy-reviewer`
 - `performance-reviewer`
 
-### 5.4 Targeted Reviewers
+### 5.4 Targeted Review Passes (orchestrator-owned, not subagents)
 
-Run conditionally based on diff content:
+When the diff matches these triggers, the orchestrator runs the check inline and adds findings to `key-findings`. These are not separate agents — no subagent file exists for them.
 
-**Error path reviewer** — when the diff contains async call chains:
+**Error-path pass** — trigger: diff contains `async` / `await` / `.then(` / `Promise`:
 - For each async call chain: what happens if it throws? Where does the error propagate?
 - Does the caller have try/catch with a user-visible error state?
 - Does a modal/dialog/overlay close before the async chain resolves?
 - Are there multi-step write operations that lack atomicity (if step 2 fails, step 1 is orphaned)?
 
-**Integration seams reviewer** — when the diff crosses component/module boundaries:
+**Integration-seams pass** — trigger: diff crosses component/module boundaries:
 - Data passed through navigation or routing (are all required params forwarded?)
 - Callback shapes: does the caller await the callback? Does it handle errors?
 - State subscriptions: after a mutation, is every dependent state snapshot refreshed?
 - Modal/dialog lifecycle vs async operations: does the UI update only after resolution?
 
-**Cross-surface entity reviewer** — when the diff creates, updates, or deletes entities:
+**Cross-surface entity pass** — trigger: diff creates, updates, or deletes entities:
 - Does the entity appear correctly on its canonical management/list surface, not just the origin screen?
 - Are semantic defaults set (category, type, grouping, order)?
 - Is there success feedback visible to the user after the operation?
 
 ### 5.5 Pattern Propagation
 
-After **any** reviewer flags a major or critical finding, grep the codebase for the same anti-pattern in related files before finalizing the review. Document sibling occurrences in the `key-findings` section even if those files are outside the current diff.
+When a reviewer flags a major or critical finding, scan sibling files for the same anti-pattern before finalizing. Sibling occurrences are often where the real bug lives — the flagged file is frequently just the first place it was spotted. Spend up to ~5 minutes scanning; stop at 5 sibling occurrences, or when coverage of plausible locations (same module, same layer, same call-site shape) is exhausted — whichever comes first. Record findings in `key-findings` even if those files are outside the current diff; if clean, record "scanned N files, no sibling occurrences".
 
 For every skipped reviewer, write a one-line reason in that section.
 
@@ -188,12 +188,14 @@ There is always exactly **one** Code Review file per review target. Compute `cr_
 
 Pass `cr_file_path` to every agent so they use **File Mode**.
 
-Dispatch agents and let each agent **Read → Edit** its own `<!-- SECTION:xxx -->` markers in `cr_file_path`. Each agent writes only within its own markers — no agent touches another agent's section.
+Dispatch **all agents selected in STEP 5 in a single turn** — issue every Agent tool call in the same assistant message. The agents write to disjoint `<!-- SECTION:xxx -->` markers in `cr_file_path`, so there are no ordering dependencies. Each agent already receives the same `full_diff` / `changed_files` context computed once in STEP 3, so the tool calls are independent and safe to batch. Do not dispatch one, wait for it to finish, then dispatch the next; that serializes a parallel workload.
+
+Each agent reads → edits its own section markers only; no agent touches another agent's section.
 
 If an agent fails or times out, write a fallback note into its section:
 `*Review skipped — [agent-name] did not complete.*`
 
-After **all** agents finish, proceed to STEP 9.
+Once every dispatched agent has finished, proceed to STEP 9.
 
 ## STEP 9: Write Verdict
 
@@ -202,7 +204,7 @@ The orchestrator writes the remaining sections that agents do not own:
 - `review-context` — fill from STEP 2 capabilities
 - `summary` — synthesize a 2-5 sentence note from agent findings
 - `verdict` — one of the verdicts below
-- `key-findings` — consolidate actionable findings from all agents, ordered by severity
+- `key-findings` — consolidate actionable findings from all agents. Include every CRITICAL and MAJOR regardless of confidence. For MINOR/INFO, include items marked `confidence: high`; drop or collapse `confidence: low` MINOR/INFO into a single "Other low-confidence notes" bullet. Order by severity, then confidence.
 - `coverage` — record what was reviewed and what was skipped
 - `verification` — record commands run and results
 - `metadata` — changed files, diff source, reviewers invoked
@@ -219,22 +221,21 @@ Never return `APPROVED` for an uncommitted working-tree draft.
 
 ## STEP 10: QA Gate Recommendation
 
-After the verdict is written, check if the diff includes UI/frontend files (e.g., `.svelte`, `.tsx`, `.jsx`, `.vue`, `.html`, component files). If it does, append a **QA recommendation** to the review file:
+After the verdict is written, check whether the diff affects user-facing rendering — any file that produces DOM output, styling, or routing state. Use this list as a seed, not a limit: `.svelte`, `.tsx`, `.jsx`, `.vue`, `.html`, `.astro`, `.mdx`, CSS/SCSS, component stories, route files. When in doubt, treat it as UI. If it qualifies, append a **QA recommendation** to the review file:
 
 > **QA recommended**: This review includes UI changes. Static code review cannot catch runtime layout, navigation, or user-flow issues. Consider running browser-based QA (manual or automated) before merging.
 
 This is a recommendation, not a blocker. It surfaces the gap between "code looks correct" and "feature works correctly."
 
-## Common Mistakes
-- Creating multiple CR files — there is always exactly ONE per review target
-- Dispatching agents without `cr_file_path` (causes inline-only results, no file written)
-- Overwriting `cr_file_path` with Write after agents already edited their sections
-- Forcing task workflow onto every review target
-- Blocking review because the branch is dirty
-- Using `main...HEAD` for working-tree review
-- Claiming spec compliance without a spec
-- Treating skipped verification as passed verification
-- Approving uncommitted drafts
+## Operating Reminders
+
+A few gates are worth re-stating because mis-handling them corrupts the review output:
+
+- One CR file per review target — reuse and clear existing markers instead of creating a second file (see STEP 7).
+- Pass `cr_file_path` to every dispatched agent so they write in File Mode (see STEP 8).
+- Use Edit, not Write, on `cr_file_path` after agents have populated their sections — a full overwrite destroys their work (see STEP 9).
+- Verification that was skipped is recorded as skipped, not as passing (see STEP 6).
+- Spec compliance is only claimed when a spec artifact exists (see STEP 2).
 
 ## Related Skills
 

@@ -40,6 +40,11 @@ Parallelization helps when a task has multiple acceptance criteria that are genu
 
 **Max concurrency**: Spawn at most **4 workers** simultaneously. Beyond that, API throughput and context quality degrade.
 
+If a scenario is not covered by the matrix, default to sequential and state
+your reasoning in one sentence before proceeding. Parallelization is an
+optimization, not a requirement — when independence is uncertain,
+sequential is the safe choice.
+
 ## Pre-flight Checks
 
 Before spawning any workers, verify:
@@ -64,7 +69,11 @@ Announce the plan:
 
 Each worker runs in an **isolated git worktree** via the Agent tool's `isolation: "worktree"` parameter. This gives each worker its own copy of the repo — no file conflicts possible.
 
-Spawn ALL workers in a **single assistant message** to maximize true concurrency:
+Spawn every worker in **the same assistant message** — do not default to
+sequential Agent calls. True concurrency only happens when all Agent tool
+calls are in one turn; splitting them across turns serializes the work and
+defeats the purpose of this skill. When calls have no dependencies, batch
+them; never spawn one, wait, then spawn the next.
 
 ```
 Agent tool call 1:
@@ -79,7 +88,9 @@ Agent tool call 1:
     - git_writes_approved: false
 
     Constraints:
-    - Implement ONLY criterion [N]
+    - Scope: criterion [N]. Make the edits needed to satisfy it (including
+      required supporting imports, types, fixtures). Do not expand scope into
+      other criteria, unrelated refactors, or drive-by cleanups.
     - Follow TDD (RED → GREEN → REFACTOR) inside scope
     - Do NOT create git commits — just make the changes
     - Do NOT edit shared task documents
@@ -91,6 +102,11 @@ Agent tool call 2 (same message):
   prompt: |
     (same structure, different criterion)
 ```
+
+Anti-pattern: do not call one Agent, wait for its result, then call the
+next. All N spawn calls go in one assistant message, period. If you find
+yourself about to issue a single Agent call when multiple items were
+selected, stop and batch them.
 
 **Why worktrees?** Without isolation, multiple agents editing files simultaneously in the same directory would create race conditions and corrupted files. Worktrees give each agent a complete, independent copy of the repo. When the agent finishes, its worktree path and branch are returned in the result — you use these to cherry-pick the changes back.
 
@@ -135,6 +151,13 @@ After all workers' changes are applied and validated, update the task document *
 - Note which items were parallelized (useful for reviewers)
 
 Workers must not edit shared task documents — this is the orchestrator's job, to avoid merge conflicts in docs.
+
+### Context note
+Worker results accumulate in this conversation. Context may be
+auto-compacted between waves. Before starting the next wave, re-read the
+task document to reconstruct scope, and only persist between waves what
+you will actually need (diffs applied, validation status). Do not stop a
+multi-wave run because context feels full — compaction is handled for you.
 
 ## Safety Rules
 

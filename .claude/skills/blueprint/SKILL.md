@@ -29,6 +29,10 @@ Large features can't be completed in a single Claude session. This skill decompo
 2. Has **explicit dependencies** — which steps must complete first
 3. Has **verification criteria** — how to confirm the step is done
 
+### Context discipline while drafting
+
+Context may be compacted mid-plan. If you sense the window tightening, write the plan to disk incrementally (one step at a time) rather than building the whole blueprint in memory. Produce every step through to the end — do not stop early because of token concerns. If compaction fires mid-draft, resume from the last written step.
+
 ## When to Use
 
 - Feature spans multiple domains (backend + mobile + infra)
@@ -43,6 +47,8 @@ Large features can't be completed in a single Claude session. This skill decompo
 2. Explore the codebase areas that will be touched
 3. Identify existing patterns to follow
 4. List unknowns and risks
+
+When the objective spans multiple codebase areas (e.g., backend + mobile + infra), spawn one Agent subagent per area in the same turn rather than reading sequentially. Each subagent returns its findings; you synthesize.
 
 ### Phase 2: Design (create the dependency DAG)
 1. Break the objective into 3-8 implementation steps
@@ -87,7 +93,10 @@ For each step, produce:
 ```
 
 ### Phase 4: Review (adversarial check)
-Before presenting the plan, self-review:
+
+First, list every concern you noticed while drafting — missing migrations, implicit env setup, unclear step boundaries, weak acceptance criteria — including low-confidence ones. Then classify each into: Completeness / Independence / Ordering / Gaps / Rollback. Carry the low-confidence items into the Risks table below with explicit "(low confidence)" tags rather than dropping them silently.
+
+After listing, verify against the checklist:
 1. **Completeness**: Does executing all steps achieve the original objective?
 2. **Independence**: Can each step truly be executed by a fresh agent with only its cold-start brief?
 3. **Ordering**: Are dependencies correctly captured? No circular dependencies?
@@ -137,7 +146,7 @@ Step 1 ─── Step 2 ─── Step 4
 
 ## Constraints
 
-- **Cold-start briefs must be self-contained** — a fresh agent should NOT need to read the full blueprint, only its step's brief
+- **Cold-start briefs are self-contained** — a fresh agent reads only its step's brief and can begin work. If you find yourself about to reference "see Step 2", inline the information instead.
 - **Keep steps focused** — each step should be completable in a single session (1-3 hours of agent work)
-- **Don't over-plan** — later steps can be intentionally vague; refine them as earlier steps complete
-- **No implementation** — this skill produces a plan, not code. Use `/si` to execute steps.
+- **Plan to the level each step needs right now** — Steps 1–2 (starting soon) get full cold-start briefs. Steps 3+ get a one-paragraph objective and can be refined later. Stop adding detail once the next executor has enough to start.
+- **Output is a plan document, not code edits.** The deliverable is the blueprint file; `/si` executes each step in a later session. If the user asks you to "also start on step 1", respond with the plan first and offer to hand off to `/si` afterward.

@@ -31,18 +31,29 @@ Shared knowledge preloaded into review agents. Apply these conventions when revi
 
 ## Review Quality Rules
 
-- **>80% confidence threshold**: only report findings you're confident about. False positives erode trust.
-- **Consolidate similar issues**: "5 functions missing error handling" with a list, not 5 separate findings
-- **Severity order**: CRITICAL → MAJOR → MINOR → INFO
-- **Actionable**: every finding needs severity + location (`file:line`) + concrete suggestion
-- **Constructive tone**: explain why issues matter, highlight positive practices
+Reviews run in two stages so we get recall AND precision:
+
+1. **Find stage (this skill)** — report every issue you notice, including low-severity
+   and uncertain ones. For each finding, include:
+   - `severity`: CRITICAL | MAJOR | MINOR | INFO
+   - `confidence`: high | medium | low
+   - `location`: `file:line`
+   - `suggestion`: concrete fix or next step
+   Do not self-censor based on severity or confidence — a later verification pass
+   will filter before anything reaches the user.
+
+2. **Presentation** — consolidate repeats ("5 functions missing error handling" with
+   a list, not 5 separate findings). Explain why each issue matters. Highlight
+   positive practices alongside problems.
 
 ## Diff-Scoped Review (when `changed_files` provided)
 
 - Primary scope: only review files in `changed_files`
 - Use `full_diff` to focus on changed lines
-- MAY read unchanged files for context (interfaces, contracts) — do NOT flag issues in unchanged code
-- Pre-existing issues: do NOT flag unless changes make them worse
+- You may read unchanged files for context (interfaces, contracts), but don't raise
+  findings against unchanged code — the author isn't touching it in this PR.
+- Skip pre-existing issues unless the current changes make them worse (e.g., a bug
+  that used to be in dead code is now reachable).
 
 ## Ownership Boundaries
 
@@ -58,7 +69,9 @@ Each agent owns specific concerns — do not duplicate other agents' work:
 | Documentation accuracy | `documentation-accuracy-reviewer` |
 | Performance, N+1, memory | `performance-reviewer` |
 
-If you spot something outside your scope, note it briefly as INFO — do not deep-dive.
+If you spot something outside your scope, note it as a one-line INFO finding with
+the likely owner (e.g. "possible security concern — flag for `security-code-reviewer`")
+and move on.
 
 ## Project File Locations
 

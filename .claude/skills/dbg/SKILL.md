@@ -18,7 +18,11 @@ allowed-tools: Read, Edit, Write, Bash, Grep, Glob, AskUserQuestion, Task
 > **Announcement**: Begin with: "I'm using the **dbg** skill for runtime debugging."
 
 ## Objective
-Find root cause using **runtime evidence**, not guesses. Instrument code, collect logs, confirm hypotheses, and only then fix.
+Find root cause using runtime evidence, not guesses. Never speculate
+about code paths you have not opened or behavior you have not logged.
+The investigate-then-fix ordering exists because guessed fixes mask
+bugs that reappear in production; logged-and-verified fixes do not.
+Instrument, reproduce, analyze, confirm, and only then edit.
 
 ## Configuration
 
@@ -60,15 +64,23 @@ with open('.debug/debug.log', 'a') as f:
 Adapt the pattern for other languages. Always wrap instrumentation in `#region dbg` / `#endregion` markers for easy cleanup.
 
 ### Rules
-- Insert **3–8** log points total
+- Insert **3–8** log points for non-trivial bugs. For bugs where Step 1
+  triage already identified a likely cause (typo, missing import, obvious
+  config mismatch), 1–2 confirming log points are enough — do not pad.
 - Cover: entry, exit, before/after critical ops, branches, edge values, state changes
-- **No secrets or PII** in log data
+- Log shapes and non-sensitive values only: booleans, counts, enum
+  states, sanitized IDs. If a field could contain a secret or PII,
+  log its presence and type (`{ token: "<redacted:string:len=42>" }`),
+  not the value.
 
 ## Debug Workflow
 
-### Step 0: Clarify (if needed)
-If the bug context is vague, ask clarifying questions first using `AskUserQuestion`.
-Goal: reproducible steps, expected vs actual behavior, environment info, scope.
+### Step 0: Clarify (only if critical info is missing)
+Skip this step if the user supplied a reproducible trigger, a stack
+trace, or an error message — proceed to Step 1. Use `AskUserQuestion`
+only when you cannot name a concrete first hypothesis without more
+input. The missing pieces worth asking about are: exact repro steps,
+expected vs actual, and environment (not general "tell me more").
 
 ### Step 1: Quick Triage
 Before generating hypotheses, gather fast context:
@@ -80,7 +92,11 @@ Before generating hypotheses, gather fast context:
 This often narrows the search space dramatically or reveals trivial causes that don't need full instrumentation.
 
 ### Step 2: Hypotheses
-Generate **3–5 precise hypotheses** about the bug cause. Be specific — each hypothesis should point to a different subsystem or failure mode.
+Generate **2–5 precise hypotheses**, scaled to bug complexity. For a
+trivial bug with a clear suspect from Step 1, two hypotheses (the suspect
+and one alternative) are enough. For a cross-service race condition, use
+the full 5. Be specific — each hypothesis should point to a different
+subsystem or failure mode.
 
 ### Step 3: Instrumentation
 Add log points to test all hypotheses in parallel. Keep them minimal and localized. Use the language-appropriate snippet from above.
@@ -124,7 +140,10 @@ After verified success:
 - For CI pipeline failures → `/fci`
 - After the fix, for pre-merge code review → `/sr`
 
-## Forbidden
-- Fixing without runtime evidence
-- Removing logs before verification
-- Using sleeps/delays as a "fix"
+## Core principles
+- Fix only after logs confirm the root cause — runtime evidence is the
+  contract this skill offers the user.
+- Keep instrumentation in place until the verification run proves the
+  fix, then clean up in one pass.
+- If a sleep or delay "fixes" the bug, it is masking a race condition;
+  surface the race in the report instead of shipping the delay.

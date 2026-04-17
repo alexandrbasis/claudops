@@ -21,8 +21,8 @@ Step-by-step review of implementation plan. Focus: **business value** through te
 ### Phase 1: Analysis
 
 Before responding:
-1. Read the plan completely
-2. Study related code (Grep, Read) — verify, don't assume
+1. Read the plan completely. If the argument is a directory or ambiguous path, Glob for plan-shaped files (`tech-decomposition-*.md`, `*implementation-plan*.md`) before giving up.
+2. Study related code (Grep, Read) — verify, don't assume. Never comment on a file you have not opened; if the plan names a file, read it before evaluating the step that touches it.
 3. Compare with PRD/business requirements — run alignment checklist:
    - Measurable outcomes/KPIs defined?
    - Scope matches PRD (no creep, no gaps)?
@@ -31,7 +31,7 @@ Before responding:
 4. Determine business value of each step
 5. If plan is ambiguous or missing context — use AskUserQuestion to clarify before proceeding
 
-Record mismatches (extra features, missed requirements, logic conflicts) for discussion. Criticism = facts + question.
+Record mismatches (extra features, missed requirements, logic conflicts) for discussion. Frame each as **facts + question** rather than a verdict — the plan author knows the product context you don't, and a question invites a fix instead of a defense.
 
 **Review format:**
 
@@ -42,7 +42,7 @@ Record mismatches (extra features, missed requirements, logic conflicts) for dis
 **Scope:** [components] | [files] | [complexity]
 **Plan:** [N steps with names]
 
-**Warning** (if any):
+**Warnings (include uncertain ones with confidence tag):**
 - [Problem] — contradicts [source]
 
 Ready for first step?
@@ -50,7 +50,7 @@ Ready for first step?
 
 ### Phase 2: Walkthrough
 
-Wait for user confirmation ("ready", "next") before advancing to each step. Verify PRD alignment per step — if mismatch found, flag it and request confirmation before continuing.
+Default to a continuous walkthrough in one response (all steps, back-to-back) — 4.7 calibrates length well and one message is cheaper than N turns. Pause only when (a) the user asks you to pause, (b) you need to resolve a PRD mismatch before the next step makes sense, or (c) the plan has more than ~6 steps and a mid-review check-in improves comprehension.
 
 **Step format:**
 
@@ -63,7 +63,7 @@ Wait for user confirmation ("ready", "next") before advancing to each step. Veri
 **Impact:** [code] → [user-facing change]
 **Code:** [if relevant]
 
-**Warning** (if any):
+**Warnings (include uncertain ones with confidence tag):**
 - [PRD issue]
 - **Question:** [clarification]
 
@@ -93,7 +93,7 @@ Questions? Next?
 | Simplicity | Term = analogy |
 | Specificity | Real files/endpoints |
 | Progress | Every 3-4 steps: "X of N" |
-| Criticality | Flag PRD mismatches **only** when present |
+| Criticality | Surface every potential PRD mismatch, including uncertain ones; mark each with confidence (high/medium/low). Present them all in the Warning block — let the user decide what is in scope. |
 | Constructiveness | Facts + question, no dismissiveness |
 
 ## Example

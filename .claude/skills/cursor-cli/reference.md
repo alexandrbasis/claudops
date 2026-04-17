@@ -66,9 +66,9 @@ agent -p "prompt" --model composer-2 --mode=ask --trust
 
 ## Model Selection
 
-### Default Model: `composer-2`
+### Required Model: `composer-2`
 
-Always use `--model composer-2` for cross-AI validation. Composer 2 is Cursor's frontier in-house model — fine-tuned Kimi K2.5 with reinforcement learning on long-horizon coding tasks.
+Pin `--model composer-2` for cross-AI validation. Composer 2 is Cursor's frontier in-house model — fine-tuned Kimi K2.5 with reinforcement learning on long-horizon coding tasks. Without this flag, you may get a default that duplicates another CLI's perspective.
 
 ### Available Models (verified March 2026)
 

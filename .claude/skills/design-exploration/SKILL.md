@@ -32,7 +32,7 @@ Typically invoked by `/brainstorm` or `/nf`, but can also run standalone when so
 
 ### Step 1: Parallel Context Gathering
 
-Launch **2-3 Explore agents in parallel** to scan different angles of the codebase simultaneously. Use a faster model unless the task clearly needs deeper reasoning. See `references/exploration-checklist.md` for a generic checklist and adapt it to the actual project layout.
+Spawn 2–3 Explore agents in the **same turn** (single message with multiple tool calls) so they run concurrently. The scan angles below are independent — do not sequentialize them. Use a faster model unless the task clearly needs deeper reasoning. See `references/exploration-checklist.md` for a generic checklist and adapt it to the actual project layout.
 
 Common scan angles:
 1. **Closest prior art**: similar features, modules, screens, services, or flows
@@ -81,8 +81,8 @@ For each approach:
 
 Once the user picks an approach (or you have a clear winner):
 
-1. Present the design in **200-300 word sections**
-2. After each section, check: "Does this look right so far?"
+1. Present all sections in a single structured response (each section 200–300 words, clearly labeled).
+2. End with: "Reply `continue` to proceed, or `revise: <section name>` to iterate on a specific section." Do not pause between sections.
 3. Cover only the areas that materially affect the caller's decision:
    - Where the feature fits in the current product or architecture
    - How the user flow or system flow would likely work
@@ -105,7 +105,7 @@ When this skill completes, it returns to the caller:
 ## Key Principles
 
 - **Evidence-based**: Every design recommendation references actual codebase patterns
-- **YAGNI ruthlessly**: Strip unnecessary features from all proposals
+- **YAGNI**: Each proposed approach should cover only what the caller's goal requires. If an approach adds abstraction beyond the stated goal, either drop it or label the extra clearly as "optional — not required by the brief."
 - **Follow existing conventions**: New code should look like it belongs in the codebase
 - **Caller-sensitive depth**: Tune depth to the caller's goal instead of always pushing into implementation detail
 - **Multiple choice preferred**: Use `AskUserQuestion` with options when clarifying

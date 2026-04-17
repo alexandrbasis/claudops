@@ -20,7 +20,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, AskUserQuestion, Agent, Skill
 Conduct a collaborative brainstorming session through natural dialogue, exploration of options, and structured capture of insights. Brainstorms can be project-related or general — the skill adapts its depth and tooling accordingly.
 
 ## Guidelines
-- **Use `AskUserQuestion` tool for ALL clarifications** — provides interactive options for user to choose from
+- Use `AskUserQuestion` for clarifications — it renders as interactive options the user can pick from, which is friendlier than free-text for most choices.
 - Ask **non-obvious and thought-provoking** questions that challenge assumptions
 - Present multiple perspectives and approaches
 - Capture key insights and decisions in the brainstorm notes
@@ -59,7 +59,7 @@ Brainstorms vary widely in scope. Quickly assess what kind of session this is �
 
 ### Step 2: Context Gathering (Adaptive)
 
-Context gathering is not a gate — it happens organically as the brainstorm progresses. Start with what's immediately relevant and pull in more context as needed.
+Context gathering is not a blocking gate, but for project-related topics you must ground the conversation in real code before proposing options. At minimum, read `CLAUDE.md` and skim the 1–2 files most directly named in the topic before Step 3. Pull in more context as specific areas become relevant. For general (non-project) topics, skip this step entirely.
 
 **For project-related topics:**
 - If the topic clearly touches existing code, invoke the `design-exploration` skill to scan the codebase
@@ -92,7 +92,7 @@ The core of the brainstorm. Adapt the depth to the calibration from Step 1.
 | **Impact** | How do we measure success? What's the MVP? What if we don't do this? |
 | **Trade-offs** | Speed vs quality? Short-term vs long-term? Complexity vs simplicity? |
 
-Present ideas in 200-300 word sections and validate understanding after each section before continuing. Be ready to pivot if direction changes.
+Present ideas in tight, self-contained sections sized to the calibration from Step 1 — shorter for Quick Decision, longer for Deep Dive. Pause to validate understanding between sections. Be ready to pivot if direction changes.
 
 **Completion signals** — the brainstorm is "done" when:
 - For Quick Decision: user has enough info to decide
@@ -101,24 +101,20 @@ Present ideas in 200-300 word sections and validate understanding after each sec
 
 ### Step 4: Research (When Needed)
 
-Launch research proactively when the conversation reveals knowledge gaps — no permission needed. Inform the user what's being researched and continue brainstorming while agents work in the background.
+Research is a branch, not the trunk. Most brainstorms need none — the model's own knowledge plus user input is usually enough, especially for Quick Decision depth. Run research only when the answer genuinely depends on information you don't have.
 
 **Quick lookups:**
 - `get_code_context_exa` — for code-related context, APIs, libraries
 - `web_search_exa` — for trends, market data, best practices
 
 **In-depth research:**
-- Spawn `comprehensive-researcher` agent via Agent tool for topics requiring multiple sources and cross-verification
-- Launch multiple researcher agents simultaneously for different sub-topics
+- Spawn `comprehensive-researcher` agents when the decision hinges on external evidence the user will ask about.
+- When fanning out across independent sub-topics, spawn all subagents **in the same assistant turn** — do not default to sequential. Inform the user what's being researched.
 
 **Code context (project-related):**
 - Use Explore agents (Sonnet) to scan relevant modules, patterns, and prior art
 
-**Trigger research when:**
-- Topic requires current or up-to-date information
-- Market trends, competitor analysis, or industry standards are relevant
-- Technical decisions benefit from external validation
-- Knowledge gaps are identified during exploration
+**Trigger research only when** the brainstorm cannot move forward without it — e.g., the user explicitly asks for market data, a claim requires external verification to be actionable, or an unfamiliar technology is central to the decision. Do not research to pad Deep Dive depth.
 
 ### Step 5: Capture
 

@@ -137,7 +137,9 @@ codex exec resume --last "[follow-up prompt]"
 codex exec resume SESSION_ID "[follow-up prompt]"
 ```
 
-## Global Flags (apply to all commands)
+## Common global flags
+
+These propagate to subcommands (but see the `codex review` caveat above).
 
 | Flag | Description |
 |---|---|
