@@ -10,7 +10,7 @@
 && jq -r '.response' /tmp/gemini.json > /tmp/gemini-result.txt \
 && echo "Gemini completed"
 ```
-Read result with **Read tool** on `/tmp/gemini-result.txt` — never `cat`.
+Read result with **Read tool** on `/tmp/gemini-result.txt` — `cat` would dump the full payload back into the conversation and defeat the token-optimization pipeline.
 
 ---
 
@@ -184,7 +184,7 @@ Risks, blind spots, or better alternatives?" # ...pipeline
 Extract structured data from Gemini for further processing.
 
 ```bash
-gemini -p "Output ONLY valid JSON. No markdown fences. No explanation.
+gemini -p "Respond with valid JSON only — no markdown fences, no explanation.
 [PROMPT requiring structured output]" --approval-mode=yolo -o json \
   > /tmp/gemini.json 2> /dev/null \
   && jq -r '.response' /tmp/gemini.json | jq '.' > /tmp/gemini-structured.json \

@@ -196,9 +196,8 @@ Return findings inline in the structured format above so the orchestrator can in
 
 ## Constraints
 
-- Read task document FIRST to understand requirements
-- Check git log to verify TDD was followed
-- Be specific with criticism — vague feedback is useless
-- Every criticism should include a suggested fix
-- Don't proceed to code review if NEEDS REWORK
-- Verify {{ARCHITECTURE}} layer boundaries are respected
+- Read the task document first — the rest of the review only makes sense once you know the intended scope
+- Check git log to verify TDD was followed (test commits precede implementation)
+- Every finding includes file, line, and suggested fix — downstream agents and the human reviewer cannot act on "the architecture feels wrong"
+- If status is NEEDS_REWORK, the orchestrator skips detailed code review — don't soften the status to avoid that
+- Verify {{ARCHITECTURE}} layer boundaries are respected per `{{DOCS_DIR}}/project-structure.md`
