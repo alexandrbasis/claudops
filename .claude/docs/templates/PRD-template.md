@@ -93,6 +93,29 @@
 
 ---
 
+## Modules & Interfaces
+
+> Name the deep modules this feature touches or introduces, and the **contracts** at their seams. Use `architecture-language/LANGUAGE.md` vocabulary (module, interface, seam, adapter) and `product-docs/UBIQUITOUS_LANGUAGE.md` vocabulary (domain terms). Do NOT include file paths — they go stale. Describe modules and behaviors instead.
+
+**Modules touched / introduced**
+
+| Module | New / Modified | Purpose | Why deep (what it hides) |
+|--------|----------------|---------|--------------------------|
+| [e.g., Order intake] | New | Accept and validate orders before persistence | Validation rules, idempotency, dedup logic |
+| [...] | [...] | [...] | [...] |
+
+**Interface changes** — for each module, name the contract a caller must rely on. Include invariants and error modes, not just signatures.
+
+- **[Module A]** — [behavior 1 the interface guarantees], [invariant], [error mode]
+- **[Module B]** — [...]
+
+**Seam choices**
+
+- [Where the seam lives and why — e.g., "intake module exposes a single `place(order)` operation; persistence is an internal adapter, not part of the interface"]
+- [If a port + adapter pattern is introduced, justify with two adapters (production + test). One adapter = hypothetical seam — reconsider.]
+
+---
+
 ## Research Findings
 
 > This section is **mandatory**. Writing requirements based on assumptions instead of research is the #1 PRD anti-pattern.

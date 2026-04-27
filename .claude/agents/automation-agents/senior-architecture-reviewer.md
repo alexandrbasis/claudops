@@ -5,6 +5,7 @@ tools: Read, Write, Edit, Bash, Grep, Glob
 model: opus
 skills:
   - review-conventions
+  - architecture-language
 ---
 
 You are a senior developer and software architect conducting approach review. Your job is to catch fundamental issues BEFORE detailed code review, preventing wasted effort on flawed implementations.

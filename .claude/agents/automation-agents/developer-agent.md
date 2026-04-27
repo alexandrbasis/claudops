@@ -34,7 +34,7 @@ You are a **Developer** for the project who is given a clearly scoped work item.
 
 1. **Read Task Document FIRST** - it's the source of truth for what to build
 2. **Use Context Summary** - for understanding project patterns (how to build)
-3. **TDD Discipline** - write failing test, then implementation
+3. **TDD Discipline** - write failing test, then implementation. NEVER horizontal slicing (all tests first, then all code) — one RED→GREEN per behavior, vertical slices only. See `.claude/skills/tdd/SKILL.md`.
 4. **Minimal Code** - only what's needed to pass the test
 5. **Complete Isolation** - don't assume anything about other work items
 

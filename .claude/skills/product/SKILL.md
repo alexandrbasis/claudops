@@ -56,6 +56,8 @@ Treat the templates as **output contracts** — the interview gathers exactly th
 
 **For PRD**: Check whether an existing JTBD already exists in `product-docs/JTBD/JTBD-*[feature-name]*.md`. If it does, load it as input context — the PRD builds on the JTBD.
 
+**Load shared glossary**: If `product-docs/UBIQUITOUS_LANGUAGE.md` exists, read it and use its terms verbatim during the interview. If a domain term in this conversation conflicts with the glossary, flag the conflict immediately rather than silently drifting. If the glossary is missing or thin and new domain terms come up, plan to invoke `/ubiquitous-language` after the grill round (Step 4 → Step 5 transition).
+
 ### Step 1: Context Gathering & Design Exploration
 
 **Invoke the `design-exploration` skill** to ground product documentation in codebase reality.
@@ -151,6 +153,13 @@ Drive the conversation section-by-section toward filling the template. Batch que
 - What are the key states (loading, empty, error, success)?
 - What business rules or constraints apply?
 
+**Modules & Interfaces** (PRD only — fills the `Modules & Interfaces` section of `PRD-template.md`):
+- Which deep modules are touched or introduced? Use `architecture-language/LANGUAGE.md` vocabulary.
+- For each module, what does its **interface** guarantee — invariants, ordering, error modes — not just type signatures?
+- Where do the seams live, and what sits behind them?
+- If a port + adapter pattern is proposed, are there genuinely two adapters (e.g. production + test)? One adapter = hypothetical seam.
+- If new domain terms surface, capture them via `/ubiquitous-language` so the PRD, tech-decomposition, and code share a single glossary.
+
 ---
 
 Aim for 3-5 rounds total per document. After round 5, present what's still unclear and ask the user: "continue interviewing" / "mark unknowns and proceed to grill". Use `AskUserQuestion` with multiple-choice options when there are clear alternatives — it's faster than free-text for both sides. Challenge assumptions: when an answer is confident but under-specified, name the gap ("You said X — how would that work for case Y?") instead of accepting at face value.
@@ -179,6 +188,8 @@ Aim for 3-5 rounds total per document. After round 5, present what's still uncle
 
 **After the grill session completes:**
 Incorporate findings. Tighten unclear wording, scope boundaries, hidden assumptions.
+
+**Update shared glossary** (before writing the doc): if the grill or interview surfaced new domain terms, ambiguous synonyms, or sharpened a fuzzy term, invoke `/ubiquitous-language` to update `product-docs/UBIQUITOUS_LANGUAGE.md`. The PRD/JTBD then uses canonical terms — and downstream `/ct` and `/si` inherit the same vocabulary.
 
 **Checkpoint:** `AskUserQuestion`: "How should we proceed?" Options: "Proceed to document writing" / "Revisit based on grill findings" / "Cut scope based on findings"
 

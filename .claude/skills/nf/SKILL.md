@@ -58,6 +58,8 @@ Treat the template as the **output contract**:
 - Check `product-docs/JTBD/JTBD-*[feature-name]*.md` for an existing JTBD
 - If found, read them as input context — they define the product-level "what and why" that this discovery will explore in depth. Reference them in the discovery document.
 
+**Load shared glossary**: If `product-docs/UBIQUITOUS_LANGUAGE.md` exists, read it and use its terms verbatim during the interview. Flag any conflict between user wording and the glossary immediately rather than silently drifting. If the glossary is missing or new domain terms come up, plan to invoke `/ubiquitous-language` after the grill round (Step 4 → Step 5 transition).
+
 ### Step 1: Context Gathering & Design Exploration
 
 **Invoke the `design-exploration` skill** to ground discovery in the real codebase.
@@ -161,6 +163,8 @@ Now that the draft shape is clear, **invoke the `/grill-me` skill** to pressure-
 **After the grill session completes:**
 - Incorporate all findings and decisions back into the feature understanding
 - Tighten unclear wording, scope boundaries, hidden assumptions, and missing states or edge cases
+
+**Update shared glossary** (before writing the discovery doc): if the grill or interview surfaced new domain terms, synonym conflicts, or sharpened a fuzzy term, invoke `/ubiquitous-language` to update `product-docs/UBIQUITOUS_LANGUAGE.md`. The discovery doc then uses canonical terms, and downstream `/vp`, `/ct`, `/si` inherit the same vocabulary.
 
 **Checkpoint:** `AskUserQuestion`: "How should we proceed?" Options: "Proceed to discovery document" / "Revisit design based on findings" / "Cut scope based on grill findings"
 

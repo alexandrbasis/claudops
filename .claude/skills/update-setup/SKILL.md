@@ -1,12 +1,11 @@
 ---
 name: update-setup
 description: >-
-  Pull upstream workflow changes from claudops into your local .claude/ folder.
-  Fetches the latest from the remote repo, shows what changed, asks what to update,
-  and warns about conflicts with local customizations. Only touches upstream-tracked
-  files — your custom local skills, agents, and hooks are never modified or removed.
-  Use when asked to 'update setup', 'pull workflow changes', 'sync claude config',
-  'update workflows', 'update skills', 'check for updates', or 'update-setup'.
+  Pull upstream workflow changes from claudops into a local .claude/ folder.
+  Uses a deterministic scan/report/apply engine, asks for approval before writes,
+  and only touches upstream-tracked workflow files. Use when asked to update setup,
+  pull workflow changes, sync claude config, update workflows, update skills,
+  check for updates, or update-setup.
 allowed-tools:
   - Read
   - Glob
@@ -15,289 +14,176 @@ allowed-tools:
   - Write
   - Edit
   - AskUserQuestion
-  - Agent
 ---
 
-# Update Setup — Upstream Sync Wizard
+# Update Setup
 
-> **Announcement**: "Checking for upstream workflow updates from **claudops**…"
+> **Announcement**: "Checking for upstream workflow updates from **claudops**..."
 
-> Context will be automatically compacted during long runs. Do not stop early due to token concerns. If you need to, write interim state (files touched, placeholders filled) to a TodoWrite list so it survives compaction.
+Sync local `.claude/` workflow files with upstream claudops. The skill is
+upstream-driven: local-only user files are ignored unless they are explicitly tracked in
+the update manifest.
 
-Sync the local `.claude/` folder with the latest changes from the upstream claudops repository. Shows a categorized changelog, warns about conflicts, and lets the user cherry-pick what to update.
+## Hard Rules
 
-## Core Principle — Upstream-Only Scope
+- Start with the deterministic script. Do not classify diffs manually.
+- Ask for explicit approval before applying updates, refreshing disabled files, deleting
+  removed upstream files, branch creation, commit, push, or PR creation.
+- Never update `.claude/settings.json`, `.claude/settings.local.json`, `CLAUDE.md`,
+  hook logs, `.gitkeep`, or local-only `*.local.*` files through this skill.
+- Use LLM judgment only to explain conflicts and help the user choose a strategy after
+  the script has produced exact statuses and diffs.
 
-**This skill only tracks files that exist in the upstream claudops repo.** Users may have their own custom skills, agents, hooks, and config files in `.claude/` — these are NEVER touched, modified, flagged, or removed. The comparison is strictly: "for each file that upstream ships, what's the local state?"
+## Script
 
-- If upstream has `skills/dbg/SKILL.md` and local also has it → compare for changes
-- If local has `skills/my-custom-tool/SKILL.md` that upstream doesn't → **ignore completely**, don't even mention it
-- If upstream removes `skills/fci/SKILL.md` that local still has → flag as "removed upstream" — the user decides whether to delete their local copy
-- New upstream files that don't exist locally → offer to add them
+Use:
 
-## Constants
-
-- **Upstream repo**: `https://github.com/alexandrbasis/claudops`
-- **Upstream branch**: `main`
-- **Local path**: `.claude/` in the current working directory
-- **Temp clone dir**: `/tmp/claudops-upstream-sync`
-
-## Process
-
-### Phase 1: Fetch Upstream
-
-1. Remove any stale temp dir: `rm -rf /tmp/claudops-upstream-sync`
-2. Shallow clone the upstream repo:
-   ```bash
-   git clone --depth 1 --single-branch --branch main \
-     https://github.com/alexandrbasis/claudops.git \
-     /tmp/claudops-upstream-sync 2>&1 | tail -5
-   ```
-3. Confirm clone succeeded. If not, report the error and stop.
-
-### Phase 2: Categorize Changes (Upstream-Driven)
-
-Compare **only upstream files** against their local counterparts. Local-only files are completely ignored.
-
-Launch **1 general-purpose Agent** with this prompt:
-
-```
-You are comparing an upstream workflow template against a local customized copy.
-Your job is to identify what changed UPSTREAM and how it relates to local state.
-
-UPSTREAM: /tmp/claudops-upstream-sync/.claude/
-LOCAL:    {CWD}/.claude/
-
-## Scope rule — upstream-only
-
-Iterate only over upstream files. Local-only files (custom skills, agents, hooks the user built themselves) stay out of the comparison entirely — don't flag, mention, or categorise them. Why: the whole promise of this skill is that it won't touch user customisations; leaking them into the report violates that promise and trains the user to distrust the tool.
-
-## Steps
-
-1. List ALL files in upstream .claude/ (using Glob "**/*" under the upstream path)
-
-2. For each upstream file, determine its status. Batch the diffs: when you have a list of N upstream/local file pairs to compare, run the `diff` calls in a single turn (parallel tool calls) rather than one-at-a-time. There are no dependencies between per-file diffs.
-
-   a. **Skip entirely** — don't process these:
-      - .claude/settings.json and .claude/settings.local.json (always local config)
-      - .claude/hooks/logs/* (runtime state)
-      - Any .gitkeep files
-      - CLAUDE.md (project-level config, always local)
-
-   b. **Check if it exists locally at the same relative path**:
-
-      - **Does NOT exist locally** → categorize as **NEW**
-        - But first check: does local have the same file with a `.disabled` suffix?
-          (e.g., upstream has `skills/fci/SKILL.md`, local has `skills/fci/SKILL.md.disabled`)
-          If so, categorize as **DISABLED_LOCALLY** instead of NEW — the user intentionally turned it off.
-
-      - **Exists locally** → compare them:
-        1. Run: diff <upstream_file> <local_file> | head -120
-        2. If identical → **UNCHANGED**
-        3. If different, determine the nature of the difference:
-
-           **For skills (coding-conventions/SKILL.md, review-conventions/SKILL.md) and agent files that contain {{PLACEHOLDER}} patterns upstream:**
-           - Read both files fully
-           - If upstream has {{PLACEHOLDER}} patterns and the ONLY differences are that local has filled in those placeholders with actual values → **PLACEHOLDER_ONLY** (skip — not a real change)
-           - If upstream has structural changes BEYOND placeholder differences (new sections added, sections removed, instructions rewritten, new rules, changed logic) → **MODIFIED**
-           - When determining this: ignore whitespace differences and minor formatting. Focus on whether the INSTRUCTIONS or STRUCTURE changed.
-
-           **For all other files (hooks, scripts, templates, docs, non-convention skills):**
-           - Same placeholder logic applies for hook/agent files with {{PLACEHOLDER}} patterns
-           - For files without placeholders: any diff = **MODIFIED**
-
-3. To detect upstream DELETIONS: This is trickier because we only have a snapshot.
-   Use a heuristic: check if upstream's skills/README.md mentions skills by name.
-   Then check if local has skills/agents/hooks that WERE in a previous upstream version but are now gone.
-   Actually, simpler approach: just compare the **folder names** under key directories:
-   - List folder names under upstream `skills/`, `agents/`, `hooks/`, `docs/templates/`
-   - List folder names under local versions of the same directories
-   - Any folder that exists locally AND matches a name pattern typical of upstream skills (not custom user additions) but is MISSING from upstream → flag as **POSSIBLY_REMOVED_UPSTREAM**
-   - Since we can't be 100% sure, always present these as suggestions, not definitive removals
-   NOTE: Err on the side of NOT flagging. If uncertain whether something is an upstream file or a user's custom file, skip it. Only flag obvious cases where the file/folder name exactly matches a known upstream pattern.
-   - For candidate "removed upstream" files, restrict the check to folders whose names appear in upstream's current `skills/README.md` or `agents/README.md` listing. If the folder name isn't in that listing, treat it as user-custom and skip. Do not infer upstream membership from naming style.
-
-## Output Format
-
-Return a structured report in this EXACT format:
-
-### NEW FILES (available upstream, not present locally)
-- `path/to/file.md` — [1-line description of what this file does based on reading it]
-...
-
-### MODIFIED FILES (structural changes beyond placeholder fills)
-- `path/to/file.md` — [1-line summary of what changed]
-  WHAT CHANGED: [2-3 line description of the meaningful upstream difference]
-  CONFLICT RISK: [none|low|high] — [reason]
-  - none: upstream changed, local is still template/unmodified
-  - low: upstream changed instructions/structure, local only has placeholder fills
-  - high: both upstream AND local have custom changes that may conflict
-...
-
-### REMOVED UPSTREAM (was a standard upstream file, now gone)
-- `path/to/file.md` — [what this was]
-  REPLACEMENT: [if upstream replaced it with something else, note the new file]
-...
-
-### DISABLED LOCALLY (upstream has it, local has it .disabled)
-- `path/to/file.md` — [note: upstream version may have updates]
-...
-
-### UNCHANGED
-- [count] files identical to upstream
-
-### PLACEHOLDER-ONLY DIFFERENCES (skipped — not real changes)
-- [count] files differ only in filled placeholder values
-
-If a category has no entries, write "(none)" under it.
-```
-
-### Phase 3: Present Changes to User
-
-After the Agent returns, parse its report and present a clean changelog:
-
-```
-## Upstream Updates Available
-
-### New files ([count])
-[list each with description]
-
-### Modified files ([count])
-[list each with change summary and conflict risk]
-
-### Removed upstream ([count])
-[list each, with replacement note if applicable]
-
-### Disabled locally with upstream updates ([count])
-[list — inform user the upstream version changed but they'd disabled it]
-```
-
-If every category is empty (only UNCHANGED + PLACEHOLDER_ONLY), announce **"Your workflow is up to date with upstream. No changes needed."** and stop.
-
-Then use **AskUserQuestion** with multi-select to let the user choose what to apply:
-
-**Question 1** (if there are new files): "Which new files do you want to add?"
-- Options: each new file as a selectable option + "All new files" + "None"
-
-**Question 2** (if there are modified files): "Which modified files do you want to update?"
-- Options: each modified file with conflict risk in description + "All modified files" + "None"
-- For HIGH conflict risk files, add a warning prefix and explanation in description
-
-**Question 3** (if there are removed upstream): "These files were removed upstream. Delete them locally?"
-- Options: each file + "All" + "Keep all (don't delete)"
-
-**Question 4** (if there are disabled-with-updates): "These files are disabled locally but have upstream updates. What to do?"
-- Options: "Update the .disabled copies (keep disabled)" + "Re-enable with latest upstream version" + "Skip"
-
-### Phase 4: Conflict Detection & Preview
-
-For each MODIFIED file the user selected:
-
-1. **CONFLICT RISK = high**: Show a preview before applying:
-   - Read both files fully (both versions are small enough that full reads are fine).
-   - If either side exceeds 300 lines, fall back to a unified diff so the user sees every hunk rather than the head of the file.
-   - Summarise what upstream changed vs what the user customized locally.
-   - Explain what specifically changed upstream vs what the user customized locally
-   - Use AskUserQuestion: "This file has local customizations. How should we handle `{filename}`?"
-     - "Replace with upstream version (will lose local changes)"
-     - "Merge: keep my local values, adopt upstream's new structure"
-     - "Skip this file"
-
-2. **CONFLICT RISK = low or none**: Queue for direct copy.
-
-### Phase 5: Apply Selected Updates
-
-For each approved change:
-
-**New files**: Create parent directories if needed, then copy:
 ```bash
-mkdir -p .claude/$(dirname {path}) && cp /tmp/claudops-upstream-sync/.claude/{path} .claude/{path}
+python3 .claude/skills/update-setup/scripts/update_setup.py --help
 ```
 
-**Modified files — replace mode**: Copy upstream over local:
+The script writes adoption state to:
+
+```text
+.claude/skills/update-setup/claudops-upstream.lock.json
+```
+
+Tracked scope:
+
+- `.claude/**`
+
+Skipped scope:
+
+- `.claude/settings.json`
+- `.claude/settings.local.json`
+- `.claude/hooks/logs/**`
+- `.gitkeep`
+- `CLAUDE.md`
+- local-only `*.local.*`
+
+## Workflow
+
+### 1. Scan
+
+Create a deterministic report:
+
 ```bash
-cp /tmp/claudops-upstream-sync/.claude/{path} .claude/{path}
+python3 .claude/skills/update-setup/scripts/update_setup.py scan \
+  --output .claudops-update-report.json
 ```
 
-**Modified files — merge mode**: Use an Agent to intelligently merge:
-```
-Merge the upstream structural changes into the local file while preserving local customized values.
+For local testing against an existing upstream clone:
 
-UPSTREAM (new structure): [full content of upstream file]
-LOCAL (customized values): [full content of local file]
+```bash
+python3 .claude/skills/update-setup/scripts/update_setup.py scan \
+  --upstream-root /tmp/claudops-upstream-sync \
+  --commit "$(git -C /tmp/claudops-upstream-sync rev-parse HEAD)" \
+  --output .claudops-update-report.json
+```
+
+### 2. Present Report
+
+Render the report:
+
+```bash
+python3 .claude/skills/update-setup/scripts/update_setup.py report \
+  --report .claudops-update-report.json
+```
+
+Explain statuses:
+
+- `new`: upstream file is not present locally.
+- `modified`: upstream differs from local and local has no tracked conflict.
+- `conflicting`: local changed since the last tracked adoption.
+- `disabled`: upstream file exists, but local has `<path>.disabled`.
+- `removed`: file was tracked in the manifest but is gone upstream.
+- `placeholder_only`: differences are filled `{{PLACEHOLDER}}` values.
+- `unchanged`: local matches upstream or the tracked adoption hash.
+
+If only `unchanged` and `placeholder_only` entries exist, report that the setup is up to
+date and stop.
+
+### 3. Ask for Approval
+
+Ask which exact paths to update, refresh, or delete. Paths are relative to `.claude/`.
+Convert approval into a selection JSON file:
+
+```json
+{
+  "update": [
+    "skills/example/SKILL.md"
+  ],
+  "refresh_disabled": [
+    "skills/disabled/SKILL.md"
+  ],
+  "delete": [
+    "skills/removed/SKILL.md"
+  ]
+}
+```
 
 Rules:
-- Preserve local filled-in values (anything that replaced a {{PLACEHOLDER}}), unless upstream deleted the placeholder entirely — in that case, drop the value and note the removal in the merge summary.
-- Adopt upstream's new sections, rewritten instructions, and logic changes.
-- For sections upstream removed: if local had custom content in that section, stop and ask the user ("Upstream removed section X; your local copy has custom content there. Keep local / adopt upstream removal / show me?").
-- If upstream added new {{PLACEHOLDER}} variables, keep them literal — /setup fills them.
-- If upstream renamed a placeholder, carry the local value to the new name.
-- Preserve the file's frontmatter YAML structure.
-- After merging, print a 3-line summary ("kept N local values, adopted M upstream changes, K open questions") and write to the local path.
-- If any merge step is uncertain, emit the uncertainty to the summary instead of guessing silently.
-```
 
-**Deleted files**: Before running `rm`, print the final list of paths selected for deletion and the count. If the count is > 3, re-confirm with AskUserQuestion ("Delete these N files? Yes / No / Let me deselect some"). Then run:
+- `update` may include `new` and `modified` paths.
+- `refresh_disabled` may include `disabled` paths and writes `<path>.disabled`.
+- `delete` may include only `removed` paths.
+- Do not apply `conflicting` paths until the user chooses a conflict strategy.
+
+### 4. Apply
+
+After approval:
 
 ```bash
-rm .claude/{path}
+python3 .claude/skills/update-setup/scripts/update_setup.py apply \
+  --report .claudops-update-report.json \
+  --selection /path/to/selection.json
 ```
 
-If removing the last file in a directory, `rmdir` the now-empty directory; never `rm -r` a non-empty directory.
+The apply step updates selected files and refreshes the lock manifest.
 
-**Disabled files with updates**: Copy upstream file to the `.disabled` path:
+### 5. Verify
+
+Run:
+
 ```bash
-cp /tmp/claudops-upstream-sync/.claude/{path} .claude/{path}.disabled
+python3 .claude/skills/update-setup/scripts/update_setup.py verify
 ```
 
-### Phase 6: Post-Update Checks
+When changing this skill itself, also run:
 
-1. **Placeholder scan**: Check if any newly added or merged files contain unfilled `{{PLACEHOLDER}}` patterns:
-   ```bash
-   grep -rl '{{' .claude/skills/ .claude/agents/ .claude/hooks/ --include='*.md' --include='*.py' --include='*.sh' 2>/dev/null | head -20
-   ```
-   If found, list the files and announce: "These files contain `{{PLACEHOLDER}}` variables. Run `/setup` to configure them for your project."
-
-2. **New hooks check**: If any new hook files were added under `.claude/hooks/`:
-   - Read `.claude/settings.json`
-   - Check if the new hooks are referenced anywhere in the hooks configuration
-   - If not, announce which hooks need wiring and suggest running `/setup` or adding them manually.
-
-3. **Conflicting instructions check**: If modified files include skill or agent definitions:
-   - Scan for instructions that might contradict other local skills
-   - Example: if an updated skill now says "always use X" but a local custom skill says "never use X"
-   - If detected, warn the user about the potential conflict with specific file paths
-
-4. **Cleanup**: Remove the temp directory:
-   ```bash
-   rm -rf /tmp/claudops-upstream-sync
-   ```
-
-### Phase 7: Summary
-
+```bash
+python3 .claude/skills/update-setup/tests/test_update_setup.py
 ```
-## Update Complete
 
-**Applied:**
-- [count] new files added
-- [count] files updated
-- [count] files removed
-- [count] disabled files refreshed
+## Conflict Handling
 
-**Action needed:**
-- [count] files have unfilled {{PLACEHOLDER}} variables — run `/setup`
-- [count] new hooks need wiring into settings.json — run `/setup`
+For `conflicting` files:
 
-**Skipped:**
-- [count] files skipped by user choice
-- [count] placeholder-only differences (not real changes)
-```
+1. Show the file path and exact diff from `.claudops-update-report.json`.
+2. Explain what upstream changed and what local changed.
+3. Ask the user to choose one strategy:
+   - replace local with upstream
+   - keep local and mark skipped
+   - manually merge, then update the manifest after verification
+
+Do not silently merge conflicts.
+
+## Post-Update Checks
+
+After applying selected updates:
+
+- Run `verify`.
+- If new hook files were added, inspect `.claude/settings.json` and report unwired hooks
+  as manual follow-up. Do not auto-edit settings.
+- If updated files contain `{{PLACEHOLDER}}`, tell the user to run `/setup`.
+- Summarize counts: updated, disabled refreshed, deleted, skipped, placeholders, and
+  manual follow-ups.
 
 ## Edge Cases
 
-- **No changes found**: Announce "Your workflow is up to date." and stop after Phase 3.
-- **Clone fails**: Report the git error, suggest checking network connectivity or GitHub access.
-- **Local .claude/ doesn't exist**: Tell the user to clone the workflow repo first, or run `/setup` from scratch.
-- **Major update detected**: If more than 5 files are MODIFIED with HIGH conflict risk, warn this is a major upstream update. Suggest reviewing the upstream repo's recent commits first: `cd /tmp/claudops-upstream-sync && git log --oneline -20`.
-- **Renamed skills/agents**: If upstream removed a file AND added a similarly-named one, flag it as a rename and offer to migrate.
-- **Binary/non-text files**: Skip diffing, just check existence and file size.
+- Clone failure: report the git error and stop.
+- Missing `.claude/`: tell the user to clone the workflow repo first or run `/setup`.
+- More than five `conflicting` files: warn this is a major update and suggest reviewing
+  upstream commits before applying.
+- Binary files: the script may copy them, but conflict explanation should avoid trying to
+  summarize binary content.

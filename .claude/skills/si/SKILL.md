@@ -19,6 +19,8 @@ Implement from a technical decomposition with TDD, lightweight task-document upd
 
 - Follow the active tech-decomposition / task document as the source of truth
 - Document lifecycle: `Technical Review` → `In Progress` → `Implementation Complete`
+- **TDD discipline** is canonical from `.claude/skills/tdd/SKILL.md` — vertical slices only (one RED→GREEN per behavior). Horizontal slicing (write all tests, then all code) is forbidden.
+- Domain terminology is canonical from `product-docs/UBIQUITOUS_LANGUAGE.md` (if present). Use its terms verbatim in code identifiers, commit messages, and test names.
 - Context will be automatically compacted during long runs. Don't stop early due to token
   concerns — persist progress to the task document after each step so a fresh window can
   resume from the same state.
