@@ -39,7 +39,7 @@ Shared knowledge preloaded into developer agents. Follow these when implementing
 
 ## Testing
 
-- **TDD**: RED → GREEN → REFACTOR
+- **TDD**: RED → GREEN → REFACTOR — vertical slices only (one RED→GREEN per behavior). Canonical: `.claude/skills/tdd/SKILL.md`.
 - Run tests: `{{TEST_CMD}}`
 - Lint: `{{LINT_CMD}}`
 - Types: `{{TYPECHECK_CMD}}`
