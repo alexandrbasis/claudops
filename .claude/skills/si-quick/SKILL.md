@@ -62,10 +62,11 @@ Get user confirmation before proceeding.
 ### STEP 3: Implement
 - Stay inside the quick plan from STEP 2. Don't refactor adjacent code, rename unrelated symbols, or add defensive checks for cases the plan didn't identify. If you find something tempting, note it as a follow-up instead of doing it.
 - Apply the change to **every file listed** in the STEP 2 plan — not only the first. If implementation reveals a file that wasn't in the plan, confirm before expanding scope.
-- **Follow TDD for any logic changes** (same bright-line rules as /si):
+- **Follow TDD for any logic changes** — canonical rules in `.claude/skills/tdd/SKILL.md`. Bright-line subset (same as `/si`):
   - Write the test first, and confirm it fails for the right reason before writing code
   - If production code landed before the failing test, revert it and restart from the test
   - Implement the minimum change that turns the test green
+  - Vertical slices only — one RED→GREEN per behavior. Never horizontal (all tests first, then all code).
   - Verify: `{{TEST_CMD}}`
   - The test-first order matters because it lets the test specify the behavior, not just confirm the implementation the model already wrote.
 - For non-logic changes (config, docs, formatting): just make the change

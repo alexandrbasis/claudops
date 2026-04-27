@@ -70,6 +70,10 @@ Search for inputs instead of assuming one repository layout. Prefer the project'
 - Open questions or unresolved markers such as `[NEEDS CLARIFICATION: ...]`
 - Prior plan patterns worth reusing for structure or level of detail
 
+**Load shared glossary**: If `product-docs/UBIQUITOUS_LANGUAGE.md` exists, read it. Use its canonical terms throughout the tech-decomposition — module names, behaviors, and acceptance criteria should match the glossary verbatim. If terms in the source PRD/discovery contradict the glossary, flag the conflict and propose canonical phrasing rather than silently inheriting drift.
+
+**Architectural vocabulary**: Load `.claude/skills/architecture-language/LANGUAGE.md` before describing module changes. Use **module / interface / seam / adapter / depth** exactly — don't drift into "component", "service", "API", or "boundary".
+
 **Output location rule:**
 - Prefer the repo's current convention for task docs
 - If no convention exists, default to:
@@ -159,6 +163,8 @@ For each gray area:
 1. **Resolve from docs or code** if the answer already exists
 2. **Ask the user** when product or implementation judgment is required
 3. **Mark as blocker/prerequisite** when external input is still missing
+
+**Glossary updates**: if a new domain term appears during ambiguity resolution, or if a term needs sharpening, invoke `/ubiquitous-language` to update `product-docs/UBIQUITOUS_LANGUAGE.md` inline. The decomposition then uses the canonical term, and `/si` and reviewers inherit it.
 
 Document non-trivial choices in the tech-decomposition file:
 
