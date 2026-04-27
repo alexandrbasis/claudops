@@ -1,10 +1,25 @@
 #!/bin/bash
 # Git Guardrails — Block dangerous git operations at the harness level.
 #
+# ============================================================
+# !!! DISABLED !!!  NOT WIRED INTO settings.json
+# ============================================================
+# This script is intentionally NOT active. It will not run on any tool
+# call until you re-add it to .claude/settings.json under
+# hooks.PreToolUse[*].hooks where the matcher is "Bash":
+#
+#   { "type": "command",
+#     "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/guards/git-guardrails.sh" }
+#
+# Disabled on 2026-04-27 because it interfered with explicit push and PR
+# creation flows during template development. Re-enable per-project once
+# the workflow tolerates a manual-only push policy.
+# ============================================================
+#
 # Event:     PreToolUse
 # Matcher:   Bash
-# Blocking:  Yes (exit 2 blocks the command)
-# Wired:     Yes (universal protection — no configuration needed)
+# Blocking:  Yes (exit 2 blocks the command) — when wired
+# Wired:     No (DISABLED — see banner above)
 #
 # Adapted from mattpocock/skills/git-guardrails-claude-code
 # (https://github.com/mattpocock/skills/tree/main/git-guardrails-claude-code)

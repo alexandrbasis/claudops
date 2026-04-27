@@ -5,9 +5,8 @@ description: >-
   conversation, flagging ambiguities and proposing canonical terms. Saves to
   product-docs/UBIQUITOUS_LANGUAGE.md. Use when user wants to define domain
   terms, build a glossary, harden terminology, or mentions "domain model" or
-  "DDD". Auto-invoke from /nf, /product, /ct as Step 0 (load) and after grill
+  "DDD". Also invoked from /nf, /product, /ct as Step 0 (load) and after grill
   (update). NOT for architectural vocabulary (use /architecture-language).
-disable-model-invocation: true
 ---
 
 # Ubiquitous Language
@@ -26,7 +25,7 @@ Extract and formalize domain terminology from the current conversation into a co
 
 ## Process
 
-1. **Read existing glossary** at `product-docs/UBIQUITOUS_LANGUAGE.md` (if it exists). Treat it as authoritative — don't overwrite, merge.
+1. **Read existing glossary** at `product-docs/UBIQUITOUS_LANGUAGE.md` (if it exists). Hold its content in memory — do NOT use Edit/section-patching. The file is small; the safe path is read → merge in memory → overwrite.
 2. **Scan the relevant scope** for domain-relevant nouns, verbs, and concepts:
    - Current conversation
    - The active task's PRD / JTBD / discovery doc
@@ -35,9 +34,10 @@ Extract and formalize domain terminology from the current conversation into a co
    - Same word used for different concepts (ambiguity)
    - Different words used for the same concept (synonyms)
    - Vague or overloaded terms
-4. **Propose a canonical glossary** with opinionated term choices.
-5. **Write to `product-docs/UBIQUITOUS_LANGUAGE.md`** in the format below.
-6. **Output a summary** inline so the caller (`/nf`, `/product`, `/ct`) can paste it into its doc.
+4. **Merge in memory**: combine existing entries with new findings. Preserve every existing term unless evidence shows it's wrong; revise definitions that have sharpened. Add newly discovered terms. Update "Flagged ambiguities" with anything resolved.
+5. **Ensure parent directory exists** before writing: `mkdir -p product-docs/` (the directory is repo-level, alongside `.claude/`, and may not exist on a fresh repo).
+6. **Write the full merged glossary** to `product-docs/UBIQUITOUS_LANGUAGE.md`, fully overwriting the prior file.
+7. **Output a summary** inline so the caller (`/nf`, `/product`, `/ct`) can paste it into its doc.
 
 ## Output format
 

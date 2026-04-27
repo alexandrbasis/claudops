@@ -51,6 +51,8 @@ Surface every concern at find time — severity and confidence are metadata, not
 
 ### 4. TDD Compliance Verification
 
+Canonical TDD discipline is defined in `.claude/skills/tdd/SKILL.md` — vertical slices, RED before GREEN, never horizontal slicing. Verify against that contract.
+
 Verify TDD was followed by checking git history:
 
 ```bash

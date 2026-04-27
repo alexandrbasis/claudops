@@ -91,7 +91,7 @@ Agent tool call 1:
     - Scope: criterion [N]. Make the edits needed to satisfy it (including
       required supporting imports, types, fixtures). Do not expand scope into
       other criteria, unrelated refactors, or drive-by cleanups.
-    - Follow TDD (RED → GREEN → REFACTOR) inside scope
+    - Follow TDD (RED → GREEN → REFACTOR) inside scope — canonical: `.claude/skills/tdd/SKILL.md`. Vertical slices only.
     - Do NOT create git commits — just make the changes
     - Do NOT edit shared task documents
     - Return a summary with: status, files_changed, test_results, and any notes

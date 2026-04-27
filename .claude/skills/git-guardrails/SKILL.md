@@ -10,9 +10,24 @@ disable-model-invocation: true
 
 # Git Guardrails
 
+> **Status: DISABLED.** The hook script exists at `.claude/hooks/guards/git-guardrails.sh` but is **not wired** into `settings.json`. It does nothing until re-enabled. See "Re-enable" below.
+
 > **Upstream**: Adapted from [mattpocock/skills/git-guardrails-claude-code](https://github.com/mattpocock/skills/tree/main/git-guardrails-claude-code). Implements harness-level git safety — prompts cannot reliably enforce this, only PreToolUse hooks can.
 
-This skill manages the universal git-safety hook at `.claude/hooks/guards/git-guardrails.sh`.
+This skill manages the git-safety hook at `.claude/hooks/guards/git-guardrails.sh`.
+
+## Re-enable
+
+Add the following entry to the `Bash`-matcher hooks array in `.claude/settings.json` under `hooks.PreToolUse`:
+
+```json
+{
+  "type": "command",
+  "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/guards/git-guardrails.sh"
+}
+```
+
+Place it first in the array for fail-fast (so dangerous commands are rejected before logging/validation hooks fire). Remove the DISABLED banner at the top of the script.
 
 ## What's blocked
 
