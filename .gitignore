@@ -70,13 +70,13 @@ Thumbs.db
 # Worktrees (local only)
 .claude/worktrees/
 
-# Hook runtime state
-.claude/hooks/logs/.once-fired.json
-.claude/hooks/logs/.read-streak.json
-.claude/hooks/logs/.tsc-cache.json
-.claude/hooks/logs/.stop-guard-fired
-.claude/hooks/logs/.test-last-run.json
-.claude/hooks/logs/commands.jsonl
+# Claude Code hook runtime state (counters, sentinels, caches, logs)
+.claude/hooks/logs/*
+!.claude/hooks/logs/.gitkeep
+.claude/hooks/**/__pycache__/
+
+# Codex CLI hook runtime state
+.codex/hooks/logs/
 
 # Local audit/scratch artifacts (kept locally, not committed)
 tasks/

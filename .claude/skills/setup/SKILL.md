@@ -198,10 +198,16 @@ Scan `.sh` and `.py` files in `.claude/hooks/` for `{{PLACEHOLDER}}` patterns an
 | | `{{CONSOLE_LOG_ALTERNATIVE}}` | Alternative message, e.g. `Use the Logger service instead of console.log` |
 | **analytics-reminder.sh** | `{{SCREEN_FILE_PATTERN}}` | Regex for screen/page files. React Native: `/(app\|screens)/.*\.tsx$`. Next.js: `/app/.*/page\.tsx$`. Empty to disable. |
 | | `{{ANALYTICS_REMINDER_MESSAGE}}` | Reminder text, or empty to disable |
-| **stop-guard.sh** | `{{STOP_TEST_CMD}}` | Shell test command string, e.g. `npm run test:silent` |
-| | `{{STOP_BUILD_CMD}}` | Shell build command string, e.g. `npm run build` |
-| **test-before-pr.sh** | `{{PR_TEST_CMD}}` | Shell test command string, e.g. `npm run test:silent` |
-| | `{{PR_BUILD_CMD}}` | Shell build/typecheck command, e.g. `npx tsc --noEmit`. Empty to skip. |
+| **stop-guard.sh** | `{{STOP_TEST_CMD}}` | Shell test command string, e.g. `cd backend && npm run test:ci 2>&1 \| tail -20` |
+| | `{{STOP_BUILD_CMD}}` | Shell build command string, e.g. `cd backend && npx tsc --noEmit 2>&1 \| tail -20` |
+| | `{{CODE_CHANGE_PATTERN}}` | Egrep regex selecting "real code" diffs. Reminder is suppressed when no diff matches. Examples — single Node app: `\.(ts\|tsx\|js\|jsx)$`; backend monorepo: `^backend/.*\.(ts\|tsx\|prisma)$`; python: `\.py$`. Empty falls back to `.*` (always remind). |
+| | `{{WIKI_PATHS}}` | Space-separated path prefixes that trigger the wiki reminder, e.g. `docs/adr docs/architecture src`. Empty = always remind (when `VERIFY_WIKI=true`). Set `VERIFY_WIKI=false` in the file to disable entirely. |
+| **test-before-pr.sh** | `{{BACKEND_PATH_FILTER}}` | Egrep regex matched against changed paths for scope 1. Single-app projects: `.*`. Monorepo backend: `^backend/`. Empty disables the scope. |
+| | `{{BACKEND_TEST_CMD}}` | Test command for scope 1, run from project root via `eval`. Single-app: `npm run test:silent`. Monorepo: `cd backend && npm run test:silent`. Empty = skip tests. |
+| | `{{BACKEND_BUILD_CMD}}` | Build/typecheck for scope 1, e.g. `npx tsc --noEmit` or `cd backend && npx tsc --noEmit`. Empty = skip build. |
+| | `{{MOBILE_PATH_FILTER}}` | Path filter for scope 2 (mobile/frontend). Set all three MOBILE_* values to empty to disable the second scope on single-app projects. |
+| | `{{MOBILE_TEST_CMD}}` | Test command for scope 2, e.g. `cd mobile-app && npm test -- --silent`. Empty = skip tests. |
+| | `{{MOBILE_BUILD_CMD}}` | Build/typecheck for scope 2, e.g. `cd mobile-app && npx tsc --noEmit`. Empty = skip build. |
 
 **Important**: For Python hook files, placeholders are replaced with Python literals (no quotes around lists/tuples). For shell hook files, values go inside existing double quotes. When a value should be empty/disabled, use empty string `""` for shell or `[]`/`()` for Python.
 
@@ -211,7 +217,7 @@ Why this needs a preview: `settings.json` is user-owned; stomping existing match
 
 **PreToolUse — Bash matcher** (add to existing or create):
 1. `bash-guard.sh` — blocks `rm -rf`, force-push, destructive DB commands
-2. `test-before-pr.sh` (timeout: 120) — blocks `gh pr create` unless tests + build pass
+2. `test-before-pr.sh` (timeout: 300) — blocks `gh pr create` unless tests + build pass for each affected scope
 
 **PreToolUse — Write|Edit matcher** (add to existing or create):
 3. `file-guard.sh` — architecture layer boundary enforcement
@@ -239,7 +245,7 @@ Adding `bash-guard.sh` and `test-before-pr.sh` should produce:
   "PreToolUse": [{"matcher": "Bash", "hooks": [
     {"type": "command", "command": "existing.sh"},
     {"type": "command", "command": ".claude/hooks/bash-guard.sh"},
-    {"type": "command", "command": ".claude/hooks/test-before-pr.sh", "timeout": 120}
+    {"type": "command", "command": ".claude/hooks/test-before-pr.sh", "timeout": 300}
   ]}]
 
 **Step 5: Generate architecture checks**

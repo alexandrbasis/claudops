@@ -7,8 +7,10 @@ Matcher:   Write|Edit
 Blocking:  Yes (exit 2 blocks the write)
 Wired:     Yes (default in settings.json)
 
-Normalizes incoming file paths (resolves symlinks, .., etc.) before matching
-against the protected patterns list, preventing path traversal bypasses.
+Normalizes incoming file paths (resolves symlinks, .., whitespace, etc.) before
+matching against the protected patterns list, preventing path traversal bypasses.
+Pattern matching is case-insensitive (V6 fix — macOS APFS is case-insensitive).
+Catches nested .git/ paths in submodules/worktrees (V7 fix).
 
 Configuration:
   PROTECTED_PATTERNS — list of fnmatch-style patterns to block writes to
@@ -28,18 +30,50 @@ import sys
 
 # === CONFIGURE FOR YOUR PROJECT ===
 PROTECTED_PATTERNS = [
+    # Environment files
     ".env",
     ".env.*",
+    ".envrc",
+    ".envrc.*",
+    # Auth tokens / RC files
+    ".npmrc",
+    ".pypirc",
+    ".netrc",
+    # Cloud credentials
+    ".aws/*",
+    ".aws/credentials",
+    ".aws/config",
+    ".gcloud/*",
+    ".kube/config",
+    ".docker/config.json",
+    # SSH / GPG
+    ".ssh/*",
+    "id_rsa*",
+    "id_ed25519*",
+    "id_ecdsa*",
+    "id_dsa*",
+    ".gnupg/*",
+    # TLS / certs / keystores
     "*.pem",
     "*.key",
     "*.p12",
     "*.pfx",
     "*.keystore",
+    "*.crt",
+    "*.cer",
+    # Lock files (regenerated, not hand-edited)
     "package-lock.json",
     "yarn.lock",
     "pnpm-lock.yaml",
     "poetry.lock",
     "Gemfile.lock",
+    "Cargo.lock",
+    "uv.lock",
+    "composer.lock",
+    # Generic credential files
+    "secrets.json",
+    "credentials.json",
+    # Git internals (root-level; nested .git/ handled separately in is_protected)
     ".git/*",
 ]
 
@@ -54,12 +88,16 @@ def get_patterns() -> list:
 
 
 def normalize_path(file_path: str, project_dir: str) -> str:
-    """Resolve and normalize a file path to prevent traversal bypasses."""
+    """Resolve and normalize a file path to prevent traversal bypasses.
+
+    V9 fix: strips leading/trailing whitespace before resolving (defeats
+    `.env  ` and ` .env` bypass attempts on case-insensitive FS).
+    """
+    file_path = file_path.strip()
     if os.path.isabs(file_path):
         resolved = os.path.normpath(file_path)
     else:
         resolved = os.path.normpath(os.path.join(project_dir, file_path))
-    # Return path relative to project dir for pattern matching
     try:
         return os.path.relpath(resolved, project_dir)
     except ValueError:
@@ -67,17 +105,34 @@ def normalize_path(file_path: str, project_dir: str) -> str:
 
 
 def is_protected(rel_path: str, patterns: list) -> str | None:
-    """Check if a relative path matches any protected pattern. Returns matched pattern or None."""
-    basename = os.path.basename(rel_path)
+    """Check if a relative path matches any protected pattern.
+
+    Case-insensitive (V6 fix). Catches nested .git/ paths anywhere
+    in the path tree (V7 fix), which is critical for submodules and
+    git worktrees.
+    """
+    # V7+V8 fix: nested credential/internal dirs in any subdir (submodules, monorepos,
+    # worktrees) — fnmatch alone doesn't span / so "subdir/.git/foo" wouldn't match
+    # ".git/*". This catches them via substring check.
+    rel_lower = rel_path.lower()
+    basename_lower = os.path.basename(rel_path).lower()
+
+    # P4-7 fix: nested-dir check uses rel_lower (case-fold) for cross-FS
+    # safety on macOS APFS (was rel_path which broke V6 case-insensitivity).
+    NESTED_PROTECTED_DIRS = (".git/", ".aws/", ".ssh/", ".gnupg/", ".gcloud/", ".kube/", ".docker/")
+    for protected_dir in NESTED_PROTECTED_DIRS:
+        if f"/{protected_dir}" in rel_lower or rel_lower.startswith(protected_dir):
+            return f"{protected_dir}* (nested or root)"
+    # Also block bare ".git" without trailing slash (e.g., editing the file `.git` itself)
+    if rel_lower == ".git" or rel_lower.endswith("/.git"):
+        return ".git (root)"
     for pattern in patterns:
-        # Match against full relative path
-        if fnmatch.fnmatch(rel_path, pattern):
+        pat_lower = pattern.lower()
+        # Match against full relative path (case-insensitive)
+        if fnmatch.fnmatch(rel_lower, pat_lower):
             return pattern
         # Match against basename only (e.g., "*.pem" matches "certs/server.pem")
-        if fnmatch.fnmatch(basename, pattern):
-            return pattern
-        # Match against path components (e.g., ".git/*" matches ".git/config")
-        if "/" in pattern and fnmatch.fnmatch(rel_path, pattern):
+        if fnmatch.fnmatch(basename_lower, pat_lower):
             return pattern
     return None
 
