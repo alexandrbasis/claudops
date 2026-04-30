@@ -7,9 +7,10 @@ description: >-
   and close', 'commit push merge', 'finalize the PR', 'land it on main',
   'we're done — close it out', or whenever the user signals end-of-work and
   the next step is to merge. If (and only if) the current work is one phase
-  of a multi-phase task in `tasks/**/phase-N-*/`, also propagate cross-phase
-  handoff information into upcoming phase tech-decomposition documents
-  before merging — otherwise this step is silently skipped. Make sure to
+  of a multi-phase task in `tasks/**/phase-N-*/`, also make upcoming phase
+  tech-decomposition documents accurate for the implementation that just
+  landed by adding handoff notes or updating stale assumptions before merging
+  — otherwise this step is silently skipped. Make sure to
   use this skill whenever the user signals end-of-implementation and wants
   the changes merged — even if they don't say the word "skill".
   NOT for opening a new PR (use plain `gh pr create`).
@@ -37,7 +38,7 @@ Land the current implementation on the base branch with the PR cleanly merged. T
 Before merging:
 
 1. Commit and push any pending local changes onto the PR branch.
-2. **(Conditional)** If the current work is one phase of a multi-phase task, propagate cross-phase handoff information into upcoming phase tech-decomposition documents. Skip silently otherwise.
+2. **(Conditional)** If the current work is one phase of a multi-phase task, make the upcoming phase tech-decomposition documents accurate for the implementation that just landed: add handoff notes, update stale assumptions, or explicitly record that no changes were needed. Skip silently otherwise.
 3. Wait for CI to be green. Do not merge or stop on red CI.
 4. Merge the PR.
 
@@ -134,7 +135,7 @@ Do not pass `--no-verify`. If a pre-commit hook fails, **fix the underlying issu
 
 ---
 
-## GATE 3: Phase Handoff Check (Conditional)
+## GATE 3: Phase Handoff / Next-Phase Accuracy Check (Conditional)
 
 **Only run this gate if the current task lives inside a `phase-N-*/` folder under a parent task directory.**
 
@@ -153,21 +154,22 @@ If there are no upcoming phases (this is the final phase), record that and skip 
 
 ### Step 2: Identify Handoff-Worthy Information
 
-Read the current phase's tech-decomposition document and look for things that **the upcoming phases must know but might not yet reflect**:
+Read the current phase's tech-decomposition document, review-fix notes, and actual diff. Then read the relevant parts of each upcoming phase document and look for things that **the upcoming phases must know but might not yet reflect**:
 
 - **Decisions made during implementation** that diverged from the original plan (renamed module, swapped library, schema change, feature flag added).
 - **Contract changes** — new exports, changed function signatures, new endpoints, changed event shapes that upcoming phases consume.
 - **Deferred work** explicitly handed to a later phase ("X is stubbed; phase 3 wires it up").
 - **Gotchas / surprises** discovered during implementation (test infra quirk, race condition workaround, ordering constraint).
 - **New file or module locations** that upcoming phases reference.
+- **Stale next-phase wording** — generic names, old flag names, assumed generated types, or requirements that no longer match the implemented contract.
 
 Sources to mine: `Completion Summary`, `Implementation Decisions`, `Notes`, `Deferred Follow-ups`, and the actual diff (`git diff $(git merge-base HEAD <base>)..HEAD --stat`) — sometimes decisions live in code but never made it back into the doc.
 
-If nothing is handoff-worthy, say so explicitly and skip to Gate 4. Empty handoffs are honest; padding them dilutes the signal in real ones.
+If the upcoming phase docs already reflect the implementation accurately, say so explicitly and skip to Gate 4. Empty handoffs are honest; padding them dilutes the signal in real ones. Do not skip just because a broad topic is mentioned; verify the wording is precise enough for the next implementer to use without re-discovering current-phase results.
 
 ### Step 3: Propose Updates Per Upcoming Phase
 
-For each upcoming phase, propose **only** the items relevant to that phase. Do not blanket-copy the same notes everywhere.
+For each upcoming phase, propose **only** the items relevant to that phase. Do not blanket-copy the same notes everywhere. Proposals may either append a handoff note or directly update stale requirements/tests/decision rows in that phase document.
 
 Present the proposal as a table:
 
@@ -182,7 +184,12 @@ Use `AskUserQuestion` to confirm: approve, edit, or skip items. Only apply appro
 
 ### Step 4: Apply Updates
 
-For each approved item, append to the relevant section of the upcoming phase's tech-decomposition document. Prefer additive edits under a clearly marked subsection, e.g.:
+For each approved item, update the upcoming phase's tech-decomposition document so it is accurate for implementation. Prefer the smallest useful edit:
+
+- Replace stale wording in existing requirements/tests/decision rows when the existing text would mislead implementation.
+- Append a clearly marked handoff subsection when the information is new context rather than a correction.
+
+For additive handoffs, use:
 
 ```markdown
 ### Handoff from phase-1-profile-lookup (added 2026-04-27)
@@ -193,13 +200,13 @@ For each approved item, append to the relevant section of the upcoming phase's t
 
 Date-stamp the heading so future readers can tell when the note was added.
 
-### Step 5: Commit Handoff Updates
+### Step 5: Commit Handoff / Next-Phase Updates
 
 If any upcoming phase docs changed:
 
 ```bash
 git add tasks/<parent-task>/phase-*/tech-decomposition-*.md
-git commit -m "docs: handoff notes to upcoming phases from <current-phase>"
+git commit -m "docs: update upcoming phase handoff from <current-phase>"
 ```
 
 Keep this commit separate from the implementation commit — it touches different files for a different reason and may need to be reverted independently.
@@ -248,7 +255,7 @@ Ready to merge:
 - Head: <feature-branch>
 - Commits being merged: <count>
 - CI: all checks green
-- Phase handoff: <"updated N upcoming phase docs" | "not applicable" | "no handoff needed">
+- Phase handoff: <"updated N upcoming phase docs" | "upcoming phase docs already accurate" | "not applicable">
 ```
 
 Ask once: "Merge now?" Use `AskUserQuestion`. Merging is hard to reverse cleanly (especially after the branch is deleted), so confirm even in auto-mode flows.
@@ -308,6 +315,7 @@ Final summary:
 <one of>
 - N/A (single task, not a phase)
 - Final phase — no upcoming phases to update
+- Upcoming phase docs already accurate — no changes needed
 - Updated <count> upcoming phase docs:
   - phase-2-session-join: <one-line summary of what was added>
   - phase-3-presence: <one-line summary>
