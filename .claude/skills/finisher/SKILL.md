@@ -38,7 +38,7 @@ Land the current implementation on the base branch with the PR cleanly merged. T
 Before merging:
 
 1. Commit and push any pending local changes onto the PR branch.
-2. **(Conditional)** If the current work is one phase of a multi-phase task, make the upcoming phase tech-decomposition documents accurate for the implementation that just landed: add handoff notes, update stale assumptions, or explicitly record that no changes were needed. Skip silently otherwise.
+2. **(Conditional)** If the current work is one phase of a multi-phase task, make the upcoming phase tech-decomposition documents accurate for the implementation that just landed: add handoff notes, update stale assumptions, or explicitly record the evidence-backed reason no changes were needed. Skip silently only when this is not a split phase.
 3. Wait for CI to be green. Do not merge or stop on red CI.
 4. Merge the PR.
 
@@ -141,6 +141,8 @@ Do not pass `--no-verify`. If a pre-commit hook fails, **fix the underlying issu
 
 For a single (non-split) task, skip directly to Gate 4.
 
+This gate is mandatory for split phases and must be evidence-backed. Do not satisfy it by noticing that a future doc mentions the broad topic; verify that the future doc is accurate enough for the next implementer to use the actual modules, functions, contracts, caveats, and deferred work that just landed.
+
 ### Step 1: Identify Upcoming Phases
 
 ```bash
@@ -154,7 +156,7 @@ If there are no upcoming phases (this is the final phase), record that and skip 
 
 ### Step 2: Identify Handoff-Worthy Information
 
-Read the current phase's tech-decomposition document, review-fix notes, and actual diff. Then read the relevant parts of each upcoming phase document and look for things that **the upcoming phases must know but might not yet reflect**:
+Read the current phase's tech-decomposition document, review-fix notes, code review file if present, and actual implementation diff. Then read the relevant parts of each upcoming phase document and look for things that **the upcoming phases must know but might not yet reflect**:
 
 - **Decisions made during implementation** that diverged from the original plan (renamed module, swapped library, schema change, feature flag added).
 - **Contract changes** — new exports, changed function signatures, new endpoints, changed event shapes that upcoming phases consume.
@@ -163,13 +165,33 @@ Read the current phase's tech-decomposition document, review-fix notes, and actu
 - **New file or module locations** that upcoming phases reference.
 - **Stale next-phase wording** — generic names, old flag names, assumed generated types, or requirements that no longer match the implemented contract.
 
-Sources to mine: `Completion Summary`, `Implementation Decisions`, `Notes`, `Deferred Follow-ups`, and the actual diff (`git diff $(git merge-base HEAD <base>)..HEAD --stat`) — sometimes decisions live in code but never made it back into the doc.
+Sources to mine: `Completion Summary`, `Implementation Decisions`, `Notes`, `Deferred Follow-ups`, code review findings/fixes, and the actual diff (`git diff $(git merge-base HEAD <base>)..HEAD --stat`) — sometimes decisions live in code but never made it back into the doc.
 
-If the upcoming phase docs already reflect the implementation accurately, say so explicitly and skip to Gate 4. Empty handoffs are honest; padding them dilutes the signal in real ones. Do not skip just because a broad topic is mentioned; verify the wording is precise enough for the next implementer to use without re-discovering current-phase results.
+For each upcoming phase, explicitly check at least these evidence categories before deciding whether a handoff is required:
+
+- **Actual exports and file paths**: hooks, services, ports, utilities, screens, route helpers, config keys, event names, and generated DTO aliases that upcoming phases will import or call.
+- **Contract shape and naming**: function signatures, route/query params, React Query keys, DTO field names, normalized error codes, and callback/mutation return values.
+- **Behavioral caveats**: temporary NoOp adapters, dependency-blocked native wiring, deferred analytics, fallback behavior, consent gating, cache invalidation, async error handling, and known local-vs-remote verification gaps.
+- **Upcoming doc wording**: requirements, test cases, implementation decisions, file lists, dependencies, and risks that mention the implemented surface.
+
+Write down the comparison result in your working notes before Gate 4:
+
+```text
+Phase handoff check:
+- Current phase: phase-K-...
+- Upcoming phases checked: phase-N-...
+- Evidence checked: <actual files/diff/docs reviewed>
+- Updates needed: <yes/no>
+- If no updates: <specific reason each upcoming phase doc already matches actual implementation>
+```
+
+If the upcoming phase docs already reflect the implementation accurately, say so explicitly with the evidence summary and skip to Gate 4. Empty handoffs are honest; padding them dilutes the signal in real ones. Do not skip just because a broad topic is mentioned; verify the wording is precise enough for the next implementer to use without re-discovering current-phase results. If the wording is accurate at a high level but misses concrete names, paths, contracts, or caveats, a handoff update is required.
 
 ### Step 3: Propose Updates Per Upcoming Phase
 
 For each upcoming phase, propose **only** the items relevant to that phase. Do not blanket-copy the same notes everywhere. Proposals may either append a handoff note or directly update stale requirements/tests/decision rows in that phase document.
+
+Every proposed item must cite the concrete implementation evidence that triggered it: file path, exported symbol, committed diff behavior, or review-fix note. If you cannot point to implementation evidence, do not add the item.
 
 Present the proposal as a table:
 
@@ -180,7 +202,7 @@ Present the proposal as a table:
 | phase-3-presence | tech-decomposition-phase-3-presence.md | "Feature flag `presence_v2` controls rollout" | Phase 3 toggles behavior on this flag |
 ```
 
-Use `AskUserQuestion` to confirm: approve, edit, or skip items. Only apply approved items.
+Use `AskUserQuestion` to confirm: approve, edit, or skip items. Only apply approved items. If the user has already given an explicit blanket instruction to enforce handoffs automatically, you may apply obvious accuracy fixes directly, but still summarize them before Gate 4.
 
 ### Step 4: Apply Updates
 
@@ -205,11 +227,13 @@ Date-stamp the heading so future readers can tell when the note was added.
 If any upcoming phase docs changed:
 
 ```bash
-git add tasks/<parent-task>/phase-*/tech-decomposition-*.md
+git add <specific upcoming phase tech-decomposition files>
 git commit -m "docs: update upcoming phase handoff from <current-phase>"
 ```
 
 Keep this commit separate from the implementation commit — it touches different files for a different reason and may need to be reverted independently.
+
+If no upcoming phase docs changed, do not create a commit. Carry the evidence-backed "upcoming phase docs already accurate" result into the final merge confirmation and final summary.
 
 ---
 
